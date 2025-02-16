@@ -1,14 +1,14 @@
 import sheets from '../../lib/googleSheets';
 
 const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID;
-const SHEET_NAME = '予定';
+const SHEET_NAME = '勤務記録';
 
 export default async function handler(req, res) {
   if (req.method === 'GET') {
     try {
       const result = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
-        range: `'${SHEET_NAME}'!A:F`,
+        range: `'${SHEET_NAME}'!A:G`,
       });
       const rows = result.data.values || [];
       res.status(200).json({ data: rows });

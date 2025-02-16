@@ -1,81 +1,9 @@
 // pages/clockbook.js
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-
-// 自作タイルカレンダーコンポーネント（前月・翌月移動対応）
-function TileCalendar({ displayDate, selectedDate, onDateSelect, onMonthChange }) {
-  const weekDays = ["日", "月", "火", "水", "木", "金", "土"];
-  const year = displayDate.getFullYear();
-  const month = displayDate.getMonth();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const firstDay = new Date(year, month, 1).getDay();
-
-  const tiles = [];
-  for (let i = 0; i < firstDay; i++) {
-    tiles.push(null);
-  }
-  for (let d = 1; d <= daysInMonth; d++) {
-    tiles.push(new Date(year, month, d));
-  }
-
-  // 簡易的な祝日判定（固定祝日例）
-  const isJapaneseHoliday = (date) => {
-    const mmdd = ("0" + (date.getMonth() + 1)).slice(-2) + "-" + ("0" + date.getDate()).slice(-2);
-    const fixedHolidays = ["01-01", "02-11", "04-29", "05-03", "05-04", "05-05", "11-03", "11-23"];
-    return fixedHolidays.includes(mmdd);
-  };
-
-  return (
-    <div className="max-w-4xl mx-auto">
-      {/* 月移動ヘッダー */}
-      <div className="flex items-center justify-between mb-4">
-        <button onClick={() => onMonthChange(-1)} className="p-2 text-xl font-bold text-gray-700 hover:text-gray-900">&lt;</button>
-        <div className="text-2xl font-bold text-gray-800">
-          {year}年 {month + 1}月
-        </div>
-        <button onClick={() => onMonthChange(1)} className="p-2 text-xl font-bold text-gray-700 hover:text-gray-900">&gt;</button>
-      </div>
-      {/* 曜日ヘッダー */}
-      <div className="grid grid-cols-7 gap-1 mb-2">
-        {weekDays.map((day) => (
-          <div key={day} className="text-center font-bold text-lg text-gray-700">{day}</div>
-        ))}
-      </div>
-      {/* 日付タイル */}
-      <div className="grid grid-cols-7 gap-2">
-        {tiles.map((date, index) => {
-          if (!date) return <div key={index} className="h-24"></div>;
-          const localDate = date.toLocaleDateString('en-CA'); // "YYYY-MM-DD"形式
-          const selectedLocalDate = selectedDate.toLocaleDateString('en-CA');
-          const isSelected = localDate === selectedLocalDate;
-          let tileClass = "h-24 flex items-center justify-center border rounded-lg cursor-pointer transition transform duration-300 text-2xl font-semibold";
-          if (isSelected) {
-            tileClass += " bg-gray-800 text-white shadow-2xl scale-110";
-          } else if (isJapaneseHoliday(date)) {
-            tileClass += " bg-yellow-200 text-gray-800";
-          } else if (date.getDay() === 0) {
-            tileClass += " bg-red-200 text-gray-800";
-          } else if (date.getDay() === 6) {
-            tileClass += " bg-blue-200 text-gray-800";
-          } else {
-            tileClass += " bg-white text-gray-800 hover:bg-gray-100";
-          }
-          return (
-            <div
-              key={index}
-              className={tileClass}
-              onClick={() => onDateSelect(date)}
-            >
-              <span>{date.getDate()}</span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
+import TileCalendar from '../components/TileCalendar';
+import AttendanceForm from '../components/AttendanceForm';
 
 export default function ClockbookPage() {
   const { data: session, status } = useSession();
@@ -142,7 +70,10 @@ export default function ClockbookPage() {
     const resAttendance = await fetch('/api/attendance', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(attendance),
+      body: JSON.stringify({
+        ...attendance,
+        totalWorkTime: attendance.totalWorkTime || ''
+      }),
     });
     if (!resAttendance.ok) {
       const data = await resAttendance.json();
@@ -186,7 +117,6 @@ export default function ClockbookPage() {
 
   return (
     <div className="p-4">
-      <h1 className="text-4xl font-bold text-center mb-6">出勤簿</h1>
       <TileCalendar 
         displayDate={displayDate}
         selectedDate={selectedDate}
@@ -201,108 +131,14 @@ export default function ClockbookPage() {
               <button onClick={() => setShowModal(false)} className="text-gray-600 hover:text-gray-800 text-3xl">&times;</button>
             </div>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* 勤務記録フォーム */}
-              <section className="bg-gray-50 p-4 rounded-lg">
-                <div>
-                  <label className="block mb-1">社員名:</label>
-                  <input 
-                    type="text" 
-                    name="employeeName" 
-                    value={attendance.employeeName} 
-                    readOnly 
-                    className="w-full p-2 border rounded bg-gray-100" 
-                  />
-                </div>
-                <div className="flex flex-col sm:flex-row sm:space-x-4">
-                  <div className="flex-1">
-                    <label className="block mb-1">出社時間:</label>
-                    <input 
-                      type="time" 
-                      name="startTime" 
-                      value={attendance.startTime} 
-                      onChange={handleAttendanceChange} 
-                      required 
-                      className="w-full p-2 border rounded" 
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <label className="block mb-1">退社時間:</label>
-                    <input 
-                      type="time" 
-                      name="endTime" 
-                      value={attendance.endTime} 
-                      onChange={handleAttendanceChange} 
-                      required 
-                      className="w-full p-2 border rounded" 
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block mb-1">勤務種別:</label>
-                  <select 
-                    name="workType" 
-                    value={attendance.workType} 
-                    onChange={handleAttendanceChange} 
-                    required 
-                    className="w-full p-2 border rounded bg-white"
-                  >
-                    <option value="出勤">出勤</option>
-                    <option value="公休">公休</option>
-                    <option value="有休">有休</option>
-                    <option value="半休">半休</option>
-                    <option value="早退">早退</option>
-                    <option value="遅刻">遅刻</option>
-                    <option value="有給休暇">有給休暇</option>
-                    <option value="休日出勤">休日出勤</option>
-                    <option value="振替出勤">振替出勤</option>
-                  </select>
-                </div>
-              </section>
-
-              {/* 休憩記録フォーム */}
-              <section className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="text-2xl font-semibold mb-2">休憩記録</h3>
-                {breakRecords.map((record, index) => (
-                  <div key={index} className="flex flex-col sm:flex-row sm:items-end sm:space-x-4 mb-2">
-                    <div className="flex-1">
-                      <label className="block mb-1">休憩開始:</label>
-                      <input 
-                        type="time" 
-                        name="breakStart" 
-                        value={record.breakStart} 
-                        onChange={(e) => handleBreakChange(index, e)} 
-                        className="w-full p-2 border rounded" 
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <label className="block mb-1">休憩終了:</label>
-                      <input 
-                        type="time" 
-                        name="breakEnd" 
-                        value={record.breakEnd} 
-                        onChange={(e) => handleBreakChange(index, e)} 
-                        className="w-full p-2 border rounded" 
-                      />
-                    </div>
-                    {breakRecords.length > 1 && (
-                      <button 
-                        type="button" 
-                        onClick={() => removeBreakRecord(index)}
-                        className="mt-2 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition"
-                      >
-                        削除
-                      </button>
-                    )}
-                  </div>
-                ))}
-                <button 
-                  type="button" 
-                  onClick={addBreakRecord} 
-                  className="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600 transition"
-                >
-                  休憩記録を追加
-                </button>
-              </section>
+              <AttendanceForm 
+                attendance={attendance}
+                breakRecords={breakRecords}
+                onAttendanceChange={handleAttendanceChange}
+                onBreakChange={handleBreakChange}
+                onAddBreak={addBreakRecord}
+                onRemoveBreak={removeBreakRecord}
+              />
 
               <button 
                 type="submit" 
@@ -318,3 +154,5 @@ export default function ClockbookPage() {
     </div>
   );
 }
+
+ClockbookPage.title = '出勤簿';

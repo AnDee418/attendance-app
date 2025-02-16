@@ -1,4 +1,3 @@
-// pages/api/auth/[...nextauth].js
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import sheets from '../../../lib/googleSheets';
@@ -30,7 +29,8 @@ async function getUserById(userId) {
   }
 }
 
-export default NextAuth({
+// authOptions として設定内容を定義し、named export する
+export const authOptions = {
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -74,4 +74,11 @@ export default NextAuth({
       return session;
     },
   },
-});
+  pages: {
+    signIn: '/auth/signin',
+    error: '/auth/error',
+  },
+};
+
+// NextAuth の初期化処理は default export として行う
+export default NextAuth(authOptions);

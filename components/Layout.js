@@ -9,19 +9,27 @@ import {
   UserCircleIcon,
   CogIcon,
   ShieldCheckIcon,
+  PlusCircleIcon,
 } from '@heroicons/react/24/outline';
+import { useState } from 'react';
+import AddMenu from './AddMenu';
 
 export default function Layout({ children, title }) {
   const { data: session } = useSession();
   const router = useRouter();
+  const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
 
   // 下部ナビゲーション項目を修正
   const navItems = [
     { name: 'ホーム', href: '/', icon: HomeIcon },
-    { name: '出勤簿', href: '/clockbook', icon: CalendarIcon },
     { name: 'みんなの予定', href: '/schedules', icon: ClipboardDocumentListIcon },
-    { name: '予定登録', href: '/schedule', icon: UserCircleIcon },
-    { name: 'ダッシュボード', href: '/dashboard', icon: CogIcon }
+    { 
+      name: '追加', 
+      href: '#', 
+      icon: PlusCircleIcon,
+      onClick: () => setIsAddMenuOpen(true)
+    },
+    { name: '設定', href: '/dashboard', icon: CogIcon }
   ];
 
   return (
@@ -63,6 +71,7 @@ export default function Layout({ children, title }) {
               <li key={index} className="flex-1">
                 <Link
                   href={item.href}
+                  onClick={item.onClick}
                   className={`flex flex-col items-center justify-center p-2 relative ${
                     isActive
                       ? "text-blue-600"
@@ -83,6 +92,9 @@ export default function Layout({ children, title }) {
           })}
         </ul>
       </nav>
+
+      {/* 追加メニュー */}
+      <AddMenu isOpen={isAddMenuOpen} setIsOpen={setIsAddMenuOpen} />
     </div>
   );
 }
