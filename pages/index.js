@@ -1,7 +1,9 @@
 // pages/index.js
 import { useState, useEffect } from 'react';
 import { useSession, signIn } from 'next-auth/react';
+import { useRouter } from 'next/router';
 import { UserCircleIcon } from '@heroicons/react/24/outline';
+import AttendanceForm from '../components/AttendanceForm';
 
 // ヘルパー関数: "HH:MM" を分に変換
 const timeToMinutes = (timeStr) => {
@@ -20,6 +22,80 @@ const getProgressColor = (hours) => {
   if (hours >= 160) return 'bg-green-500';
   if (hours >= 120) return 'bg-blue-500';
   return 'bg-blue-400';
+};
+
+// 追加: 新しいヘルパー関数群と WORK_TYPES の定義
+const calculatePlannedWorkingHours = (schedules, currentDate, userName) => {
+  let totalHours = 0;
+  const selectedMonth = currentDate.getMonth();
+  const selectedYear = currentDate.getFullYear();
+  const startDate = new Date(selectedYear, selectedMonth - 1, 21);
+  const endDate = new Date(selectedYear, selectedMonth, 20);
+  schedules.forEach(schedule => {
+    const scheduleDate = new Date(schedule[0]);
+    if (isNaN(scheduleDate.getTime())) return;
+    if (
+      scheduleDate.getTime() >= startDate.getTime() &&
+      scheduleDate.getTime() <= endDate.getTime() &&
+      schedule[1] === userName &&
+      schedule[5] === '予定'
+    ) {
+      // schedule[6] が存在しない場合は、開始・終了時刻から算出
+      const workingHours = parseFloat(schedule[6]) || ((timeToMinutes(schedule[3]) - timeToMinutes(schedule[2])) / 60);
+      totalHours += workingHours;
+    }
+  });
+  return Math.round(totalHours * 10) / 10;
+};
+
+const calculateActualWorkingHoursForClock = (schedules, currentDate, userName) => {
+  let totalHours = 0;
+  const selectedMonth = currentDate.getMonth();
+  const selectedYear = currentDate.getFullYear();
+  const startDate = new Date(selectedYear, selectedMonth - 1, 21);
+  const endDate = new Date(selectedYear, selectedMonth, 20);
+  schedules.forEach(schedule => {
+    const scheduleDate = new Date(schedule[0]);
+    if (isNaN(scheduleDate.getTime())) return;
+    if (
+      scheduleDate.getTime() >= startDate.getTime() &&
+      scheduleDate.getTime() <= endDate.getTime() &&
+      schedule[1] === userName &&
+      schedule[5] === '出勤簿'
+    ) {
+      const workHours = parseFloat(schedule[6]) || ((timeToMinutes(schedule[3]) - timeToMinutes(schedule[2])) / 60);
+      totalHours += workHours;
+    }
+  });
+  return Math.round(totalHours * 10) / 10;
+};
+
+const WORK_TYPES = {
+  '出勤': { bgColor: 'bg-blue-50', textColor: 'text-blue-600', borderColor: 'border-blue-100' },
+  '在宅': { bgColor: 'bg-green-50', textColor: 'text-green-600', borderColor: 'border-green-100' },
+  '休暇': { bgColor: 'bg-red-50', textColor: 'text-red-600', borderColor: 'border-red-100' },
+  '半休': { bgColor: 'bg-yellow-50', textColor: 'text-yellow-600', borderColor: 'border-yellow-100' },
+  '遅刻': { bgColor: 'bg-orange-50', textColor: 'text-orange-600', borderColor: 'border-orange-100' }
+};
+
+const calculateWorkTypeCounts = (schedules, type = '予定') => {
+  const counts = {};
+  Object.keys(WORK_TYPES).forEach(workType => {
+    counts[workType] = schedules.filter(s => s[4] === workType && s[5] === type).length;
+  });
+  return counts;
+};
+
+const getStandardWorkingHours = (date, settingsData) => {
+  if (!settingsData || !settingsData.workHours) return 160;
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  let configMonth = month;
+  if (day >= 21) {
+    configMonth = month + 1;
+    if (configMonth > 12) configMonth = 1;
+  }
+  return settingsData.workHours[configMonth.toString()] || 160;
 };
 
 // ユーザーアイコンの表示コンポーネント
@@ -42,22 +118,53 @@ const UserAvatar = ({ user }) => {
 
 export default function HomePage() {
   const { data: session, status } = useSession();
+  const router = useRouter();
+  
+  // フックはすべて呼び出す（条件分岐前）
   const [attendanceData, setAttendanceData] = useState([]);
   const [breakData, setBreakData] = useState([]);
   const [workDetailData, setWorkDetailData] = useState([]);
-
   const [totalWorkingHours, setTotalWorkingHours] = useState(0);
   const [workTypeCounts, setWorkTypeCounts] = useState({});
-
   const [todayWorkDetail, setTodayWorkDetail] = useState([]);
   const [weekWorkDetail, setWeekWorkDetail] = useState({});
-
-  // 今日の業務詳細と勤務時間
   const [todayScheduledTime, setTodayScheduledTime] = useState({ start: '', end: '' });
-
-  // 強制再レンダリング用のstate
   const [forceUpdate, setForceUpdate] = useState(false);
+  const [plannedWorkingHours, setPlannedWorkingHours] = useState(0);
+  const [todayBreak, setTodayBreak] = useState([]);
+  const standardHours = 160;
+  const [schedules, setSchedules] = useState([]);
+  const [settings, setSettings] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editAttendance, setEditAttendance] = useState({
+    date: new Date().toLocaleDateString('en-CA'),
+    employeeName: '',
+    startTime: '',
+    endTime: '',
+    workType: '出勤',
+    recordType: '予定',
+  });
+  const [editBreakRecords, setEditBreakRecords] = useState([{ breakStart: '', breakEnd: '', recordType: '予定' }]);
+  const [editWorkDetails, setEditWorkDetails] = useState([{ 
+    workTitle: '', 
+    workStart: '', 
+    workEnd: '', 
+    detail: '', 
+    workCategory: '業務',
+    recordType: '予定' 
+  }]);
+  const [editMessage, setEditMessage] = useState('');
 
+  // セッションから安全にユーザー名を取得（session が undefined であっても userName は空文字）
+  const userName = session?.user?.name || '';
+  
+  // 認証状態が unauthenticated の場合、side effect 内で signIn を発動します
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      signIn();
+    }
+  }, [status]);
+  
   // APIデータの取得（出勤簿、休憩、業務詳細）
   useEffect(() => {
     if (status === 'authenticated') {
@@ -73,7 +180,7 @@ export default function HomePage() {
               workType: row[4],
               recordType: row[5],
             }));
-            const userRecords = records.filter(rec => rec.employeeName === session.user.name);
+            const userRecords = records.filter(rec => rec.employeeName === userName);
             setAttendanceData(userRecords);
           }
         });
@@ -88,7 +195,7 @@ export default function HomePage() {
               breakEnd: row[3],
               recordType: row[4],
             }));
-            const userRecords = records.filter(rec => rec.employeeName === session.user.name);
+            const userRecords = records.filter(rec => rec.employeeName === userName);
             setBreakData(userRecords);
           }
         });
@@ -103,8 +210,9 @@ export default function HomePage() {
               workStart: row[3],
               workEnd: row[4],
               detail: row[5],
+              recordType: row[6]
             }));
-            const userRecords = records.filter(rec => rec.employeeName === session.user.name);
+            const userRecords = records.filter(rec => rec.employeeName === userName && rec.recordType === '予定');
             setWorkDetailData(userRecords);
           }
         });
@@ -115,7 +223,7 @@ export default function HomePage() {
         .then(data => {
           if (data.data) {
             // ログインユーザーの情報を検索（新しいデータ構造に対応）
-            const userInfo = data.data.find(user => user.data[1] === session.user.userId);
+            const userInfo = data.data.find(user => user.data[1] === session?.user?.userId);
             if (userInfo && userInfo.data[6]) {
               // セッション情報にアイコンURLを追加
               session.user.iconUrl = userInfo.data[6];
@@ -125,19 +233,47 @@ export default function HomePage() {
           }
         })
         .catch(error => console.error('Error fetching user info:', error));
-    } else if (status === 'unauthenticated') {
-      signIn();
+
+      // 追加: /api/schedules および /api/settings の取得
+      fetch('/api/schedules')
+        .then(res => res.json())
+        .then(data => {
+          if (data.data) {
+            setSchedules(data.data);
+          }
+        })
+        .catch(error => console.error('Error fetching schedules:', error));
+
+      fetch('/api/settings')
+        .then(res => res.json())
+        .then(data => setSettings(data))
+        .catch(error => console.error('Error fetching settings:', error));
     }
-  }, [status, session]);
+  }, [status, session, userName]);
 
   // 今日の業務詳細と勤務時間
   useEffect(() => {
     const todayStr = getLocalDateString(new Date());
-    const todays = workDetailData.filter(rec => rec.date === todayStr);
+    // デバッグ用のログ出力
+    console.log("All WorkDetailData:", workDetailData);
+    console.log("Today string:", todayStr);
+
+    // 業務詳細をフィルタリング: 今日の日付かつレコードタイプ "予定"
+    const todays = workDetailData.filter(rec => {
+      const recDateStr = getLocalDateString(new Date(rec.date));
+      const match = recDateStr === todayStr && rec.recordType === '予定';
+      if(match) {
+         console.log("Matched work detail record:", rec);
+      }
+      return match;
+    });
+    console.log("Filtered Today's Work Detail:", todays);
     setTodayWorkDetail(todays);
 
-    // 今日の勤務予定時間を取得
-    const todayAttendance = attendanceData.find(rec => rec.date === todayStr && rec.recordType === '予定');
+    // 勤務記録シートから "予定" のレコードを対象に、今日の日付を比較
+    const todayAttendance = attendanceData.find(
+      rec => getLocalDateString(new Date(rec.date)) === todayStr && rec.recordType === '予定'
+    );
     if (todayAttendance) {
       setTodayScheduledTime({
         start: todayAttendance.startTime,
@@ -228,233 +364,778 @@ export default function HomePage() {
     setWorkTypeCounts(counts);
   }, [attendanceData, breakData]);
 
-  if (status === 'loading') return <div className="p-4 text-center">Loading...</div>;
-  if (!session) return null;
+  // 給与期間内の「予定」勤務時間を計算（休憩時間は考慮せず、開始・終了時刻の差分で計算）
+  useEffect(() => {
+    if (attendanceData.length === 0) return;
+    const today = new Date();
+    let payrollStart, payrollEnd;
+    if (today.getDate() >= 21) {
+      payrollStart = new Date(today.getFullYear(), today.getMonth(), 21);
+      payrollEnd = new Date(today.getFullYear(), today.getMonth() + 1, 20);
+    } else {
+      payrollStart = new Date(today.getFullYear(), today.getMonth() - 1, 21);
+      payrollEnd = new Date(today.getFullYear(), today.getMonth(), 20);
+    }
+    let plannedMinutes = 0;
+    attendanceData.forEach(rec => {
+      const recDate = new Date(rec.date);
+      if (rec.recordType === "予定" && recDate >= payrollStart && recDate <= payrollEnd) {
+        plannedMinutes += timeToMinutes(rec.endTime) - timeToMinutes(rec.startTime);
+      }
+    });
+    setPlannedWorkingHours(minutesToHours(plannedMinutes));
+  }, [attendanceData]);
+
+  // 今日の「予定」休憩時間を計算
+  useEffect(() => {
+    const todayStr = getLocalDateString(new Date());
+    // 休憩記録シートも同様に、日付を変換して比較
+    const todaysBreaks = breakData.filter(
+      rec => getLocalDateString(new Date(rec.date)) === todayStr && rec.recordType === '予定'
+    );
+    setTodayBreak(todaysBreaks);
+  }, [breakData]);
+
+  // 現在日付を取得
+  const currentDate = new Date();
+  // ログインユーザーの schedules を抽出（userName が空でなければ抽出、無ければ空配列）
+  const userSchedules = userName ? schedules.filter(s => s[1] === userName) : [];
+  const actualHours = calculateActualWorkingHoursForClock(userSchedules, currentDate, userName);
+  const plannedHours = calculatePlannedWorkingHours(userSchedules, currentDate, userName);
+  const plannedCounts = calculateWorkTypeCounts(userSchedules, '予定');
+  const clockbookCounts = calculateWorkTypeCounts(userSchedules, '出勤簿');
+  const computedStandardHours = settings ? getStandardWorkingHours(currentDate, settings) : 160;
+
+  // 編集用の関数を追加
+  const handleEditAttendanceChange = (e) => {
+    setEditAttendance({ ...editAttendance, [e.target.name]: e.target.value });
+  };
+
+  const handleEditBreakChange = (index, e) => {
+    const newBreakRecords = [...editBreakRecords];
+    newBreakRecords[index][e.target.name] = e.target.value;
+    setEditBreakRecords(newBreakRecords);
+  };
+
+  const handleEditWorkDetailChange = (index, e) => {
+    const newWorkDetails = [...editWorkDetails];
+    newWorkDetails[index][e.target.name] = e.target.value;
+    setEditWorkDetails(newWorkDetails);
+  };
+
+  const addEditBreakRecord = () => {
+    setEditBreakRecords([...editBreakRecords, { breakStart: '', breakEnd: '', recordType: '予定' }]);
+  };
+
+  const addEditWorkDetail = () => {
+    setEditWorkDetails([...editWorkDetails, { 
+      workTitle: '', 
+      workStart: '', 
+      workEnd: '', 
+      detail: '', 
+      workCategory: '業務',
+      recordType: '予定' 
+    }]);
+  };
+
+  const removeEditBreakRecord = (index) => {
+    if (editBreakRecords.length > 1) {
+      setEditBreakRecords(editBreakRecords.filter((_, i) => i !== index));
+    }
+  };
+
+  const removeEditWorkDetail = (index) => {
+    if (editWorkDetails.length > 1) {
+      setEditWorkDetails(editWorkDetails.filter((_, i) => i !== index));
+    }
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    setEditMessage('');
+
+    try {
+      // まず既存のデータを削除
+      const today = getLocalDateString(new Date());
+      const deleteParams = new URLSearchParams({
+        date: today,
+        employeeName: userName,
+        recordType: '予定'
+      });
+
+      // 勤務記録の削除
+      await fetch(`/api/attendance?${deleteParams}`, { method: 'DELETE' });
+      
+      // 休憩記録の削除
+      await fetch(`/api/break?${deleteParams}`, { method: 'DELETE' });
+      
+      // 業務詳細の削除
+      await fetch(`/api/workdetail?${deleteParams}`, { method: 'DELETE' });
+
+      // 新しいデータを登録
+      // 勤務記録送信
+      const resAttendance = await fetch('/api/attendance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editAttendance),
+      });
+      if (!resAttendance.ok) throw new Error('勤務記録送信エラー');
+
+      // 休憩記録送信
+      for (let record of editBreakRecords) {
+        if (record.breakStart || record.breakEnd) {
+          const resBreak = await fetch('/api/break', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              date: editAttendance.date,
+              employeeName: editAttendance.employeeName,
+              breakStart: record.breakStart,
+              breakEnd: record.breakEnd,
+              recordType: record.recordType,
+            }),
+          });
+          if (!resBreak.ok) throw new Error('休憩記録送信エラー');
+        }
+      }
+
+      // 業務詳細送信
+      for (let detail of editWorkDetails) {
+        if (detail.workTitle || detail.workStart || detail.workEnd || detail.detail) {
+          const resWork = await fetch('/api/workdetail', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              date: editAttendance.date,
+              employeeName: editAttendance.employeeName,
+              workTitle: detail.workTitle,
+              workStart: detail.workStart,
+              workEnd: detail.workEnd,
+              detail: detail.detail,
+              workCategory: detail.workCategory,
+              recordType: detail.recordType,
+            }),
+          });
+          if (!resWork.ok) throw new Error('業務詳細送信エラー');
+        }
+      }
+
+      setEditMessage('全ての予定が正常に更新されました！');
+      // 3秒後にモーダルを閉じる
+      setTimeout(() => {
+        setShowEditModal(false);
+        // ページのデータを更新
+        window.location.reload();
+      }, 3000);
+
+    } catch (error) {
+      console.error('Error updating schedule:', error);
+      setEditMessage(error.message || '予定の更新に失敗しました');
+    }
+  };
+
+  // 編集モーダルを開く際のデータ設定
+  const openEditModal = () => {
+    const today = getLocalDateString(new Date());
+    setEditAttendance({
+      date: today,
+      employeeName: userName,
+      startTime: todayScheduledTime.start || '',
+      endTime: todayScheduledTime.end || '',
+      workType: '出勤',
+      recordType: '予定',
+    });
+    
+    // 休憩時間の設定
+    setEditBreakRecords(
+      todayBreak.length > 0 
+        ? todayBreak.map(br => ({
+            breakStart: br.breakStart,
+            breakEnd: br.breakEnd,
+            recordType: '予定'
+          }))
+        : [{ breakStart: '', breakEnd: '', recordType: '予定' }]
+    );
+    
+    // 業務詳細の設定
+    setEditWorkDetails(
+      todayWorkDetail.length > 0
+        ? todayWorkDetail.map(detail => ({
+            workTitle: detail.workTitle,
+            workStart: detail.workStart,
+            workEnd: detail.workEnd,
+            detail: detail.detail,
+            workCategory: detail.workCategory || '業務',
+            recordType: '予定'
+          }))
+        : [{ 
+            workTitle: '', 
+            workStart: '', 
+            workEnd: '', 
+            detail: '', 
+            workCategory: '業務',
+            recordType: '予定' 
+          }]
+    );
+    
+    setShowEditModal(true);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-3">
-      {/* ユーザーセクション */}
-      <section className="bg-white rounded-2xl shadow-lg p-4 mb-4">
-        <div className="flex items-center gap-4">
-          {session.user.iconUrl ? (
-            <img
-              src={session.user.iconUrl}
-              alt={session.user.name}
-              className="w-16 h-16 rounded-full border-2 border-blue-400 object-cover"
-            />
-          ) : (
-            <UserCircleIcon className="h-16 w-16 text-gray-400" />
-          )}
-          <div className="flex-1 min-w-0">
-            <h2 className="text-lg font-bold text-gray-800 truncate">{session.user.name}</h2>
-            <p className="text-sm text-gray-500 truncate">{session.user.affiliation}</p>
-          </div>
-        </div>
-      </section>
-
-      {/* 勤務時間セクション */}
-      <section className="bg-white rounded-2xl shadow-lg p-4 mb-4">
-        <h2 className="text-base font-semibold text-gray-600 mb-2">勤務時間</h2>
-        <p className="text-xs text-gray-500 mb-3">{payrollPeriodLabel()}</p>
-        
-        {/* 円形プログレスバーと時間表示 */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="relative w-32 h-32">
-            <svg className="w-full h-full" viewBox="0 0 100 100">
-              {/* 背景の円 */}
-              <circle
-                cx="50"
-                cy="50"
-                r="45"
-                fill="none"
-                stroke="#eee"
-                strokeWidth="10"
-              />
-              {/* プログレスバー */}
-              <circle
-                cx="50"
-                cy="50"
-                r="45"
-                fill="none"
-                stroke="#3B82F6"
-                strokeWidth="10"
-                strokeLinecap="round"
-                strokeDasharray={`${Math.min((totalWorkingHours / 160) * 283, 283)} 283`}
-                transform="rotate(-90 50 50)"
-              />
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-3xl font-bold text-blue-600">{totalWorkingHours}</span>
-              <span className="text-sm text-gray-600">時間</span>
-            </div>
-          </div>
-          
-          {/* 月間目標 */}
-          <div className="flex-1 ml-6">
-            <div className="mb-2">
-              <div className="flex justify-between text-sm text-gray-600 mb-1">
-                <span>月間目標</span>
-                <span>{totalWorkingHours}/160 時間</span>
-              </div>
-              <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                <div
-                  className={`h-full ${getProgressColor(totalWorkingHours)} transition-all duration-300`}
-                  style={{ width: `${Math.min((totalWorkingHours / 160) * 100, 100)}%` }}
-                ></div>
+      {(!userName) ? (
+        <div className="p-4 text-center">Loading...</div>
+      ) : (
+        <>
+          {/* ユーザーセクション */}
+          <section className="bg-white rounded-2xl shadow-lg p-4 mb-4">
+            <div className="flex items-center gap-4">
+              {session.user.iconUrl ? (
+                <img
+                  src={session.user.iconUrl}
+                  alt={session.user.name}
+                  className="w-16 h-16 rounded-full border-2 border-blue-400 object-cover"
+                />
+              ) : (
+                <UserCircleIcon className="h-16 w-16 text-gray-400" />
+              )}
+              <div className="flex-1 min-w-0">
+                <h2 className="text-lg font-bold text-gray-800 truncate">{session.user.name}</h2>
+                <p className="text-sm text-gray-500 truncate">{session.user.affiliation}</p>
               </div>
             </div>
-          </div>
-        </div>
+          </section>
 
-        {/* 勤務種別内訳 */}
-        <div className="border-t pt-3">
-          <h3 className="text-sm font-medium text-gray-600 mb-2">勤務種別</h3>
-          <div className="flex flex-wrap gap-2">
-            {Object.entries(workTypeCounts)
-              .filter(([type]) => type !== 'undefined' && type !== undefined)
-              .map(([type, count]) => (
-                <div key={type} className="px-3 py-1.5 bg-gray-50 rounded-full border border-gray-100 flex items-center">
-                  <span className="text-sm text-gray-600">{type}</span>
-                  <div className="w-px h-3 bg-gray-200 mx-2"></div>
-                  <span className="text-sm font-medium text-blue-600">{count}回</span>
-                </div>
-              ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 今日の業務詳細セクション */}
-      <section className="bg-white rounded-2xl shadow-lg p-4 mb-4">
-        <h2 className="text-base font-semibold text-gray-600 mb-3">今日の業務</h2>
-        
-        {/* 勤務予定時間 */}
-        <div className="mb-4 flex items-center justify-between bg-gray-50 rounded-xl p-3">
-          <div className="flex items-center">
-            <div className="w-1.5 h-8 bg-blue-400 rounded-full mr-3"></div>
-            <div>
-              <p className="text-xs text-gray-500 mb-0.5">勤務予定時間</p>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-700">
-                  {todayScheduledTime.start || '--:--'}
-                </span>
-                <span className="text-gray-400">→</span>
-                <span className="text-sm font-medium text-gray-700">
-                  {todayScheduledTime.end || '--:--'}
-                </span>
-              </div>
-            </div>
-          </div>
-          <div className="px-3 py-1 bg-blue-50 rounded-full">
-            <span className="text-xs text-blue-600">
-              {todayScheduledTime.start && todayScheduledTime.end ? 
-                `${Math.round((timeToMinutes(todayScheduledTime.end) - timeToMinutes(todayScheduledTime.start)) / 60)}時間` : 
-                '未設定'}
-            </span>
-          </div>
-        </div>
-
-        {/* 業務詳細リスト */}
-        {todayWorkDetail.length > 0 ? (
-          <div className="space-y-3">
-            {todayWorkDetail.map((detail, idx) => (
-              <div key={idx} className="p-3 rounded-xl bg-gray-50 border border-gray-100">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-medium text-gray-700">{detail.workTitle}</span>
-                  <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-600">
-                    {detail.workStart} - {detail.workEnd}
-                  </span>
-                </div>
-                {detail.detail && (
-                  <div className="mt-2 pl-2 border-l-2 border-gray-200">
-                    <p className="text-sm text-gray-500 line-clamp-2">{detail.detail}</p>
+          {/* 勤務時間セクション */}
+          <section className="bg-white rounded-2xl shadow-lg p-4 mb-4">
+            <h2 className="text-base font-semibold text-gray-600 mb-2">勤務時間</h2>
+            <p className="text-xs text-gray-500 mb-3">{payrollPeriodLabel()}</p>
+            
+            <div className="mb-8 space-y-8">
+              {/* 円形プログレスバー */}
+              <div className="relative w-48 h-48 mx-auto">
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 112 112">
+                  <circle
+                    cx="56"
+                    cy="56"
+                    r="52"
+                    className="stroke-current text-gray-100"
+                    strokeWidth="6"
+                    fill="none"
+                  />
+                  <circle
+                    cx="56"
+                    cy="56"
+                    r="52"
+                    className="stroke-current text-green-500"
+                    strokeWidth="6"
+                    fill="none"
+                    strokeDasharray={`${(actualHours / computedStandardHours) * 327} 327`}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-4xl font-bold text-gray-900">{actualHours}</span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-lg text-gray-500">/ </span>
+                    <span className="text-xl text-gray-500">{computedStandardHours}</span>
                   </div>
+                  <span className="text-sm text-gray-500 mt-1">実働時間</span>
+                </div>
+              </div>
+
+              {/* 予定勤務時間セクション */}
+              <div className="w-full max-w-xl mx-auto bg-white rounded-xl shadow-sm overflow-hidden">
+                {/* ヘッダー部分 */}
+                <div className="bg-blue-50 px-4 py-3 border-b border-blue-100">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1 h-5 bg-blue-500 rounded-full"></div>
+                    <h3 className="text-base font-medium text-gray-700">予定勤務時間</h3>
+                  </div>
+                </div>
+                
+                {/* メインコンテンツ */}
+                <div className="px-6 py-4">
+                  <div className="flex items-center justify-between">
+                    {/* 予定時間 */}
+                    <div className="text-center w-[60%]">
+                      <span className="block text-4xl font-bold text-blue-600 tracking-tight">
+                        {plannedHours}
+                      </span>
+                      <span className="text-sm text-gray-500">予定勤務時間</span>
+                    </div>
+                    
+                    {/* 区切り線 */}
+                    <div className="h-16 w-px bg-gray-200 mx-4"></div>
+                    
+                    {/* 差分表示 */}
+                    <div className="text-center w-[40%]">
+                      <span className={`block text-4xl font-bold tracking-tight ${
+                        Math.abs(plannedHours - computedStandardHours) <= 3
+                          ? 'text-green-600'
+                          : Math.abs(plannedHours - computedStandardHours) <= 9
+                            ? 'text-yellow-600'
+                            : 'text-red-500'
+                      }`}>
+                        {plannedHours >= computedStandardHours ? '+' : '-'}
+                        {Math.abs(plannedHours - computedStandardHours)}
+                      </span>
+                      <span className="text-sm text-gray-500">基準との差分</span>
+                    </div>
+                  </div>
+                  
+                  {/* ステータス表示 */}
+                  <div className={`mt-4 px-4 py-2 rounded-lg text-center text-sm font-medium ${
+                    Math.abs(plannedHours - computedStandardHours) <= 3
+                      ? 'bg-green-50 text-green-700 border border-green-200'
+                      : Math.abs(plannedHours - computedStandardHours) <= 9
+                        ? 'bg-yellow-50 text-yellow-700 border border-yellow-200'
+                        : 'bg-red-50 text-red-700 border border-red-200'
+                  }`}>
+                    <div className="flex items-center justify-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${
+                        Math.abs(plannedHours - computedStandardHours) <= 3
+                          ? 'bg-green-500'
+                          : Math.abs(plannedHours - computedStandardHours) <= 9
+                            ? 'bg-yellow-500'
+                            : 'bg-red-500'
+                      }`}></div>
+                      {Math.abs(plannedHours - computedStandardHours) <= 3
+                        ? "予定時間は基準内です"
+                        : Math.abs(plannedHours - computedStandardHours) <= 9
+                          ? "予定時間は許容範囲内です"
+                          : "予定時間の調整が必要です"}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 勤務種別内訳 */}
+            <div className="border-t pt-3">
+              <div className="bg-gray-50/50 rounded-lg px-3 py-2 space-y-2 border border-gray-100">
+                {/* 予定セクション */}
+                <div>
+                  <h3 className="text-xs font-medium text-gray-500 mb-1.5 flex items-center">
+                    <div className="w-2 h-2 rounded-full bg-blue-400 mr-2"></div>
+                    勤務種別（予定）
+                  </h3>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Object.entries(plannedCounts).map(([type, count]) => {
+                      if (count === 0) return null;
+                      return (
+                        <div
+                          key={`予定-${type}`}
+                          className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium 
+                              bg-blue-50 text-blue-600"
+                        >
+                          {type} {count}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 区切り線 */}
+                <div className="border-t border-gray-100"></div>
+
+                {/* 出勤簿セクション */}
+                <div>
+                  <h3 className="text-xs font-medium text-gray-500 mb-1.5 flex items-center">
+                    <div className="w-2 h-2 rounded-full bg-green-400 mr-2"></div>
+                    勤務種別（出勤簿）
+                  </h3>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Object.entries(clockbookCounts).map(([type, count]) => {
+                      if (count === 0) return null;
+                      return (
+                        <div
+                          key={`出勤簿-${type}`}
+                          className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium 
+                              bg-green-50 text-green-600"
+                        >
+                          {type} {count}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* 今日の業務詳細セクション */}
+          <section className="bg-white rounded-2xl shadow-lg p-3 mb-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <h2 className="text-base font-semibold text-gray-600">今日の業務</h2>
+                <div className="text-xs bg-blue-50 text-blue-600 px-2.5 py-0.5 rounded-full">
+                  {getLocalDateString(new Date())}
+                </div>
+              </div>
+              <button
+                onClick={openEditModal}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium 
+                  text-blue-700 bg-blue-50 hover:bg-blue-100 
+                  active:bg-blue-100 active:scale-95 rounded-lg transition-all duration-200 
+                  -mr-1 group"
+              >
+                <svg 
+                  className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth="2" 
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" 
+                  />
+                </svg>
+                予定を修正
+              </button>
+            </div>
+            
+            {/* 勤務時間カード */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+              {/* 出退勤時間カード */}
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-3">
+                <div className="flex items-center mb-2">
+                  <div className="w-6 h-6 rounded-lg bg-blue-400 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="ml-2 text-sm font-medium text-gray-700">勤務時間</h3>
+                </div>
+                <div className="flex justify-between items-center">
+                  <div className="text-center flex-1">
+                    <p className="text-xs text-gray-500">出勤</p>
+                    <p className="text-base font-semibold text-blue-600">{todayScheduledTime.start || '--:--'}</p>
+                  </div>
+                  <div className="h-8 w-px bg-blue-200"></div>
+                  <div className="text-center flex-1">
+                    <p className="text-xs text-gray-500">退勤</p>
+                    <p className="text-base font-semibold text-blue-600">{todayScheduledTime.end || '--:--'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 休憩時間カード */}
+              <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-3">
+                <div className="flex items-center mb-2">
+                  <div className="w-6 h-6 rounded-lg bg-emerald-400 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                  </div>
+                  <h3 className="ml-2 text-sm font-medium text-gray-700">休憩時間</h3>
+                </div>
+                {todayBreak.length > 0 ? (
+                  <div className="space-y-1">
+                    {todayBreak.map((br, idx) => (
+                      <div key={idx} className="flex justify-between items-center">
+                        <div className="text-center flex-1">
+                          <p className="text-xs text-gray-500">開始</p>
+                          <p className="text-base font-semibold text-emerald-600">{br.breakStart}</p>
+                        </div>
+                        <div className="h-8 w-px bg-emerald-200"></div>
+                        <div className="text-center flex-1">
+                          <p className="text-xs text-gray-500">終了</p>
+                          <p className="text-base font-semibold text-emerald-600">{br.breakEnd}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-400 text-center mt-2">休憩予定なし</p>
                 )}
               </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-gray-500 text-center py-4">業務詳細はありません</p>
-        )}
-      </section>
+            </div>
 
-      {/* 今週の業務詳細セクション */}
-      <section className="bg-white rounded-2xl shadow-lg p-4">
-        <h2 className="text-base font-semibold text-gray-600 mb-3">今週の業務</h2>
-        {Object.keys(weekWorkDetail).length > 0 ? (
-          <div className="space-y-3">
-            {Object.entries(weekWorkDetail).map(([dayDate, details]) => {
-              // 今日の日付かどうかを判定
-              const isToday = dayDate.includes(getLocalDateString(new Date()));
-              return (
-                <div key={dayDate} className={`border-l-4 rounded-r-lg pl-4 pb-3 last:pb-0 ${
-                  isToday ? 'border-blue-400 bg-blue-50' :
-                  dayDate.includes('土') ? 'border-indigo-300 bg-indigo-50' :
-                  dayDate.includes('日') ? 'border-rose-300 bg-rose-50' :
-                  'border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-colors'
-                }`}>
-                  <h3 className="text-sm font-medium mb-2 flex items-center py-2">
-                    <span className={`inline-block w-7 h-7 rounded-lg mr-2 flex items-center justify-center text-xs font-bold ${
-                      isToday ? 'bg-blue-400 text-white' :
-                      dayDate.includes('土') ? 'bg-indigo-400 text-white' :
-                      dayDate.includes('日') ? 'bg-rose-400 text-white' :
-                      'bg-gray-600 text-white'
-                    }`}>
-                      {dayDate.split(' ')[0]}
-                    </span>
-                    <span className={`${
-                      isToday ? 'text-blue-700 font-semibold' :
-                      dayDate.includes('土') ? 'text-indigo-700' :
-                      dayDate.includes('日') ? 'text-rose-700' :
-                      'text-gray-700'
-                    }`}>
-                      {dayDate.split(' ')[1].replace(/[()]/g, '')}
-                    </span>
-                    {isToday && (
-                      <span className="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-600 rounded-full">
-                        Today
-                      </span>
-                    )}
-                  </h3>
-                  {details.length > 0 ? (
-                    <div className="space-y-2">
-                      {details.map((detail, idx) => (
-                        <div key={idx} className={`rounded-lg p-3 ${
-                          isToday ? 'bg-white shadow-sm' : 'bg-white/80'
-                        }`}>
-                          <div className="flex justify-between items-center mb-1">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium text-gray-700">
-                                {detail.workTitle}
-                              </span>
+            {/* 業務詳細リスト */}
+            <div className="mt-3">
+              <h3 className="text-sm font-medium text-gray-600 mb-2 flex items-center">
+                <div className="w-1 h-4 bg-blue-400 rounded-full mr-2"></div>
+                業務詳細
+              </h3>
+              {todayWorkDetail.length > 0 ? (
+                <div className="space-y-2">
+                  {todayWorkDetail.map((detail, idx) => (
+                    <div key={idx} className="group relative bg-gradient-to-r from-gray-50 to-gray-50/50 hover:from-blue-50 hover:to-blue-50/50 rounded-xl p-2.5 transition-all duration-300">
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-gray-200 group-hover:bg-blue-400 rounded-l-xl transition-colors duration-300"></div>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center space-x-2">
+                          <div className="flex-shrink-0">
+                            <div className="w-8 h-8 rounded-lg bg-white shadow-sm border border-gray-100 flex items-center justify-center">
+                              <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                              </svg>
                             </div>
-                            <span className={`text-xs px-2 py-1 rounded-full ${
-                              isToday ? 'bg-blue-100 text-blue-600' :
-                              'bg-gray-100 text-gray-600'
-                            }`}>
-                              {detail.workStart}-{detail.workEnd}
-                            </span>
                           </div>
-                          {detail.detail && (
-                            <div className="mt-2 pl-2 border-l-2 border-gray-200">
-                              <p className="text-xs text-gray-500 line-clamp-2">
-                                {detail.detail}
-                              </p>
-                            </div>
-                          )}
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-800">{detail.workTitle}</h4>
+                            {detail.detail && (
+                              <p className="text-xs text-gray-500 line-clamp-1">{detail.detail}</p>
+                            )}
+                          </div>
                         </div>
-                      ))}
+                        <div className="flex-shrink-0">
+                          <span className="px-2 py-0.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-full whitespace-nowrap">
+                            {detail.workStart}-{detail.workEnd}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  ) : (
-                    <p className="text-sm text-gray-400 italic pl-8">予定なし</p>
-                  )}
+                  ))}
                 </div>
-              );
-            })}
+              ) : (
+                <div className="text-center py-4">
+                  <div className="w-12 h-12 mx-auto mb-2 bg-gray-100 rounded-full flex items-center justify-center">
+                    <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                  </div>
+                  <p className="text-xs text-gray-500">今日の業務詳細はありません</p>
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* 今週の業務詳細セクション */}
+          <section className="bg-white rounded-2xl shadow-lg p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <h2 className="text-base font-semibold text-gray-600">今週の業務</h2>
+              </div>
+              <button
+                onClick={openEditModal}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium 
+                  text-blue-700 bg-blue-50 hover:bg-blue-100 
+                  active:bg-blue-100 active:scale-95 rounded-lg transition-all duration-200 
+                  -mr-1 group"
+              >
+                <svg 
+                  className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth="2" 
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" 
+                  />
+                </svg>
+                予定を修正
+              </button>
+            </div>
+            {Object.keys(weekWorkDetail).length > 0 ? (
+              <div className="space-y-3">
+                {Object.entries(weekWorkDetail).map(([dayDate, details]) => {
+                  const isToday = dayDate.includes(getLocalDateString(new Date()));
+                  return (
+                    <div key={dayDate} className={`rounded-lg overflow-hidden ${
+                      isToday ? 'bg-blue-50' :
+                      dayDate.includes('土') ? 'bg-indigo-50' :
+                      dayDate.includes('日') ? 'bg-rose-50' :
+                      'bg-gray-50 hover:bg-gray-100 transition-colors'
+                    }`}>
+                      {/* 日付ヘッダー部分 */}
+                      <div className={`flex items-center px-4 py-2 border-l-4 ${
+                        isToday ? 'border-blue-400' :
+                        dayDate.includes('土') ? 'border-indigo-300' :
+                        dayDate.includes('日') ? 'border-rose-300' :
+                        'border-gray-200'
+                      }`}>
+                        <span className={`inline-block w-7 h-7 rounded-lg mr-2 flex items-center justify-center text-xs font-bold ${
+                          isToday ? 'bg-blue-400 text-white' :
+                          dayDate.includes('土') ? 'bg-indigo-400 text-white' :
+                          dayDate.includes('日') ? 'bg-rose-400 text-white' :
+                          'bg-gray-600 text-white'
+                        }`}>
+                          {dayDate.split(' ')[0]}
+                        </span>
+                        <span className={`${
+                          isToday ? 'text-blue-700 font-semibold' :
+                          dayDate.includes('土') ? 'text-indigo-700' :
+                          dayDate.includes('日') ? 'text-rose-700' :
+                          'text-gray-700'
+                        }`}>
+                          {dayDate.split(' ')[1].replace(/[()]/g, '')}
+                        </span>
+                        {isToday && (
+                          <span className="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-600 rounded-full">
+                            Today
+                          </span>
+                        )}
+                      </div>
+
+                      {/* 業務詳細部分 */}
+                      <div className="px-4 py-2">
+                        {details.length > 0 ? (
+                          <div className="space-y-2">
+                            {details.map((detail, idx) => (
+                              <div key={idx} className={`rounded-lg p-3 ${
+                                isToday ? 'bg-white/90' : 'bg-white/70'
+                              } shadow-sm`}>
+                                <div className="flex justify-between items-start gap-2">
+                                  <div className="min-w-0 flex-1">
+                                    <h4 className="text-sm font-medium text-gray-700 truncate">
+                                      {detail.workTitle}
+                                    </h4>
+                                    {detail.detail && (
+                                      <p className="mt-1 text-xs text-gray-500 line-clamp-2 border-l-2 border-gray-200 pl-2">
+                                        {detail.detail}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <span className={`flex-shrink-0 text-xs px-2 py-1 rounded-full whitespace-nowrap ${
+                                    isToday ? 'bg-blue-100 text-blue-600' :
+                                    'bg-gray-100 text-gray-600'
+                                  }`}>
+                                    {detail.workStart}-{detail.workEnd}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-400 italic pl-8">予定なし</p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 text-center py-4">業務詳細はありません</p>
+            )}
+          </section>
+        </>
+      )}
+      {showEditModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-3xl overflow-y-auto max-h-full">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-3xl font-semibold">{editAttendance.date} の予定修正</h2>
+              <button 
+                onClick={() => setShowEditModal(false)} 
+                className="text-gray-600 hover:text-gray-800 text-3xl"
+              >
+                &times;
+              </button>
+            </div>
+            <form onSubmit={handleEditSubmit} className="space-y-6">
+              <AttendanceForm 
+                attendance={editAttendance}
+                breakRecords={editBreakRecords}
+                onAttendanceChange={handleEditAttendanceChange}
+                onBreakChange={handleEditBreakChange}
+                onAddBreak={addEditBreakRecord}
+                onRemoveBreak={removeEditBreakRecord}
+              />
+
+              {/* 業務詳細フォーム */}
+              <section className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="text-2xl font-semibold mb-2">業務詳細</h3>
+                {editWorkDetails.map((detail, index) => (
+                  <div key={index} className="mb-4 border-b border-gray-200 pb-2">
+                    <div className="flex flex-col sm:flex-row sm:space-x-4 mb-2">
+                      <div className="flex-1">
+                        <label className="block mb-1">種別:</label>
+                        <select
+                          name="workCategory"
+                          value={detail.workCategory}
+                          onChange={(e) => handleEditWorkDetailChange(index, e)}
+                          className="w-full p-2 border rounded"
+                        >
+                          <option value="業務">業務</option>
+                          <option value="販売会">販売会</option>
+                          <option value="外出">外出</option>
+                          <option value="ミーティング">ミーティング</option>
+                        </select>
+                      </div>
+                      <div className="flex-1">
+                        <label className="block mb-1">業務タイトル:</label>
+                        <input 
+                          type="text" 
+                          name="workTitle" 
+                          placeholder="業務タイトル" 
+                          value={detail.workTitle} 
+                          onChange={(e) => handleEditWorkDetailChange(index, e)} 
+                          className="w-full p-2 border rounded" 
+                        />
+                      </div>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:space-x-4 mb-1">
+                      <div className="flex-1">
+                        <label className="block mb-1">業務開始:</label>
+                        <input 
+                          type="time" 
+                          name="workStart" 
+                          value={detail.workStart} 
+                          onChange={(e) => handleEditWorkDetailChange(index, e)} 
+                          className="w-full p-2 border rounded" 
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label className="block mb-1">業務終了:</label>
+                        <input 
+                          type="time" 
+                          name="workEnd" 
+                          value={detail.workEnd} 
+                          onChange={(e) => handleEditWorkDetailChange(index, e)} 
+                          className="w-full p-2 border rounded" 
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block mb-1">詳細:</label>
+                      <textarea
+                        name="detail"
+                        placeholder="詳細を記入してください"
+                        value={detail.detail}
+                        onChange={(e) => handleEditWorkDetailChange(index, e)}
+                        className="w-full p-2 border rounded h-24"
+                      />
+                    </div>
+                    {editWorkDetails.length > 1 && (
+                      <button 
+                        type="button" 
+                        onClick={() => removeEditWorkDetail(index)}
+                        className="mt-2 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition"
+                      >
+                        削除
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button 
+                  type="button" 
+                  onClick={addEditWorkDetail} 
+                  className="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600 transition"
+                >
+                  業務詳細を追加
+                </button>
+              </section>
+
+              <button 
+                type="submit" 
+                className="w-full bg-blue-600 text-white p-3 rounded hover:bg-blue-700 transition"
+              >
+                更新
+              </button>
+            </form>
+            {editMessage && (
+              <p className="mt-4 text-center text-green-600">{editMessage}</p>
+            )}
           </div>
-        ) : (
-          <p className="text-sm text-gray-500 text-center py-4">業務詳細はありません</p>
-        )}
-      </section>
+        </div>
+      )}
     </div>
   );
 }

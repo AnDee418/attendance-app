@@ -16,9 +16,18 @@ const formatMonth = (date) => {
   return `${date.getFullYear()}年${date.getMonth() + 1}月`;
 };
 
-// 規定勤務時間の定義（月ごとに異なる場合を想定）
-const getStandardWorkingHours = (date) => {
-  return 160; // 仮の固定値
+// 規定勤務時間の定義：設定値から該当期間の労働時間を取得する（21日を境に翌月の設定を使用）
+const getStandardWorkingHours = (date, settingsData) => {
+  if (!settingsData || !settingsData.workHours) return 160;
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  let configMonth = month;
+  // 21日以降は翌月の設定を利用（年末の場合は1月に繰り越す）
+  if (day >= 21) {
+    configMonth = month + 1;
+    if (configMonth > 12) configMonth = 1;
+  }
+  return settingsData.workHours[configMonth.toString()] || 160;
 };
 
 // 勤務時間計算用ヘルパー関数
@@ -200,6 +209,7 @@ export default function SchedulesPage() {
   const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [settings, setSettings] = useState(null);
   const [breakRecords, setBreakRecords] = useState([]);
 
   useEffect(() => {
@@ -207,6 +217,11 @@ export default function SchedulesPage() {
       fetchUsers();
       fetchSchedules();
       fetchBreakRecords();
+      // APIから設定値を取得してstateに格納（管理者でなくても設定を閲覧可能とする例）
+      fetch('/api/settings')
+        .then((res) => res.json())
+        .then((data) => setSettings(data))
+        .catch((error) => console.error('Error fetching settings:', error));
     }
   }, [status, currentDate]);
 
@@ -261,10 +276,10 @@ export default function SchedulesPage() {
   if (loading) return <div className="p-4 text-center">Loading...</div>;
 
   return (
-    <div className="max-w-7xl mx-auto py-8">
+    <div className="max-w-7xl mx-auto">
       {/* 月選択ヘッダー＆規定労働時間 */}
       <div className="flex items-center justify-center mb-6">
-        <div className="flex flex-col items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-lg px-6 py-3">
+        <div className="flex flex-col items-center gap-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-lg px-6 py-2">
           <div className="flex items-center gap-6">
             <button
               onClick={() => handleMonthChange(-1)}
@@ -283,17 +298,17 @@ export default function SchedulesPage() {
             </button>
           </div>
           <div className="text-sm text-white">
-            規定労働時間: {getStandardWorkingHours(currentDate)}時間
+            規定労働時間: {getStandardWorkingHours(currentDate, settings)}時間
           </div>
         </div>
       </div>
       
       {/* ユーザーカードグリッド */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {users.map((user) => {
+          const standardHours = getStandardWorkingHours(currentDate, settings);
           const userSchedules = schedules.filter(s => s[1] === user.data[0]);
           const userBreakRecords = breakRecords.filter(b => b[1] === user.data[0]);
-          const standardHours = getStandardWorkingHours(currentDate);
           const totalHours = calculateWorkingHours(userSchedules, currentDate);
           const actualHours = calculateActualWorkingHoursForClock(userSchedules, currentDate, user.data[0]);
           const plannedCounts = calculateWorkTypeCounts(userSchedules, '予定');
@@ -466,3 +481,5 @@ export default function SchedulesPage() {
     </div>
   );
 }
+
+SchedulesPage.title = 'みんなの予定';

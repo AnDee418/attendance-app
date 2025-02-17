@@ -62,14 +62,23 @@ export default function DateSelectionPage() {
     router.push(`/view?user=${encodeURIComponent(user)}&date=${date.toISOString()}`);
   };
 
+  // 月変更のハンドラーを追加
+  const handleMonthChange = (increment) => {
+    setCalendarDate(prevDate => {
+      const newDate = new Date(prevDate);
+      newDate.setMonth(newDate.getMonth() + increment);
+      return newDate;
+    });
+  };
+
   if (loading || !userData) {
     return <div className="p-4 text-center">Loading...</div>;
   }
 
   return (
-    <div className="max-w-7xl mx-auto py-8 px-4">
+    <div className="max-w-7xl mx-auto px-4">
       {/* ユーザー情報セクション */}
-      <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+      <div className="bg-white rounded-xl shadow-sm px-4 py-2 mb-4">
         <div className="flex items-center gap-4">
           {userData.data[6] ? (
             <img
@@ -100,7 +109,11 @@ export default function DateSelectionPage() {
       </div>
 
       {/* カレンダー */}
-      <TileCalendar onDateSelect={handleDateSelect} currentDate={calendarDate} />
+      <TileCalendar 
+        onDateSelect={handleDateSelect} 
+        displayDate={calendarDate}
+        onMonthChange={handleMonthChange} 
+      />
     </div>
   );
 }

@@ -62,6 +62,27 @@ export default function AdminPage() {
     console.log('Admin page - Session data:', session);
   }, [router.pathname, session, status]);
 
+  // 既存の認証チェック useEffect の下に追加
+  useEffect(() => {
+    if (session && session.user?.accountType === '管理者') {
+      (async () => {
+        try {
+          const res = await fetch('/api/settings');
+          if (res.ok) {
+            const data = await res.json();
+            // APIから取得した設定データがある場合は state を更新
+            setSettings({
+              workHours: data.workHours || settings.workHours,
+              paidLeave: data.paidLeave || settings.paidLeave,
+            });
+          }
+        } catch (error) {
+          console.error('設定データの取得に失敗しました', error);
+        }
+      })();
+    }
+  }, [session]);
+
   const handleSettingsChange = (category, field, value) => {
     setSettings(prev => ({
       ...prev,
@@ -208,7 +229,9 @@ export default function AdminPage() {
           <input
             type="number"
             value={settings.paidLeave.baseCount}
-            onChange={(e) => handleSettingsChange('paidLeave', 'baseCount', e.target.value)}
+            onChange={(e) =>
+              handleSettingsChange('paidLeave', 'baseCount', parseInt(e.target.value))
+            }
             className="w-full p-2 border rounded-lg"
             min="0"
           />

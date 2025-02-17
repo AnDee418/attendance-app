@@ -49,11 +49,11 @@ export default function TileCalendar({ displayDate, selectedDate = new Date(), o
       {/* 日付タイル */}
       <div className="grid grid-cols-7 gap-2">
         {tiles.map((date, index) => {
-          if (!date) return <div key={index} className="h-24"></div>;
+          if (!date) return <div key={index} className="h-16"></div>;
           const localDate = date.toLocaleDateString('en-CA');
           const selectedLocalDate = selectedDate.toLocaleDateString('en-CA');
           const isSelected = selectedLocalDate === localDate;
-          let tileClass = "h-24 flex items-center justify-center border rounded-lg cursor-pointer transition transform duration-300 text-2xl font-semibold";
+          let tileClass = "h-16 flex items-center justify-center border rounded-lg cursor-pointer transition transform duration-300 text-2xl font-semibold";
           if (isSelected) {
             tileClass += " bg-gray-800 text-white shadow-2xl scale-110";
           } else if (isJapaneseHoliday(date)) {
