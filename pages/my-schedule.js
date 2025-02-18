@@ -13,6 +13,10 @@ import {
 import MonthlyListSection from '../components/MonthlyListSection';
 import IconSlider from '../components/icon-slider';
 import ScheduleForm from '../components/ScheduleForm';
+import ClockbookForm from '../components/ClockbookForm';
+import WorkDetailModal from '../components/WorkDetailModal';
+import Layout from '../components/Layout';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 // アカウント種別の定義（member-schedule.js と同様）
 const accountTypes = {
@@ -75,6 +79,10 @@ export default function MySchedulePage() {
     recordType: '予定' 
   }]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [clockbookAttendance, setClockbookAttendance] = useState(null);
+  const [showClockbookForm, setShowClockbookForm] = useState(false);
+  const [selectedWorkDetail, setSelectedWorkDetail] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   
   // すべてのuseEffectをここに移動
   useEffect(() => {
@@ -103,6 +111,7 @@ export default function MySchedulePage() {
   // 新しく追加したuseEffect
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true);
       try {
         const [breakRes, workDetailRes] = await Promise.all([
           fetch('/api/break'),
@@ -126,21 +135,13 @@ export default function MySchedulePage() {
         if (workDetailRes.ok) {
           const data = await workDetailRes.json();
           if (data.data) {
-            const mappedWorkDetails = data.data.map(row => ({
-              date: row[0],
-              employeeName: row[1],
-              workTitle: row[2],
-              workStart: row[3],
-              workEnd: row[4],
-              detail: row[5],
-              recordType: row[6],
-              workCategory: row[7] || '業務'
-            }));
-            setWorkDetails(mappedWorkDetails);
+            setWorkDetails(data.data);
           }
         }
       } catch (error) {
         console.error('Error fetching data:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -149,8 +150,6 @@ export default function MySchedulePage() {
     return () => clearInterval(intervalId);
   }, []); // 空の依存配列
 
-  const isLoading = status === 'loading' || !session || !userData;
-  
   // 月移動の処理
   const handleMonthChange = (delta) => {
     const newDate = new Date(currentDate);
@@ -321,14 +320,13 @@ export default function MySchedulePage() {
     } else if (type === 'attendance') {
       if (selectedDate && userData) {
         const dateStr = getLocalDateString(selectedDate);
-        // 勤務記録（出勤簿）を検索
         const existingAttendance = userSchedules.find(s => 
           getLocalDateString(new Date(s[0])) === dateStr && s[5] === '出勤簿'
         );
         
         if (existingAttendance) {
-          // 編集モード：既存データをフォームに設定
-          setScheduleAttendance({
+          // 編集モード：既存の出勤簿データを設定
+          setClockbookAttendance({
             date: dateStr,
             employeeName: userData.data[0],
             startTime: existingAttendance[2],
@@ -337,8 +335,8 @@ export default function MySchedulePage() {
             recordType: '出勤簿'
           });
         } else {
-          // 追加モード：空のフォームを設定
-          setScheduleAttendance({
+          // 追加モード：空の出勤簿フォームを設定
+          setClockbookAttendance({
             date: dateStr,
             employeeName: userData.data[0],
             startTime: '',
@@ -347,8 +345,7 @@ export default function MySchedulePage() {
             recordType: '出勤簿'
           });
         }
-        // ※ ここで必要に応じて休憩記録や業務詳細の初期化処理も追加できます
-        setShowScheduleForm(true);
+        setShowClockbookForm(true);
       }
       setSelectedDate(null);
     }
@@ -356,7 +353,7 @@ export default function MySchedulePage() {
 
   // handleScheduleSubmitの修正
   const handleScheduleSubmit = async (attendance, breakRecords, workDetails) => {
-    setIsSubmitting(true); // 登録開始
+    setIsSubmitting(true);
     try {
       // 既存のデータがある場合は削除
       const existingSchedule = userSchedules.find(s => 
@@ -447,48 +444,146 @@ export default function MySchedulePage() {
         const data = await scheduleRes.json();
         if (data.data) {
           setSchedules(data.data);
-          // userSchedulesも更新（現在の月のデータをフィルタリング）
-          const updatedUserSchedules = data.data.filter(s =>
-            userData &&
-            s[1] === userData.data[0] &&
-            new Date(s[0]).getMonth() === currentDate.getMonth() &&
-            new Date(s[0]).getFullYear() === currentDate.getFullYear()
-          );
-          // 必要に応じてuserSchedulesの状態も更新
         }
       }
 
       if (breakRes.ok) {
         const data = await breakRes.json();
-        if (data.data) setBreakData(data.data);
+        if (data.data) {
+          const mappedBreakData = data.data.map(row => ({
+            date: row[0],
+            employeeName: row[1],
+            breakStart: row[2],
+            breakEnd: row[3],
+            recordType: row[4]
+          }));
+          setBreakData(mappedBreakData);
+        }
       }
 
       if (workDetailRes.ok) {
         const data = await workDetailRes.json();
-        if (data.data) setWorkDetails(data.data);
+        if (data.data) {
+          setWorkDetails(data.data);
+        }
       }
 
       setShowScheduleForm(false);
       setScheduleAttendance(null);
+      setSelectedDate(null);
       setEditMessage('予定を保存しました');
-      
-      // 3秒後にメッセージをクリア
-      setTimeout(() => {
-        setEditMessage('');
-      }, 3000);
+      setTimeout(() => setEditMessage(''), 3000);
 
     } catch (error) {
       console.error('Error submitting schedule:', error);
       setEditMessage(error.message || '予定の保存に失敗しました');
     } finally {
-      setIsSubmitting(false); // 登録完了時に false に戻す
+      setIsSubmitting(false);
     }
   };
 
+  // handleClockbookSubmitの修正
+  const handleClockbookSubmit = async (attendance, breakRecords) => {
+    setIsSubmitting(true);
+    try {
+      // 既存の出勤簿がある場合は削除
+      const existingAttendance = userSchedules.find(s =>
+        getLocalDateString(new Date(s[0])) === attendance.date && s[5] === '出勤簿'
+      );
+      
+      if (existingAttendance) {
+        const deleteParams = new URLSearchParams({
+          date: attendance.date,
+          employeeName: attendance.employeeName,
+          recordType: '出勤簿'
+        });
+        // 勤務記録と休憩記録の削除
+        await fetch(`/api/attendance?${deleteParams}`, { method: 'DELETE' });
+        await fetch(`/api/break?${deleteParams}`, { method: 'DELETE' });
+      }
+      
+      // 新しい出勤簿データを登録
+      const resAttendance = await fetch('/api/attendance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(attendance),
+      });
+      if (!resAttendance.ok) {
+        throw new Error('勤務記録送信エラー');
+      }
+      
+      // 休憩記録の送信
+      for (let record of breakRecords) {
+        if (record.breakStart || record.breakEnd) {
+          const resBreak = await fetch('/api/break', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              date: attendance.date,
+              employeeName: attendance.employeeName,
+              breakStart: record.breakStart,
+              breakEnd: record.breakEnd,
+              recordType: '出勤簿'
+            }),
+          });
+          if (!resBreak.ok) {
+            throw new Error('休憩記録送信エラー');
+          }
+        }
+      }
+      
+      // データの再取得と状態の更新
+      const [scheduleRes, breakRes] = await Promise.all([
+        fetch('/api/schedules'),
+        fetch('/api/break')
+      ]);
+      
+      if (scheduleRes.ok) {
+        const data = await scheduleRes.json();
+        if (data.data) {
+          setSchedules(data.data);
+        }
+      }
+      
+      if (breakRes.ok) {
+        const data = await breakRes.json();
+        if (data.data) {
+          const mappedBreakData = data.data.map(row => ({
+            date: row[0],
+            employeeName: row[1],
+            breakStart: row[2],
+            breakEnd: row[3],
+            recordType: row[4]
+          }));
+          setBreakData(mappedBreakData);
+        }
+      }
+      
+      // workDetailはClockbookの場合は特に更新しなくても良い
+      
+      setShowClockbookForm(false);
+      setClockbookAttendance(null);
+      setSelectedDate(null);
+      setEditMessage('勤務実績を保存しました');
+      setTimeout(() => setEditMessage(''), 3000);
+    } catch (error) {
+      console.error('Error submitting clockbook:', error);
+      setEditMessage(error.message || '勤務実績の保存に失敗しました');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // この行を削除
+  // const isLoading = status === 'loading' || !session || !userData;
+
+  // 代わりに、isLoadingの条件を更新
+  const loading = isLoading || status === 'loading' || !session || !userData;
+
   return (
     <>
-      {isLoading ? (
-        <div className="p-4 text-center">Loading...</div>
+      {loading ? (
+        <LoadingSpinner />
       ) : (
         <>
           {/* 月移動用のボタン - z-indexとpositionを調整 */}
@@ -510,9 +605,9 @@ export default function MySchedulePage() {
             </div>
           </div>
           
-          <div className="max-w-5xl mx-auto pb-24 mt-2">
-            {/* ユーザー情報カード */}
-            <div className="bg-white rounded-xl shadow-sm p-4 cursor-default mb-6">
+          <div className="max-w-5xl mx-auto pb-24">
+            {/* ユーザー情報カード - マージンを調整 */}
+            <div className="bg-white rounded-xl shadow-sm p-4 cursor-default">
               <div className="flex items-center gap-3">
                 {userData.data[6] ? (
                   <img
@@ -542,28 +637,31 @@ export default function MySchedulePage() {
               </div>
             </div>
             
-            {/* スワイプ可能なコンテンツエリア内に MonthlyListSection を配置 */}
-            <div 
-              className={`transition-transform duration-300 ${
-                swipeDirection === 'left' ? 'translate-x-[-100px] opacity-0' :
-                swipeDirection === 'right' ? 'translate-x-[100px] opacity-0' :
-                'translate-x-0 opacity-100'
-              }`}
-              {...swipeHandlers}
-            >
-              <MonthlyListSection
-                currentDate={currentDate}
-                workDetails={workDetails}
-                userData={userData}
-                userSchedules={userSchedules}
-                breakData={breakData}
-                onAddButtonClick={(date) => setSelectedDate(date)}
-                getLocalDateString={getLocalDateString}
-              />
+            <div className="mt-4">
+              {/* スワイプ可能なコンテンツエリア */}
+              <div 
+                className={`transition-transform duration-300 ${
+                  swipeDirection === 'left' ? 'translate-x-[-100px] opacity-0' :
+                  swipeDirection === 'right' ? 'translate-x-[100px] opacity-0' :
+                  'translate-x-0 opacity-100'
+                }`}
+                {...swipeHandlers}
+              >
+                <MonthlyListSection
+                  currentDate={currentDate}
+                  workDetails={workDetails}
+                  userData={userData}
+                  userSchedules={userSchedules}
+                  breakData={breakData}
+                  onAddButtonClick={(date) => setSelectedDate(date)}
+                  getLocalDateString={getLocalDateString}
+                  onWorkDetailClick={(detail) => setSelectedWorkDetail(detail)}
+                />
+              </div>
             </div>
           </div>
 
-          {/* モーダル */}
+          {/* 追加ボタンのモーダル */}
           {selectedDate && (() => {
             const dateStr = getLocalDateString(selectedDate);
             const existingSchedule = userSchedules.find(s => 
@@ -577,9 +675,13 @@ export default function MySchedulePage() {
             const hasAttendance = !!existingAttendance;
             
             return (
-              <div className="fixed inset-0 z-50 flex items-center justify-center">
-                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setSelectedDate(null)}></div>
-                <div className="relative bg-white/95 backdrop-blur-md rounded-2xl shadow-xl p-6 w-11/12 max-w-sm z-50 border border-white/20">
+              <div className="fixed inset-0 z-[100] flex items-center justify-center">
+                <div 
+                  className="fixed inset-0 bg-black/40 backdrop-blur-sm" 
+                  onClick={() => setSelectedDate(null)}
+                />
+                <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
+                  bg-white rounded-2xl shadow-xl p-6 w-11/12 max-w-sm z-[101] border border-gray-200">
                   <div className="mb-6 text-center">
                     <h3 className="text-xl font-bold text-gray-900">
                       {selectedDate.toLocaleDateString('ja-JP', { 
@@ -624,6 +726,7 @@ export default function MySchedulePage() {
                         </div>
                       </div>
                     </button>
+
                     <button
                       className="flex items-center w-full px-4 py-3 text-left text-gray-700 
                         rounded-xl transition-all duration-150
@@ -669,6 +772,12 @@ export default function MySchedulePage() {
             );
           })()}
 
+          {/* 業務詳細モーダル */}
+          <WorkDetailModal 
+            workDetail={selectedWorkDetail} 
+            onClose={() => setSelectedWorkDetail(null)} 
+          />
+
           {/* ScheduleForm モーダル */}
           {showScheduleForm && scheduleAttendance && (
             <ScheduleForm
@@ -691,10 +800,22 @@ export default function MySchedulePage() {
               }}
             />
           )}
+          
+          {/* 新規追加: ClockbookForm モーダル */}
+          {showClockbookForm && clockbookAttendance && (
+            <ClockbookForm
+              initialAttendance={clockbookAttendance}
+              onSubmit={handleClockbookSubmit}
+              onClose={() => {
+                setShowClockbookForm(false);
+                setClockbookAttendance(null);
+              }}
+            />
+          )}
         </>
       )}
-
-      {/* 送信中の場合はオーバーレイでLoading表示 */}
+      
+      {/* 送信中のオーバーレイ */}
       {isSubmitting && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div className="text-white text-2xl">登録中...</div>

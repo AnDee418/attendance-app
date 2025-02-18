@@ -24,14 +24,8 @@ export default function Layout({ children, title }) {
   // 下部ナビゲーション項目を修正
   const navItems = [
     { name: 'ホーム', href: '/', icon: HomeIcon },
-    { name: '予定', href: '/my-schedule', icon: CalendarIcon },
-    { name: 'みんな', href: '/schedules', icon: ClipboardDocumentListIcon },
-    { 
-      name: '追加', 
-      href: '#', 
-      icon: PlusCircleIcon,
-      onClick: () => setIsAddMenuOpen(true)
-    },
+    { name: '自分の予定', href: '/my-schedule', icon: CalendarIcon },
+    { name: 'みんなの予定', href: '/schedules', icon: ClipboardDocumentListIcon },
     { 
       name: '設定', 
       href: '/dashboard', 

@@ -50,11 +50,17 @@ export default function ClockbookForm({
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50">
-      <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-3xl overflow-y-auto max-h-full">
+    <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50">
+      <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-3xl 
+        overflow-y-auto my-20 max-h-[calc(100vh-160px)]">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-3xl font-semibold">{attendance.date} の勤務記録</h2>
-          <button onClick={onClose} className="text-gray-600 hover:text-gray-800 text-3xl">&times;</button>
+          <h2 className="text-2xl font-semibold">{attendance.date} の勤務記録</h2>
+          <button 
+            onClick={onClose} 
+            className="text-gray-600 hover:text-gray-800 text-3xl"
+          >
+            &times;
+          </button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-6">
           <AttendanceForm 
@@ -66,14 +72,25 @@ export default function ClockbookForm({
             onRemoveBreak={removeBreakRecord}
           />
 
-          <button 
-            type="submit" 
-            className="w-full bg-blue-600 text-white p-3 rounded hover:bg-blue-700 transition"
-          >
-            送信
-          </button>
+          <div className="flex gap-4 mt-6">
+            <button 
+              type="submit" 
+              className="flex-1 bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 
+                transition-all duration-200 active:scale-95"
+            >
+              保存
+            </button>
+            <button 
+              type="button"
+              onClick={onClose}
+              className="flex-1 bg-gray-100 text-gray-700 p-3 rounded-lg hover:bg-gray-200 
+                transition-all duration-200 active:scale-95"
+            >
+              キャンセル
+            </button>
+          </div>
         </form>
-        {message && <p className="mt-4 text-center text-green-600">{message}</p>}
+        {message && <p className="mt-4 text-center text-red-600">{message}</p>}
       </div>
     </div>
   );

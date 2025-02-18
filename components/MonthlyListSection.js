@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 
 // ヘルパー関数：月の日付一覧を取得
@@ -21,7 +21,8 @@ export default function MonthlyListSection({
   userSchedules, 
   breakData,
   onAddButtonClick,
-  getLocalDateString
+  getLocalDateString,
+  onWorkDetailClick
 }) {
   const router = useRouter();
   const isMySchedulePage = router.pathname.includes('my-schedule');
@@ -30,7 +31,7 @@ export default function MonthlyListSection({
     <>
       <div className="bg-white rounded-2xl shadow-lg p-4">
         <div className="space-y-3">
-          {getDaysInMonth(currentDate).map(date => {
+          {getDaysInMonth(currentDate).map((date, idx) => {
             const dateKey = date.toLocaleDateString('ja-JP', { 
               weekday: 'short', 
               year: 'numeric', 
@@ -51,27 +52,55 @@ export default function MonthlyListSection({
                 userData: userData?.data[0],
                 recordType: rec.recordType
               });
+              
+              // 出勤簿データを優先的に検索
+              const clockbookDetails = workDetails.filter(cd => 
+                getLocalDateString(new Date(cd.date)) === targetDate &&
+                cd.employeeName === userData?.data[0] &&
+                cd.recordType === '出勤簿'
+              );
+              
               return (
                 userData &&
                 rec.employeeName === userData.data[0] &&
                 recDate === targetDate &&
-                rec.recordType === '予定'
+                (clockbookDetails.length > 0 ? 
+                  rec.recordType === '出勤簿' : 
+                  rec.recordType === '予定')
               );
             });
             
             console.log(`Details for ${getLocalDateString(date)}:`, dayDetails);
             
             // 該当日の出退勤の予定レコードを取得
-            const attendanceRecordForDate = userSchedules.find(s => 
-              new Date(s[0]).toDateString() === date.toDateString() && 
-              s[5] === '予定'
-            );
+            const attendanceRecordForDate = userSchedules.find(s => {
+              const matchDate = new Date(s[0]).toDateString() === date.toDateString();
+              // 出勤簿データを優先的に検索
+              const clockbookRecord = userSchedules.find(cr => 
+                new Date(cr[0]).toDateString() === date.toDateString() && 
+                cr[5] === '出勤簿'
+              );
+              
+              // 出勤簿データがある場合はそれを返し、なければ予定データを返す
+              if (clockbookRecord) {
+                return true && s === clockbookRecord;
+              }
+              return matchDate && s[5] === '予定';
+            });
             
             // 該当日の休憩記録を取得
-            const breakRecordsForDate = breakData.filter(br => 
-              new Date(br.date).toDateString() === date.toDateString() &&
-              br.recordType === '予定'
-            );
+            const breakRecordsForDate = breakData.filter(br => {
+              const matchDate = new Date(br.date).toDateString() === date.toDateString();
+              // 出勤簿データを優先的に検索
+              const clockbookBreaks = breakData.filter(cbr => 
+                new Date(cbr.date).toDateString() === date.toDateString() &&
+                cbr.recordType === '出勤簿'
+              );
+              
+              return clockbookBreaks.length > 0 ? 
+                (matchDate && br.recordType === '出勤簿') : 
+                (matchDate && br.recordType === '予定');
+            });
             
             let bgClass = 'bg-gray-50';
             let borderClass = 'border-gray-200';
@@ -140,13 +169,24 @@ export default function MonthlyListSection({
                 <div className="px-4 py-3 space-y-3">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div className="bg-white bg-opacity-75 backdrop-blur-sm rounded-xl p-3 shadow-sm hover:shadow transition-all duration-300">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <div className="w-6 h-6 rounded-lg bg-blue-400 flex items-center justify-center">
-                          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-6 h-6 rounded-lg bg-blue-400 flex items-center justify-center">
+                            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </div>
+                          <span className="text-sm font-medium text-gray-700">勤務時間</span>
                         </div>
-                        <span className="text-sm font-medium text-gray-700">勤務時間</span>
+                        {attendanceRecordForDate && (
+                          <span className={`text-xs px-2 py-1 rounded-lg font-medium ${
+                            attendanceRecordForDate[5] === '出勤簿' 
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : 'bg-blue-100 text-blue-700'
+                          }`}>
+                            {attendanceRecordForDate[5] === '出勤簿' ? '実績' : '予定'}
+                          </span>
+                        )}
                       </div>
                       <div className="flex justify-between items-center px-2">
                         <div>
@@ -166,13 +206,24 @@ export default function MonthlyListSection({
                     </div>
             
                     <div className="bg-white bg-opacity-75 backdrop-blur-sm rounded-xl p-3 shadow-sm hover:shadow transition-all duration-300">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <div className="w-6 h-6 rounded-lg bg-emerald-400 flex items-center justify-center">
-                          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                          </svg>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-6 h-6 rounded-lg bg-emerald-400 flex items-center justify-center">
+                            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                          </div>
+                          <span className="text-sm font-medium text-gray-700">休憩時間</span>
                         </div>
-                        <span className="text-sm font-medium text-gray-700">休憩時間</span>
+                        {breakRecordsForDate.length > 0 && (
+                          <span className={`text-xs px-2 py-1 rounded-lg font-medium ${
+                            breakRecordsForDate[0].recordType === '出勤簿'
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : 'bg-blue-100 text-blue-700'
+                          }`}>
+                            {breakRecordsForDate[0].recordType === '出勤簿' ? '実績' : '予定'}
+                          </span>
+                        )}
                       </div>
                       {breakRecordsForDate.length > 0 ? (
                         <div className="space-y-1 px-2">
@@ -198,17 +249,32 @@ export default function MonthlyListSection({
           
                   {dayDetails.length > 0 && (
                     <div className="bg-white bg-opacity-75 backdrop-blur-sm rounded-xl p-3 shadow-sm">
-                      <div className="flex items-center space-x-2 mb-3">
-                        <div className="w-6 h-6 rounded-lg bg-purple-400 flex items-center justify-center">
-                          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                          </svg>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-6 h-6 rounded-lg bg-purple-400 flex items-center justify-center">
+                            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                          </div>
+                          <span className="text-sm font-medium text-gray-700">業務詳細</span>
                         </div>
-                        <span className="text-sm font-medium text-gray-700">業務詳細</span>
+                        <span className={`text-xs px-2 py-1 rounded-lg font-medium ${
+                          dayDetails[0].recordType === '出勤簿'
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : 'bg-blue-100 text-blue-700'
+                        }`}>
+                          {dayDetails[0].recordType === '出勤簿' ? '実績' : '予定'}
+                        </span>
                       </div>
                       <div className="space-y-2">
                         {dayDetails.map((detail, idx) => (
-                          <div key={idx} className="group bg-gray-50 hover:bg-blue-50 rounded-lg p-2.5 transition-all duration-300">
+                          <div 
+                            key={idx} 
+                            className="group bg-gray-50 hover:bg-blue-50 rounded-lg p-2.5 transition-all duration-300 cursor-pointer"
+                            onClick={() => {
+                              onWorkDetailClick(detail);
+                            }}
+                          >
                             <div className="flex items-center justify-between gap-2">
                               <div className="flex items-center space-x-3 min-w-0">
                                 <div className="flex-shrink-0">

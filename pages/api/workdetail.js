@@ -10,10 +10,20 @@ export default async function handler(req, res) {
     try {
       const result = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
-        range: `${SHEET_NAME}!A:G`,
+        range: `${SHEET_NAME}!A:H`,
       });
       const rows = result.data.values || [];
-      res.status(200).json({ data: rows });
+      const mappedRows = rows.map(row => ({
+        date: row[0],           // 日付
+        employeeName: row[1],   // 社員名
+        workTitle: row[2],      // 業務タイトル
+        workStart: row[3],      // 業務開始時間
+        workEnd: row[4],        // 業務終了時間
+        workCategory: row[5],   // 種別
+        recordType: row[6],     // 登録タイプ
+        detail: row[7]          // 詳細 (H列)
+      }));
+      res.status(200).json({ data: mappedRows });
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: '業務詳細の取得に失敗しました。' });
@@ -39,7 +49,7 @@ export default async function handler(req, res) {
 
       await sheets.spreadsheets.values.append({
         spreadsheetId: SPREADSHEET_ID,
-        range: `${SHEET_NAME}!A:G`,
+        range: `${SHEET_NAME}!A:H`,
         valueInputOption: 'RAW',
         requestBody: {
           values: [[
@@ -49,7 +59,8 @@ export default async function handler(req, res) {
             workStart,      // 業務開始時間
             workEnd,        // 業務終了時間
             workCategory,   // 種別
-            recordType      // 登録タイプ
+            recordType,     // 登録タイプ
+            detail         // 詳細 (H列)
           ]],
         },
       });
@@ -65,7 +76,7 @@ export default async function handler(req, res) {
       
       const result = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
-        range: `${SHEET_NAME}!A:G`,
+        range: `${SHEET_NAME}!A:H`,
       });
       
       const rows = result.data.values || [];
@@ -77,13 +88,13 @@ export default async function handler(req, res) {
       
       await sheets.spreadsheets.values.clear({
         spreadsheetId: SPREADSHEET_ID,
-        range: `${SHEET_NAME}!A:G`,
+        range: `${SHEET_NAME}!A:H`,
       });
       
       if (rowsToKeep.length > 0) {
         await sheets.spreadsheets.values.append({
           spreadsheetId: SPREADSHEET_ID,
-          range: `${SHEET_NAME}!A:G`,
+          range: `${SHEET_NAME}!A:H`,
           valueInputOption: 'RAW',
           requestBody: {
             values: rowsToKeep,

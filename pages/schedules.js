@@ -10,6 +10,7 @@ import {
   DocumentTextIcon, 
   UserIcon 
 } from '@heroicons/react/24/outline';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 // 月の表示用ヘルパー関数
 const formatMonth = (date) => {
@@ -333,7 +334,7 @@ export default function SchedulesPage() {
     return orderedGroups;
   };
 
-  if (!session) return <div className="p-4 text-center">Loading...</div>;
+  if (!session) return <LoadingSpinner />;
 
   const groupedUsers = groupUsersByTypeAndDepartment(users);
 

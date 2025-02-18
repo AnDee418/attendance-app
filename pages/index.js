@@ -4,6 +4,8 @@ import { useSession, signIn } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import { UserCircleIcon } from '@heroicons/react/24/outline';
 import AttendanceForm from '../components/AttendanceForm';
+import WorkDetailModal from '../components/WorkDetailModal';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 // ヘルパー関数: "HH:MM" を分に変換
 const timeToMinutes = (timeStr) => {
@@ -154,6 +156,7 @@ export default function HomePage() {
     recordType: '予定' 
   }]);
   const [editMessage, setEditMessage] = useState('');
+  const [selectedWorkDetail, setSelectedWorkDetail] = useState(null);
 
   // セッションから安全にユーザー名を取得（session が undefined であっても userName は空文字）
   const userName = session?.user?.name || '';
@@ -203,19 +206,26 @@ export default function HomePage() {
         .then(res => res.json())
         .then(data => {
           if (data.data) {
+            console.log("Raw Work Detail Data:", data.data); // デバッグ用
             const records = data.data.map(row => ({
-              date: row[0],
-              employeeName: row[1],
-              workTitle: row[2],
-              workStart: row[3],
-              workEnd: row[4],
-              detail: row[5],
-              recordType: row[6]
+              date: row.date,
+              employeeName: row.employeeName,
+              workTitle: row.workTitle,
+              workStart: row.workStart,
+              workEnd: row.workEnd,
+              detail: row.detail,
+              workCategory: row.workCategory,
+              recordType: row.recordType
             }));
-            const userRecords = records.filter(rec => rec.employeeName === userName && rec.recordType === '予定');
+            const userRecords = records.filter(rec => 
+              rec.employeeName === userName && 
+              rec.recordType === '予定'
+            );
+            console.log("Filtered User Records:", userRecords); // デバッグ用
             setWorkDetailData(userRecords);
           }
-        });
+        })
+        .catch(error => console.error('Error fetching work details:', error));
 
       // セッション情報にアイコンURLを追加
       fetch('/api/users')
@@ -303,16 +313,24 @@ export default function HomePage() {
     
     // 業務詳細を該当する日付に振り分け
     workDetailData.forEach(rec => {
-      const recDate = new Date(rec.date);
-      if (recDate >= monday && recDate <= new Date(monday.getTime() + 6 * 24 * 60 * 60 * 1000)) {
-        const dayName = recDate.toLocaleDateString('ja-JP', { weekday: 'short' });
-        const dateStr = getLocalDateString(recDate);
-        const key = `${dayName} (${dateStr})`;
-        if (weekDetail[key]) {
-          weekDetail[key].push(rec);
+      const recDate = getLocalDateString(new Date(rec.date));
+      Object.keys(weekDetail).forEach(key => {
+        const weekDateStr = key.split(' ')[1].replace(/[()]/g, '');
+        if (recDate === weekDateStr) {
+          weekDetail[key].push({
+            date: rec.date,
+            workTitle: rec.workTitle,
+            workStart: rec.workStart,
+            workEnd: rec.workEnd,
+            detail: rec.detail,
+            workCategory: rec.workCategory,
+            recordType: rec.recordType
+          });
         }
-      }
+      });
     });
+    
+    console.log("Week Detail Data:", weekDetail); // デバッグ用
     setWeekWorkDetail(weekDetail);
   }, [workDetailData]);
 
@@ -584,7 +602,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-3">
       {(!userName) ? (
-        <div className="p-4 text-center">Loading...</div>
+        <LoadingSpinner />
       ) : (
         <>
           {/* ユーザーセクション */}
@@ -863,33 +881,44 @@ export default function HomePage() {
               </h3>
               {todayWorkDetail.length > 0 ? (
                 <div className="space-y-2">
-                  {todayWorkDetail.map((detail, idx) => (
-                    <div key={idx} className="group relative bg-gradient-to-r from-gray-50 to-gray-50/50 hover:from-blue-50 hover:to-blue-50/50 rounded-xl p-2.5 transition-all duration-300">
-                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-gray-200 group-hover:bg-blue-400 rounded-l-xl transition-colors duration-300"></div>
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center space-x-2">
-                          <div className="flex-shrink-0">
-                            <div className="w-8 h-8 rounded-lg bg-white shadow-sm border border-gray-100 flex items-center justify-center">
-                              <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                              </svg>
+                  {todayWorkDetail.map((detail, idx) => {
+                    const today = new Date();
+                    const detailDate = new Date(detail.date);
+                    const isToday = detailDate.toDateString() === today.toDateString();
+                    
+                    return (
+                      <div key={idx} className={`rounded-lg p-3 ${
+                        isToday ? 'bg-white/90' : 'bg-white/70'
+                      } shadow-sm cursor-pointer hover:bg-blue-50 transition-all duration-300`}
+                      onClick={() => setSelectedWorkDetail({
+                        ...detail,
+                        date: getLocalDateString(detailDate)
+                      })}>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center space-x-2">
+                            <div className="flex-shrink-0">
+                              <div className="w-8 h-8 rounded-lg bg-white shadow-sm border border-gray-100 flex items-center justify-center">
+                                <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                              </div>
+                            </div>
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-800">{detail.workTitle}</h4>
+                              {detail.detail && (
+                                <p className="text-xs text-gray-500 line-clamp-1">{detail.detail}</p>
+                              )}
                             </div>
                           </div>
-                          <div>
-                            <h4 className="text-sm font-medium text-gray-800">{detail.workTitle}</h4>
-                            {detail.detail && (
-                              <p className="text-xs text-gray-500 line-clamp-1">{detail.detail}</p>
-                            )}
+                          <div className="flex-shrink-0">
+                            <span className="px-2 py-0.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-full whitespace-nowrap">
+                              {detail.workStart}-{detail.workEnd}
+                            </span>
                           </div>
                         </div>
-                        <div className="flex-shrink-0">
-                          <span className="px-2 py-0.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-full whitespace-nowrap">
-                            {detail.workStart}-{detail.workEnd}
-                          </span>
-                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="text-center py-4">
@@ -904,34 +933,18 @@ export default function HomePage() {
             </div>
           </section>
 
+          {/* 業務詳細モーダル */}
+          <WorkDetailModal 
+            workDetail={selectedWorkDetail} 
+            onClose={() => setSelectedWorkDetail(null)} 
+          />
+
           {/* 今週の業務詳細セクション */}
           <section className="bg-white rounded-2xl shadow-lg p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
                 <h2 className="text-base font-semibold text-gray-600">今週の業務</h2>
               </div>
-              <button
-                onClick={openEditModal}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium 
-                  text-blue-700 bg-blue-50 hover:bg-blue-100 
-                  active:bg-blue-100 active:scale-95 rounded-lg transition-all duration-200 
-                  -mr-1 group"
-              >
-                <svg 
-                  className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
-                >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth="2" 
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" 
-                  />
-                </svg>
-                予定を修正
-              </button>
             </div>
             {Object.keys(weekWorkDetail).length > 0 ? (
               <div className="space-y-3">
@@ -981,9 +994,19 @@ export default function HomePage() {
                             {details.map((detail, idx) => (
                               <div key={idx} className={`rounded-lg p-3 ${
                                 isToday ? 'bg-white/90' : 'bg-white/70'
-                              } shadow-sm`}>
+                              } shadow-sm cursor-pointer hover:bg-blue-50 transition-all duration-300`}
+                              onClick={() => setSelectedWorkDetail({
+                                ...detail,
+                                date: dayDate.split(' ')[1].replace(/[()]/g, '')
+                              })}>
                                 <div className="flex justify-between items-start gap-2">
                                   <div className="min-w-0 flex-1">
+                                    {/* 業務カテゴリーバッジを追加 */}
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">
+                                        {detail.workCategory || '業務'}
+                                      </span>
+                                    </div>
                                     <h4 className="text-sm font-medium text-gray-700 truncate">
                                       {detail.workTitle}
                                     </h4>
@@ -994,8 +1017,7 @@ export default function HomePage() {
                                     )}
                                   </div>
                                   <span className={`flex-shrink-0 text-xs px-2 py-1 rounded-full whitespace-nowrap ${
-                                    isToday ? 'bg-blue-100 text-blue-600' :
-                                    'bg-gray-100 text-gray-600'
+                                    isToday ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'
                                   }`}>
                                     {detail.workStart}-{detail.workEnd}
                                   </span>

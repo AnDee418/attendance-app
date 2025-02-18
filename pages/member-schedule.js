@@ -14,6 +14,8 @@ import Link from 'next/link';
 import IconSlider from '../components/icon-slider';
 import { useSwipeable } from 'react-swipeable';
 import MonthlyListSection from '../components/MonthlyListSection';
+import WorkDetailModal from '../components/WorkDetailModal';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 // ヘルパー関数：月の表示（例：2023年10月）
 const formatMonth = (date) => {
@@ -171,6 +173,8 @@ export default function MemberSchedulePage() {
   // スワイプハンドラーを追加
   const [swipeDirection, setSwipeDirection] = useState(null);
   
+  const [selectedWorkDetail, setSelectedWorkDetail] = useState(null);
+  
   // 対象ユーザーの情報を取得
   useEffect(() => {
     if (!userQuery) return;
@@ -198,24 +202,14 @@ export default function MemberSchedulePage() {
       .catch(err => console.error('Error fetching schedules:', err));
   }, []);
   
-  // /api/workdetail から業務詳細を取得（レコードタイプが「予定」のみ）
+  // /api/workdetail から業務詳細を取得
   useEffect(() => {
     fetch('/api/workdetail')
       .then(res => res.json())
       .then(data => {
         if (data.data) {
-          // データ構造を適切な形式に変換
-          const records = data.data.map(row => ({
-            date: row[0],
-            employeeName: row[1],
-            workTitle: row[2],
-            workStart: row[3],
-            workEnd: row[4],
-            detail: row[5],
-            recordType: row[6]
-          }));
           // 予定のみをフィルタリング
-          const filtered = records.filter(record => record.recordType === '予定');
+          const filtered = data.data.filter(record => record.recordType === '予定');
           setWorkDetails(filtered);
         }
       })
@@ -311,7 +305,7 @@ export default function MemberSchedulePage() {
     trackMouse: false
   });
   
-  if (!userData) return <div className="p-4 text-center">Loading...</div>;
+  if (!userData) return <LoadingSpinner />;
   
   return (
     <>
@@ -507,6 +501,8 @@ export default function MemberSchedulePage() {
             userData={userData}
             userSchedules={userSchedules}
             breakData={breakData}
+            getLocalDateString={getLocalDateString}
+            onWorkDetailClick={(detail) => setSelectedWorkDetail(detail)}
           />
         </div>
       </div>
@@ -515,6 +511,12 @@ export default function MemberSchedulePage() {
       <div className="fixed bottom-16 left-0 right-0 z-30">
          <IconSlider currentUserId={userData.data[1]} />
       </div>
+
+      {/* 業務詳細モーダル */}
+      <WorkDetailModal 
+        workDetail={selectedWorkDetail} 
+        onClose={() => setSelectedWorkDetail(null)} 
+      />
     </>
   );
 }
