@@ -83,7 +83,7 @@ export default function AdminUsersPage() {
 
   // 管理者以外のアクセスを制限
   useEffect(() => {
-    if (status === 'authenticated' && session?.user?.accountType !== '管理者') {
+    if (status === 'authenticated' && !session?.user?.isAdmin) {
       router.push('/');
     }
   }, [session, status, router]);
@@ -131,7 +131,8 @@ export default function AdminUsersPage() {
           email: updatedUser.email,
           affiliation: updatedUser.affiliation,
           accountType: updatedUser.accountType,
-          iconUrl: updatedUser.iconUrl
+          iconUrl: updatedUser.iconUrl,
+          isAdmin: updatedUser.isAdmin
         })
       });
 
@@ -314,8 +315,8 @@ export default function AdminUsersPage() {
 
       {/* 編集モーダル */}
       {isModalOpen && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4 my-20 max-h-[calc(100vh-160px)] overflow-y-auto">
             <h2 className="text-xl font-semibold mb-4">ユーザー編集</h2>
             <form onSubmit={async (e) => {
               e.preventDefault();
@@ -328,8 +329,9 @@ export default function AdminUsersPage() {
                 password: formData.get('password'),
                 email: formData.get('email'),
                 affiliation: formData.get('affiliation'),
-                accountType: formData.get('accountType'),
-                iconUrl: selectedUser.data[6]
+                accountType: formData.get('isAdmin') ? '管理者' : formData.get('accountType'),
+                iconUrl: selectedUser.data[6],
+                isAdmin: formData.get('isAdmin') ? true : false
               };
 
               console.log('Form data:', updateData);
@@ -545,15 +547,26 @@ export default function AdminUsersPage() {
                   <label className="block text-sm font-medium text-gray-700">アカウント種別</label>
                   <select
                     name="accountType"
-                    defaultValue={selectedUser.data[5]}
+                    defaultValue={selectedUser.data[5] === '管理者' ? '' : selectedUser.data[5]}
                     className="mt-1 w-full p-2 border rounded-lg"
                     required
                   >
-                    <option value="管理者">管理者</option>
+                    <option value="">選択してください</option>
                     <option value="営業">営業</option>
                     <option value="業務">業務</option>
                     <option value="アルバイト">アルバイト</option>
                   </select>
+                </div>
+                <div className="mt-4">
+                  <label className="flex items-center space-x-2">
+                    <input 
+                      type="checkbox" 
+                      name="isAdmin"
+                      defaultChecked={selectedUser.data[7] === 'true'}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700">管理者権限を与える</span>
+                  </label>
                 </div>
               </div>
               <div className="mt-6 flex gap-3">

@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     try {
       const result = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
-        range: `'${USERS_SHEET_NAME}'!A:G`,
+        range: `'${USERS_SHEET_NAME}'!A:H`,
       });
       const rows = result.data.values || [];
       
@@ -28,17 +28,17 @@ export default async function handler(req, res) {
     }
   } else if (req.method === 'POST') {
     // 新規ユーザー登録
-    const { name, userId, password, email, affiliation, accountType, iconUrl } = req.body;
+    const { name, userId, password, email, affiliation, accountType, iconUrl, isAdmin } = req.body;
     if (!name || !userId || !password || !email || !affiliation || !accountType) {
       return res.status(400).json({ error: '必要な項目が不足しています。' });
     }
     try {
       await sheets.spreadsheets.values.append({
         spreadsheetId: SPREADSHEET_ID,
-        range: `'${USERS_SHEET_NAME}'!A:G`,
+        range: `'${USERS_SHEET_NAME}'!A:H`,
         valueInputOption: 'RAW',
         requestBody: {
-          values: [[name, userId, password, email, affiliation, accountType, iconUrl || '']],
+          values: [[name, userId, password, email, affiliation, accountType, iconUrl || '', isAdmin ? 'true' : 'false']],
         },
       });
       res.status(200).json({ message: 'ユーザーアカウントを作成しました。' });

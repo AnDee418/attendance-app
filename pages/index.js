@@ -1139,3 +1139,5 @@ export default function HomePage() {
     </div>
   );
 }
+
+HomePage.title = 'ホーム';

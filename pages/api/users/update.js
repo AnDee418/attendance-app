@@ -12,7 +12,7 @@ export default async function handler(req, res) {
 
   console.log('Received update request:', req.body); // リクエストデータ
 
-  const { rowIndex, name, userId, password, email, affiliation, accountType, iconUrl } = req.body;
+  const { rowIndex, name, userId, password, email, affiliation, accountType, iconUrl, isAdmin } = req.body;
   
   // バリデーション
   if (!rowIndex || rowIndex < 2 || !name || !email || !affiliation || !accountType) {
@@ -36,14 +36,15 @@ export default async function handler(req, res) {
       email,
       affiliation,
       accountType,
-      iconUrl || currentData.data.values?.[0][6] || '' // アイコンURL
+      iconUrl || currentData.data.values?.[0][6] || '', // アイコンURL
+      isAdmin ? 'true' : 'false'
     ];
     console.log('Update values:', updateValues); // 更新データ
 
     // データを更新
     await sheets.spreadsheets.values.update({
       spreadsheetId: SPREADSHEET_ID,
-      range: `'${USERS_SHEET_NAME}'!A${rowIndex}:G${rowIndex}`,
+      range: `'${USERS_SHEET_NAME}'!A${rowIndex}:H${rowIndex}`,
       valueInputOption: 'RAW',
       requestBody: {
         values: [updateValues],

@@ -49,7 +49,7 @@ export default function AdminPage() {
       return;
     }
 
-    if (session.user?.accountType !== '管理者') {
+    if (!session.user?.isAdmin) {
       router.push('/');
       return;
     }
@@ -64,7 +64,7 @@ export default function AdminPage() {
 
   // 既存の認証チェック useEffect の下に追加
   useEffect(() => {
-    if (session && session.user?.accountType === '管理者') {
+    if (session && session.user?.isAdmin) {
       (async () => {
         try {
           const res = await fetch('/api/settings');
@@ -143,7 +143,7 @@ export default function AdminPage() {
   }
 
   // 認証チェックを修正
-  if (!session || session.user?.accountType !== '管理者') {
+  if (!session || !session.user?.isAdmin) {
     return null;
   }
 

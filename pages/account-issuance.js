@@ -14,15 +14,6 @@ import 'react-image-crop/dist/ReactCrop.css';
 // アカウント種別の定義
 const accountTypes = [
   {
-    value: '管理者',
-    label: '管理者',
-    icon: ShieldCheckIcon,
-    description: 'システム全体の管理権限を持ちます',
-    bgColor: 'bg-blue-50',
-    textColor: 'text-blue-700',
-    borderColor: 'border-blue-200'
-  },
-  {
     value: '営業',
     label: '営業',
     icon: BriefcaseIcon,
@@ -71,7 +62,8 @@ export default function AccountIssuancePage() {
     email: '',
     affiliation: '',
     accountType: '',
-    iconUrl: ''
+    iconUrl: '',
+    isAdmin: false
   });
   const [error, setError] = useState('');
   
@@ -137,7 +129,7 @@ export default function AccountIssuancePage() {
     setError('');
 
     try {
-      // アイコンURLを含めたデータを送信
+      // isAdmin フラグをチェックして accountType を決定
       const res = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -147,8 +139,9 @@ export default function AccountIssuancePage() {
           password: formData.password,
           email: formData.email,
           affiliation: formData.affiliation,
-          accountType: formData.accountType,
-          iconUrl: formData.iconUrl || '' // アイコンURLを追加
+          accountType: formData.isAdmin ? '管理者' : formData.accountType, // 管理者チェックがオンなら '管理者'
+          iconUrl: formData.iconUrl || '', // アイコンURLを追加
+          isAdmin: formData.isAdmin
         })
       });
 
@@ -285,6 +278,19 @@ export default function AccountIssuancePage() {
               </label>
             ))}
           </div>
+        </div>
+
+        {/* 新しい「管理者権限を与える」チェックボックス */}
+        <div className="mt-4">
+          <label className="flex items-center space-x-2">
+            <input 
+              type="checkbox" 
+              checked={formData.isAdmin}
+              onChange={(e) => setFormData({ ...formData, isAdmin: e.target.checked })}
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <span className="text-sm font-medium text-gray-700">管理者権限を与える</span>
+          </label>
         </div>
 
         {/* ユーザーアイコン選択部分 */}

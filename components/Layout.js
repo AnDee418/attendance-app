@@ -19,17 +19,32 @@ export default function Layout({ children, title }) {
   const router = useRouter();
   const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
 
+  console.log('Session in Layout:', session);
+
   // 下部ナビゲーション項目を修正
   const navItems = [
     { name: 'ホーム', href: '/', icon: HomeIcon },
-    { name: 'みんなの予定', href: '/schedules', icon: ClipboardDocumentListIcon },
+    { name: '予定', href: '/my-schedule', icon: CalendarIcon },
+    { name: 'みんな', href: '/schedules', icon: ClipboardDocumentListIcon },
     { 
       name: '追加', 
       href: '#', 
       icon: PlusCircleIcon,
       onClick: () => setIsAddMenuOpen(true)
     },
-    { name: '設定', href: '/dashboard', icon: CogIcon }
+    { 
+      name: '設定', 
+      href: '/dashboard', 
+      icon: ({ className }) => session?.user?.iconUrl ? (
+        <img
+          src={session.user.iconUrl}
+          alt={session.user.name}
+          className={`w-6 h-6 rounded-full object-cover`}
+        />
+      ) : (
+        <UserCircleIcon className={className} />
+      )
+    }
   ];
 
   return (
@@ -37,32 +52,23 @@ export default function Layout({ children, title }) {
       {/* ヘッダー */}
       <header className="fixed top-0 left-0 right-0 bg-blue-600 text-white p-4 flex justify-between items-center z-20 shadow-md">
         <h1 className="text-xl font-bold">{title}</h1>
-        <div className="flex items-center gap-4">
-          {/* 管理者の場合のみ Admin ボタンを表示 */}
-          {session?.user?.accountType === '管理者' && (
-            <Link
-              href="/admin"
-              className="flex items-center gap-1 px-3 py-1.5 bg-blue-700 hover:bg-blue-800 rounded-lg transition-colors"
-            >
-              <ShieldCheckIcon className="h-5 w-5" />
-              <span className="text-sm">Admin</span>
-            </Link>
-          )}
-          <button
-            onClick={() => signOut()}
-            className="flex items-center gap-1 hover:text-gray-200 transition"
+        {/* 管理者の場合のみ 管理 ボタンを表示 */}
+        {session?.user?.isAdmin && (
+          <Link
+            href="/admin"
+            className="flex items-center gap-1 px-3 py-1.5 bg-blue-700 hover:bg-blue-800 rounded-lg transition-colors"
           >
             <CogIcon className="h-5 w-5" />
-            <span className="text-sm">Sign Out</span>
-          </button>
-        </div>
+            <span className="text-sm">管理</span>
+          </Link>
+        )}
       </header>
 
       {/* メインコンテンツ */}
       <main className="flex-1 pt-20 pb-24 px-4">{children}</main>
 
       {/* 下部ナビゲーション */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-20">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
         <ul className="flex justify-around">
           {navItems.map((item, index) => {
             const isActive = router.pathname === item.href;
