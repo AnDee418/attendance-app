@@ -686,20 +686,6 @@ export default function SchedulesPage() {
           </div>
         ))}
       </div>
-      <MonthlyListSection
-        currentDate={currentDate}
-        workDetails={workDetails}
-        userData={userData}
-        userSchedules={userSchedules}
-        breakData={breakData}
-        onAddButtonClick={handleAddButtonClick}
-        getLocalDateString={getLocalDateString}
-        onWorkDetailClick={handleWorkDetailClick}
-        showSummaryCard={showSummaryCard}
-        timeToHoursAndMinutes={timeToHoursAndMinutes}
-        parseJapaneseTimeString={parseJapaneseTimeString}
-        vacationRequests={vacationRequests}
-      />
     </div>
   );
 }

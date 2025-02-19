@@ -714,20 +714,20 @@ export default function HomePage() {
           </section>
 
           {/* 勤務時間セクション */}
-          <section className="bg-white rounded-2xl shadow-lg p-6 mb-4">
-            <div className="flex items-center justify-between mb-4">
+          <section className="bg-white rounded-2xl shadow-lg p-4 mb-4">
+            <div className="flex items-center justify-between mb-3">
               <div>
                 <h2 className="text-base font-semibold text-gray-600">勤務時間</h2>
-                <p className="text-xs text-gray-500 mt-1">{payrollPeriodLabel()}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{payrollPeriodLabel()}</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {/* 左側: 円形プログレスバー */}
-              <div className={`flex flex-col items-center justify-center bg-gradient-to-br from-blue-50/50 to-indigo-50/50 rounded-xl p-6 ${
+              <div className={`flex flex-col items-center justify-center bg-gradient-to-br from-blue-50/50 to-indigo-50/50 rounded-xl p-4 ${
                 !shouldShowPlannedHours ? 'lg:col-span-2' : ''
               }`}>
-                <div className={`relative ${!shouldShowPlannedHours ? 'w-64 h-64' : 'w-48 h-48'}`}>
+                <div className={`relative ${!shouldShowPlannedHours ? 'w-56 h-56' : 'w-40 h-40'}`}>
                   <svg className="w-full h-full transform -rotate-90" viewBox="0 0 112 112">
                     <circle
                       cx="56"
@@ -772,9 +772,9 @@ export default function HomePage() {
                     <span className={`text-gray-500 mt-1 ${!shouldShowPlannedHours ? 'text-base' : 'text-sm'}`}>実働時間</span>
                   </div>
                 </div>
-                <div className="mt-4 text-center">
-                  <div className={`px-6 py-3 rounded-full font-medium ${
-                    !shouldShowPlannedHours ? 'text-base' : 'text-sm'
+                <div className="mt-3">
+                  <div className={`px-4 py-2 rounded-full font-medium ${
+                    !shouldShowPlannedHours ? 'text-sm' : 'text-xs'
                   } ${
                     actualHours >= computedStandardHours 
                       ? 'bg-green-100 text-green-700' 
@@ -795,14 +795,14 @@ export default function HomePage() {
               {shouldShowPlannedHours && (
                 <div className="flex flex-col">
                   <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 flex-grow">
-                    <div className="bg-blue-50 px-4 py-3 border-b border-blue-100">
+                    <div className="bg-blue-50 px-3 py-2 border-b border-blue-100">
                       <div className="flex items-center gap-2">
-                        <div className="w-1 h-5 bg-blue-500 rounded-full"></div>
-                        <h3 className="text-base font-medium text-gray-700">予定勤務時間</h3>
+                        <div className="w-1 h-4 bg-blue-500 rounded-full"></div>
+                        <h3 className="text-sm font-medium text-gray-700">予定勤務時間</h3>
                       </div>
                     </div>
                     
-                    <div className="p-6">
+                    <div className="p-4">
                       <div className="flex items-center justify-between mb-6">
                         <div className="text-center flex-1">
                           <div className="flex items-baseline justify-center">
@@ -877,10 +877,10 @@ export default function HomePage() {
             </div>
 
             {/* 勤務種別内訳 */}
-            <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-3">
               {/* 予定セクション */}
-              <div className="bg-gradient-to-br from-blue-50/50 to-indigo-50/50 rounded-xl p-4 border border-blue-100">
-                <h3 className="text-sm font-medium text-gray-600 mb-3 flex items-center">
+              <div className="bg-gradient-to-br from-blue-50/50 to-indigo-50/50 rounded-xl p-3 border border-blue-100">
+                <h3 className="text-xs font-medium text-gray-600 mb-2 flex items-center">
                   <div className="w-2 h-2 rounded-full bg-blue-400 mr-2"></div>
                   勤務種別（予定）
                 </h3>
@@ -901,8 +901,8 @@ export default function HomePage() {
               </div>
 
               {/* 出勤簿セクション */}
-              <div className="bg-gradient-to-br from-green-50/50 to-emerald-50/50 rounded-xl p-4 border border-green-100">
-                <h3 className="text-sm font-medium text-gray-600 mb-3 flex items-center">
+              <div className="bg-gradient-to-br from-green-50/50 to-emerald-50/50 rounded-xl p-3 border border-green-100">
+                <h3 className="text-xs font-medium text-gray-600 mb-2 flex items-center">
                   <div className="w-2 h-2 rounded-full bg-green-400 mr-2"></div>
                   勤務種別（出勤簿）
                 </h3>
