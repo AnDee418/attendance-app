@@ -235,82 +235,101 @@ export default function AdminUsersPage() {
   ];
 
   if (status === 'loading') return <div>Loading...</div>;
-  if (!session || session.user.accountType !== '管理者') return null;
+  if (!session || !session.user?.isAdmin) return null;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">ユーザー管理</h1>
-        <button
-          onClick={() => router.back()}
-          className="text-sm text-gray-600 hover:text-gray-800"
-        >
-          ← 戻る
-        </button>
+    <div className="min-h-screen bg-gray-50">
+      {/* シンプルなヘッダー */}
+      <div className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
+          <button
+            onClick={() => router.back()}
+            className="text-sm text-gray-600 hover:text-gray-900"
+          >
+            ← 戻る
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {users && users.map((user) => (
-          <div
-            key={user.rowIndex}
-            onClick={() => {
-              setSelectedUser(user);
-              setIsModalOpen(true);
-            }}
-            className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer"
-          >
-            {user.data && user.data[6] && user.data[6].trim() ? (
-              <img
-                src={user.data[6]}
-                alt={user.data[0]}
-                className="w-12 h-12 rounded-full object-cover"
-                onError={(e) => {
-                  console.error('Image load error:', e);
-                  e.target.src = '';
-                  e.target.onerror = null;
-                }}
-              />
-            ) : (
-              <UserCircleIcon className="h-12 w-12 text-gray-400" />
-            )}
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-lg font-medium text-gray-800">{user.data[0]}</span>
-                {(() => {
-                  const { icon, bgColor, textColor } = getAccountTypeInfo(user.data[5]);
-                  return (
-                    <span className={`flex items-center gap-1 px-2 py-0.5 ${bgColor} ${textColor} rounded-full text-xs`}>
-                      {icon}
-                      {user.data[5]}
-                    </span>
-                  );
-                })()}
+      {/* メインコンテンツ */}
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {users && users.map((user) => (
+            <div
+              key={user.rowIndex}
+              onClick={() => {
+                setSelectedUser(user);
+                setIsModalOpen(true);
+              }}
+              className="group bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden cursor-pointer"
+            >
+              <div className="p-4">
+                <div className="flex items-center space-x-3">
+                  {/* アイコン */}
+                  {user.data && user.data[6] && user.data[6].trim() ? (
+                    <img
+                      src={user.data[6]}
+                      alt={user.data[0]}
+                      className="w-12 h-12 rounded-full object-cover"
+                      onError={(e) => {
+                        e.target.src = '';
+                        e.target.onerror = null;
+                      }}
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
+                      <UserCircleIcon className="h-8 w-8 text-gray-400" />
+                    </div>
+                  )}
+                  
+                  {/* ユーザー情報 */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-base font-medium text-gray-900 truncate">
+                        {user.data[0]}
+                      </h2>
+                      {(() => {
+                        const { icon, bgColor, textColor } = getAccountTypeInfo(user.data[5]);
+                        return (
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${bgColor} ${textColor}`}>
+                            {icon}
+                            <span className="ml-1">{user.data[5]}</span>
+                          </span>
+                        );
+                      })()}
+                    </div>
+                    <p className="text-sm text-gray-500 truncate mt-0.5">
+                      {user.data[4]} {/* 所属 */}
+                    </p>
+                  </div>
+                </div>
               </div>
-              <div className="text-sm text-gray-500">ID: {user.data[1]}</div>
+
+              {/* アクションボタン */}
+              <div className="px-4 py-2 bg-gray-50 flex justify-end space-x-2 border-t">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedUser(user);
+                    setIsModalOpen(true);
+                  }}
+                  className="text-blue-600 hover:text-blue-700"
+                >
+                  <PencilSquareIcon className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteUser(user.data[1]);
+                  }}
+                  className="text-red-600 hover:text-red-700"
+                >
+                  <TrashIcon className="h-4 w-4" />
+                </button>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSelectedUser(user);
-                  setIsModalOpen(true);
-                }}
-                className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg"
-              >
-                <PencilSquareIcon className="h-5 w-5" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDeleteUser(user.data[1]);
-                }}
-                className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg"
-              >
-                <TrashIcon className="h-5 w-5" />
-              </button>
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {/* 編集モーダル */}
@@ -595,3 +614,5 @@ export default function AdminUsersPage() {
     </div>
   );
 } 
+
+AdminUsersPage.title = 'ユーザー管理';

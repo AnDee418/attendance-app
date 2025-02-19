@@ -154,7 +154,7 @@ export default function AdminPage() {
       {/* ユーザー管理セクション */}
       <section className="mb-12">
         <h2 className="text-xl font-semibold text-gray-700 mb-4">ユーザー管理</h2>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Link
             href="/account-issuance"
             className="flex items-center justify-center gap-2 bg-blue-600 text-white p-4 rounded-xl hover:bg-blue-700 transition-colors"
@@ -168,6 +168,13 @@ export default function AdminPage() {
           >
             <UserGroupIcon className="h-6 w-6" />
             <span className="font-medium">ユーザー管理・編集</span>
+          </Link>
+          <Link
+            href="/admin/work-hours"
+            className="flex items-center justify-center gap-2 bg-purple-600 text-white p-4 rounded-xl hover:bg-purple-700 transition-colors"
+          >
+            <ClockIcon className="h-6 w-6" />
+            <span className="font-medium">勤務時間リスト</span>
           </Link>
         </div>
       </section>

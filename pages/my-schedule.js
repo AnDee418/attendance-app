@@ -17,6 +17,7 @@ import ClockbookForm from '../components/ClockbookForm';
 import WorkDetailModal from '../components/WorkDetailModal';
 import Layout from '../components/Layout';
 import LoadingSpinner from '../components/LoadingSpinner';
+import VacationRequestForm from '../components/VacationRequestForm';
 
 // アカウント種別の定義（member-schedule.js と同様）
 const accountTypes = {
@@ -55,6 +56,7 @@ export default function MySchedulePage() {
   const [workDetails, setWorkDetails] = useState([]);
   const [settings, setSettings] = useState(null);
   const [breakData, setBreakData] = useState([]);
+  const [vacationRequests, setVacationRequests] = useState(null);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [swipeDirection, setSwipeDirection] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
@@ -83,6 +85,8 @@ export default function MySchedulePage() {
   const [showClockbookForm, setShowClockbookForm] = useState(false);
   const [selectedWorkDetail, setSelectedWorkDetail] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showVacationForm, setShowVacationForm] = useState(false);
+  const [vacationDate, setVacationDate] = useState(null);
   
   // すべてのuseEffectをここに移動
   useEffect(() => {
@@ -92,6 +96,10 @@ export default function MySchedulePage() {
         if (data.data) {
           const foundUser = data.data.find(u => u.data[0] === session?.user?.name);
           setUserData(foundUser);
+          // ユーザーのアカウントタイプをローカルストレージに保存
+          if (foundUser) {
+            window.localStorage.setItem('userAccountType', foundUser.data[5]);
+          }
         }
       })
       .catch(err => console.error('Error fetching users:', err));
@@ -149,6 +157,22 @@ export default function MySchedulePage() {
     const intervalId = setInterval(fetchData, 300000);
     return () => clearInterval(intervalId);
   }, []); // 空の依存配列
+
+  // 休暇申請データを取得するためのuseEffectを追加
+  useEffect(() => {
+    const fetchVacationRequests = async () => {
+      try {
+        const res = await fetch('/api/vacation-requests');
+        if (!res.ok) throw new Error('休暇申請の取得に失敗しました');
+        const data = await res.json();
+        setVacationRequests(data);
+      } catch (error) {
+        console.error('Error fetching vacation requests:', error);
+        setVacationRequests({ data: [] });
+      }
+    };
+    fetchVacationRequests();
+  }, []);
 
   // 月移動の処理
   const handleMonthChange = (delta) => {
@@ -227,7 +251,18 @@ export default function MySchedulePage() {
 
   // handleActionButtonClickを修正
   const handleActionButtonClick = (type) => {
-    if (type === 'schedule') {
+    if (type === 'vacation') {
+      // 休暇申請フォームを表示
+      if (selectedDate && userData) {
+        const dateStr = getLocalDateString(selectedDate);
+        setVacationDate({
+          date: dateStr,
+          employeeName: userData.data[0]
+        });
+        setShowVacationForm(true);
+      }
+      setSelectedDate(null);
+    } else if (type === 'schedule') {
       if (selectedDate && userData) {
         const dateStr = getLocalDateString(selectedDate);
         
@@ -574,6 +609,38 @@ export default function MySchedulePage() {
     }
   };
 
+  // 休暇申請の送信処理を追加
+  const handleVacationSubmit = async (formData) => {
+    setIsSubmitting(true);
+    try {
+      // ログインしているユーザー名を優先して、employeeNameを設定する
+      const submissionData = {
+        ...formData,
+        employeeName: userData?.data[0] || formData.employeeName,
+      };
+
+      const response = await fetch('/api/vacation-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(submissionData),
+      });
+      
+      if (!response.ok) {
+        throw new Error('休暇申請の送信に失敗しました');
+      }
+
+      setShowVacationForm(false);
+      setVacationDate(null);
+      setEditMessage('休暇申請を送信しました');
+      setTimeout(() => setEditMessage(''), 3000);
+    } catch (error) {
+      console.error('Error submitting vacation request:', error);
+      setEditMessage(error.message || '休暇申請の送信に失敗しました');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // この行を削除
   // const isLoading = status === 'loading' || !session || !userData;
 
@@ -656,6 +723,7 @@ export default function MySchedulePage() {
                   onAddButtonClick={(date) => setSelectedDate(date)}
                   getLocalDateString={getLocalDateString}
                   onWorkDetailClick={(detail) => setSelectedWorkDetail(detail)}
+                  vacationRequests={vacationRequests}
                 />
               </div>
             </div>
@@ -668,11 +736,11 @@ export default function MySchedulePage() {
               getLocalDateString(new Date(s[0])) === dateStr && s[5] === '予定'
             );
             const hasSchedule = !!existingSchedule;
-            // 出勤簿データの存在をチェック
             const existingAttendance = userSchedules.find(s => 
               getLocalDateString(new Date(s[0])) === dateStr && s[5] === '出勤簿'
             );
             const hasAttendance = !!existingAttendance;
+            const isアルバイト = userData && userData.data[5] === 'アルバイト';
             
             return (
               <div className="fixed inset-0 z-[100] flex items-center justify-center">
@@ -693,39 +761,78 @@ export default function MySchedulePage() {
                     <p className="text-sm text-gray-500 mt-1">アクションを選択してください</p>
                   </div>
                   <div className="space-y-3">
-                    <button
-                      className="flex items-center w-full px-4 py-3 text-left text-gray-700 
-                        rounded-xl transition-all duration-150
-                        bg-blue-50/50 border border-blue-100
-                        active:scale-98 active:bg-blue-100/70 group
-                        relative overflow-hidden"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleActionButtonClick('schedule');
-                      }}
-                    >
-                      <div className="absolute inset-0 bg-blue-100/50 opacity-0 group-active:opacity-100 transition-opacity duration-150"></div>
-                      <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-100 
-                        flex items-center justify-center mr-3 z-10
-                        group-active:bg-blue-200 transition-colors duration-150
-                        border border-blue-200">
-                        <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
-                            d={hasSchedule 
-                              ? "M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                              : "M12 4v16m8-8H4"} 
-                          />
-                        </svg>
-                      </div>
-                      <div className="z-10">
-                        <div className="font-medium">
-                          {hasSchedule ? "行動予定の編集" : "行動予定の追加"}
+                    {isアルバイト ? (
+                      // アルバイト用のボタン
+                      <button
+                        className="flex items-center w-full px-4 py-3 text-left text-gray-700 
+                          rounded-xl transition-all duration-150
+                          bg-blue-50/50 border border-blue-100
+                          active:scale-98 active:bg-blue-100/70 group
+                          relative overflow-hidden"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleActionButtonClick('vacation');
+                        }}
+                      >
+                        <div className="absolute inset-0 bg-blue-100/50 opacity-0 group-active:opacity-100 transition-opacity duration-150"></div>
+                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-100 
+                          flex items-center justify-center mr-3 z-10
+                          group-active:bg-blue-200 transition-colors duration-150
+                          border border-blue-200">
+                          <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
+                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
                         </div>
-                        <div className="text-xs text-gray-500 group-active:text-blue-600">
-                          {hasSchedule ? "登録済みの予定を編集します" : "新しい予定を追加します"}
+                        <div className="z-10">
+                          <div className="font-medium">休暇申請</div>
+                          <div className="text-xs text-gray-500 group-active:text-blue-600">
+                            休暇の申請を行います
+                          </div>
                         </div>
-                      </div>
-                    </button>
+                      </button>
+                    ) : (
+                      // 通常のスケジュールボタン
+                      <button
+                        className="flex items-center w-full px-4 py-3 text-left text-gray-700 
+                          rounded-xl transition-all duration-150
+                          bg-blue-50/50 border border-blue-100
+                          active:scale-98 active:bg-blue-100/70 group
+                          relative overflow-hidden"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleActionButtonClick('schedule');
+                        }}
+                      >
+                        <div className="absolute inset-0 bg-blue-100/50 opacity-0 group-active:opacity-100 transition-opacity duration-150"></div>
+                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-100 
+                          flex items-center justify-center mr-3 z-10
+                          group-active:bg-blue-200 transition-colors duration-150
+                          border border-blue-200">
+                          <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
+                              d={hasSchedule 
+                                ? "M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                : "M12 4v16m8-8H4"} 
+                            />
+                          </svg>
+                        </div>
+                        <div className="z-10">
+                          <div className="font-medium">
+                            {isアルバイト 
+                              ? (hasSchedule ? "休暇申請の編集" : "休暇申請")
+                              : (hasSchedule ? "行動予定の編集" : "行動予定の追加")
+                            }
+                          </div>
+                          <div className="text-xs text-gray-500 group-active:text-blue-600">
+                            {isアルバイト 
+                              ? (hasSchedule ? "登録済みの休暇申請を編集します" : "新しい休暇申請を追加します")
+                              : (hasSchedule ? "登録済みの予定を編集します" : "新しい予定を追加します")
+                            }
+                          </div>
+                        </div>
+                      </button>
+                    )}
 
                     <button
                       className="flex items-center w-full px-4 py-3 text-left text-gray-700 
@@ -809,6 +916,19 @@ export default function MySchedulePage() {
               onClose={() => {
                 setShowClockbookForm(false);
                 setClockbookAttendance(null);
+              }}
+            />
+          )}
+
+          {/* 休暇申請フォームを追加 */}
+          {showVacationForm && vacationDate && (
+            <VacationRequestForm
+              initialDate={vacationDate.date}
+              employeeName={vacationDate.employeeName}
+              onSubmit={handleVacationSubmit}
+              onClose={() => {
+                setShowVacationForm(false);
+                setVacationDate(null);
               }}
             />
           )}

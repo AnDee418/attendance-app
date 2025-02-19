@@ -86,6 +86,11 @@ export default function ScheduleForm({
     }
   };
 
+  // 業務アカウントかどうかを判定
+  const isGyomuAccount = initialAttendance?.employeeName && 
+    typeof window !== 'undefined' && 
+    window.localStorage.getItem('userAccountType') === '業務';
+
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50">
       <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-3xl 
@@ -100,17 +105,38 @@ export default function ScheduleForm({
           </button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* 勤務記録フォーム */}
-          <AttendanceForm 
-            attendance={attendance}
-            breakRecords={breakRecords}
-            onAttendanceChange={handleAttendanceChange}
-            onBreakChange={handleBreakChange}
-            onAddBreak={addBreakRecord}
-            onRemoveBreak={removeBreakRecord}
-          />
+          {/* 業務アカウントの場合は勤務種別のみ表示 */}
+          {isGyomuAccount ? (
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="mb-4">
+                <label className="block mb-1">勤務種別:</label>
+                <select
+                  name="workType"
+                  value={attendance.workType}
+                  onChange={handleAttendanceChange}
+                  className="w-full p-2 border rounded"
+                >
+                  <option value="出勤">出勤</option>
+                  <option value="在宅">在宅</option>
+                  <option value="休暇">休暇</option>
+                  <option value="半休">半休</option>
+                  <option value="遅刻">遅刻</option>
+                </select>
+              </div>
+            </div>
+          ) : (
+            // 通常のアカウントの場合は全ての項目を表示
+            <AttendanceForm 
+              attendance={attendance}
+              breakRecords={breakRecords}
+              onAttendanceChange={handleAttendanceChange}
+              onBreakChange={handleBreakChange}
+              onAddBreak={addBreakRecord}
+              onRemoveBreak={removeBreakRecord}
+            />
+          )}
 
-          {/* 業務詳細フォーム */}
+          {/* 業務詳細フォーム - 全アカウントで表示 */}
           <section className="bg-gray-50 p-4 rounded-lg">
             <h3 className="text-2xl font-semibold mb-2">業務詳細</h3>
             {workDetails.map((detail, index) => (

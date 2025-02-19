@@ -3,7 +3,12 @@ import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import Image from 'next/image';
 
-export default function IconSlider({ currentUserId }) {
+export default function IconSlider({ 
+  currentUserId, 
+  onUserSelect, 
+  selectedUsers = [], 
+  isDesktop 
+}) {
   const { data: session } = useSession();
   const [users, setUsers] = useState([]);
 
@@ -137,58 +142,64 @@ export default function IconSlider({ currentUserId }) {
                 {accountTypeOrder.map(accountType => (
                   groupedUsers[accountType] && Object.keys(groupedUsers[accountType]).length > 0 && (
                     <div key={accountType} className="flex flex-col">
-                      {/* ユーザーアイコングループ */}
                       <div className="flex gap-6">
                         {affiliationOrder.map(affiliation => (
                           groupedUsers[accountType][affiliation]?.length > 0 && (
                             <div key={affiliation} className="flex flex-col">
                               <div className="flex gap-6">
                                 {groupedUsers[accountType][affiliation].map((user) => (
-                                  <Link
+                                  <div
                                     key={user.id}
-                                    href={`/member-schedule?user=${encodeURIComponent(user.username)}`}
+                                    onClick={() => isDesktop && onUserSelect(user)}
                                     className={`flex-shrink-0 transition-all duration-300 ${
-                                      user.id === currentUserId 
-                                        ? 'z-10' 
-                                        : ''
+                                      isDesktop ? 'cursor-pointer' : ''
                                     }`}
                                   >
-                                    <div className="flex flex-col items-center relative">
-                                      {/* アイコン画像またはフォールバック */}
-                                      <div className={`relative w-14 h-14 rounded-full bg-white
-                                        ${user.id === currentUserId 
-                                          ? 'ring-[3px] ring-green-500'
-                                          : 'ring-2 ring-white/80'
-                                        }`}
-                                      >
-                                        {user.image_url ? (
-                                          <Image
-                                            src={user.image_url}
-                                            alt={user.username || 'ユーザー'}
-                                            fill
-                                            className="rounded-full object-cover"
-                                          />
-                                        ) : (
-                                          <div className="w-full h-full rounded-full bg-gradient-to-br from-gray-100 to-white flex items-center justify-center">
-                                            <span className="text-xl font-medium text-blue-600">
-                                              {(user.username || 'U').charAt(0)}
-                                            </span>
-                                          </div>
-                                        )}
+                                    <Link
+                                      href={`/member-schedule?user=${encodeURIComponent(user.username)}`}
+                                      className={`flex-shrink-0 transition-all duration-300`}
+                                      onClick={(e) => isDesktop && e.preventDefault()}
+                                    >
+                                      <div className="flex flex-col items-center relative">
+                                        <div className={`relative w-14 h-14 rounded-full bg-white
+                                          ${user.id === currentUserId 
+                                            ? 'ring-[3px] ring-green-500'
+                                            : selectedUsers.some(u => u.data[1] === user.id)
+                                              ? 'ring-[3px] ring-blue-500'
+                                              : 'ring-2 ring-white/80'
+                                          }`}
+                                        >
+                                          {user.image_url ? (
+                                            <Image
+                                              src={user.image_url}
+                                              alt={user.username || 'ユーザー'}
+                                              fill
+                                              className="rounded-full object-cover"
+                                            />
+                                          ) : (
+                                            <div className="w-full h-full rounded-full bg-gradient-to-br from-gray-100 to-white flex items-center justify-center">
+                                              <span className="text-xl font-medium text-blue-600">
+                                                {(user.username || 'U').charAt(0)}
+                                              </span>
+                                            </div>
+                                          )}
+                                        </div>
+                                        
+                                        {/* ユーザー名の表示を更新 */}
+                                        <span className={`mt-1 text-[10px] font-medium px-2 py-0.5 rounded-full w-16 truncate text-center
+                                          ${user.id === currentUserId 
+                                            ? 'bg-green-500 text-white font-bold'
+                                            : selectedUsers.some(u => u.data[1] === user.id)
+                                              ? 'bg-blue-500 text-white font-bold'
+                                              : 'text-white'
+                                          }`}
+                                          title={user.username || 'ユーザー'}
+                                        >
+                                          {user.username || 'ユーザー'}
+                                        </span>
                                       </div>
-                                      
-                                      {/* ユーザー名 */}
-                                      <span className={`mt-1 text-[10px] font-medium px-2 py-0.5 rounded-full w-16 truncate text-center
-                                        ${user.id === currentUserId 
-                                          ? 'bg-green-500 text-white font-bold' 
-                                          : 'text-white'
-                                        }`}
-                                        title={user.username || 'ユーザー'}
-                                      >
-                                        {user.username || 'ユーザー'}
-                                      </span>
-                                    </div>
-                                  </Link>
+                                    </Link>
+                                  </div>
                                 ))}
                               </div>
                             </div>

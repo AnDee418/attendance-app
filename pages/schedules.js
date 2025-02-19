@@ -11,6 +11,7 @@ import {
   UserIcon 
 } from '@heroicons/react/24/outline';
 import LoadingSpinner from '../components/LoadingSpinner';
+import MonthlyListSection from '../components/MonthlyListSection';
 
 // 月の表示用ヘルパー関数
 const formatMonth = (date) => {
@@ -51,33 +52,106 @@ const calculateWorkingHours = (schedules, currentDate) => {
   return Math.round(totalMinutes / 60);
 };
 
-// 実動時間計算（出勤簿の実労働時間カラムの合計）
-// 対象期間は「21日～20日区切り」、対象ユーザー、種別が '出勤簿'
+// 時間文字列を数値に変換する関数を追加
+const parseJapaneseTimeString = (timeStr) => {
+  if (!timeStr || typeof timeStr !== 'string') return 0;
+  
+  // "7時間30分" のような形式から数値を抽出
+  const hoursMatch = timeStr.match(/(\d+)時間/);
+  const minutesMatch = timeStr.match(/(\d+)分/);
+  
+  const hours = hoursMatch ? parseInt(hoursMatch[1], 10) : 0;
+  const minutes = minutesMatch ? parseInt(minutesMatch[1], 10) : 0;
+  
+  // 分を時間に変換する際の丸め誤差を防ぐため、小数点以下10桁まで保持
+  const totalHours = Number((hours + (minutes / 60)).toFixed(10));
+  
+  return totalHours;
+};
+
+// timeToHoursAndMinutes 関数を追加
+const timeToHoursAndMinutes = (totalHours) => {
+  if (isNaN(totalHours)) return { hours: 0, minutes: 0 };
+  
+  // 時間を分に変換して計算
+  const totalMinutes = Math.round(totalHours * 60);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  
+  return {
+    hours: hours,
+    minutes: minutes
+  };
+};
+
+// 実働時間計算関数を修正
 const calculateActualWorkingHoursForClock = (schedules, currentDate, userName) => {
-  let totalHours = 0;
+  if (!schedules || !Array.isArray(schedules)) return 0;
+  
+  let totalMinutes = 0;
   const selectedMonth = currentDate.getMonth();
   const selectedYear = currentDate.getFullYear();
-  
-  // 「21日～20日区切り」の期間
-  const startDate = new Date(selectedYear, selectedMonth - 1, 21);
-  const endDate = new Date(selectedYear, selectedMonth, 20);
-  
-  schedules.forEach(schedule => {
-    const scheduleDate = new Date(schedule[0]);
-    if (isNaN(scheduleDate.getTime())) return;
+  const startDate = new Date(selectedYear, selectedMonth - 1, 21, 0, 0, 0);
+  const endDate = new Date(selectedYear, selectedMonth, 20, 23, 59, 59);
+
+  // 対象データのフィルタリング
+  const targetSchedules = schedules.filter(schedule => {
+    if (!Array.isArray(schedule)) return false;
     
-    if (
-      scheduleDate.getTime() >= startDate.getTime() &&
-      scheduleDate.getTime() <= endDate.getTime() &&
-      schedule[1] === userName &&
-      schedule[5] === '出勤簿'
-    ) {
-      const workHours = parseFloat(schedule[6]) || 0;
-      totalHours += workHours;
-    }
+    const scheduleDate = new Date(schedule[0]);
+    if (isNaN(scheduleDate.getTime())) return false;
+
+    const isInDateRange = scheduleDate >= startDate && scheduleDate <= endDate;
+    const isMatchingUser = schedule[1] === userName;
+    const isClockbookRecord = schedule[5] === '出勤簿';
+    const hasWorkingHours = schedule[6] && typeof schedule[6] === 'string';
+
+    return isInDateRange && isMatchingUser && isClockbookRecord && hasWorkingHours;
   });
+
+  // フィルタリングされたデータの合計時間を計算
+  targetSchedules.forEach(schedule => {
+    const workHours = parseJapaneseTimeString(schedule[6]);
+    totalMinutes += Math.round(workHours * 60);  // 時間を分に変換して加算
+  });
+
+  // 最後に合計分を時間に戻す
+  return totalMinutes / 60;
+};
+
+// 予定勤務時間計算関数も同様に修正
+const calculatePlannedWorkingHours = (schedules, currentDate, userName) => {
+  if (!schedules || !Array.isArray(schedules)) return 0;
   
-  return Math.round(totalHours * 10) / 10; // 小数点第1位まで
+  let totalMinutes = 0;
+  const selectedMonth = currentDate.getMonth();
+  const selectedYear = currentDate.getFullYear();
+  const startDate = new Date(selectedYear, selectedMonth - 1, 21, 0, 0, 0);
+  const endDate = new Date(selectedYear, selectedMonth, 20, 23, 59, 59);
+
+  // 対象データのフィルタリング
+  const targetSchedules = schedules.filter(schedule => {
+    if (!Array.isArray(schedule)) return false;
+    
+    const scheduleDate = new Date(schedule[0]);
+    if (isNaN(scheduleDate.getTime())) return false;
+
+    const isInDateRange = scheduleDate >= startDate && scheduleDate <= endDate;
+    const isMatchingUser = schedule[1] === userName;
+    const isPlannedRecord = schedule[5] === '予定';
+    const hasWorkingHours = schedule[6] && typeof schedule[6] === 'string';
+
+    return isInDateRange && isMatchingUser && isPlannedRecord && hasWorkingHours;
+  });
+
+  // フィルタリングされたデータの合計時間を計算
+  targetSchedules.forEach(schedule => {
+    const workHours = parseJapaneseTimeString(schedule[6]);
+    totalMinutes += Math.round(workHours * 60);  // 時間を分に変換して加算
+  });
+
+  // 最後に合計分を時間に戻す
+  return totalMinutes / 60;
 };
 
 // 進捗状況に応じた色を返す関数
@@ -149,40 +223,6 @@ const formatTimeWithDiff = (time, total) => {
   };
 };
 
-/**
- * 予定の勤務時間（実労働時間カラム、現在G列）の合計を計算する関数
- * 対象期間は「21日～20日区切り」
- * 条件：対象期間内、ユーザー名が一致、種別が「予定」
- * ※ 日付比較は getTime() を用いています
- */
-const calculatePlannedWorkingHours = (schedules, currentDate, userName) => {
-  let totalHours = 0;
-  const selectedMonth = currentDate.getMonth();
-  const selectedYear = currentDate.getFullYear();
-
-  // 「21日～20日区切り」の期間
-  const startDate = new Date(selectedYear, selectedMonth - 1, 21);
-  const endDate = new Date(selectedYear, selectedMonth, 20);
-
-  schedules.forEach(schedule => {
-    const scheduleDate = new Date(schedule[0]);
-    if (isNaN(scheduleDate.getTime())) {
-      return;
-    }
-    if (
-      scheduleDate.getTime() >= startDate.getTime() &&
-      scheduleDate.getTime() <= endDate.getTime() &&
-      schedule[1] === userName &&
-      schedule[5] === '予定'
-    ) {
-      const workingHours = parseFloat(schedule[6]) || 0;
-      totalHours += workingHours;
-    }
-  });
-
-  return Math.round(totalHours * 10) / 10; // 小数点第1位まで表示
-};
-
 // 予定の休憩時間を計算する関数
 const calculatePlannedBreakHours = (breakRecords, currentDate) => {
   let totalMinutes = 0;
@@ -204,6 +244,18 @@ const calculatePlannedBreakHours = (breakRecords, currentDate) => {
   return Math.round(totalMinutes / 60);
 };
 
+// 休暇申請データを取得する関数を追加
+const fetchVacationRequests = async () => {
+  try {
+    const response = await fetch('/api/vacation-requests');
+    if (!response.ok) throw new Error('休暇申請の取得に失敗しました');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching vacation requests:', error);
+    return { data: [] };
+  }
+};
+
 export default function SchedulesPage() {
   const { data: session } = useSession();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -211,6 +263,7 @@ export default function SchedulesPage() {
   const [schedules, setSchedules] = useState([]);
   const [settings, setSettings] = useState(null);
   const [breakRecords, setBreakRecords] = useState([]);
+  const [vacationRequests, setVacationRequests] = useState(null);
 
   // ユーザーの表示フィルタリング関数
   const filterUsers = (allUsers) => {
@@ -294,11 +347,14 @@ export default function SchedulesPage() {
     fetchSettings();
   }, []);
 
-  // デバッグ用のログ出力を追加
+  // 休暇申請データを取得するuseEffectを追加
   useEffect(() => {
-    console.log('Current session:', session);
-    console.log('Filtered users:', users);
-  }, [session, users]);
+    const getVacationRequests = async () => {
+      const data = await fetchVacationRequests();
+      setVacationRequests(data);
+    };
+    getVacationRequests();
+  }, []);
 
   const handleMonthChange = (delta) => {
     const newDate = new Date(currentDate);
@@ -398,7 +454,7 @@ export default function SchedulesPage() {
             </div>
 
             {/* ユーザーカードグリッド */}
-            <div className="grid grid-cols-1 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {Object.entries(departments).map(([_, departmentUsers]) => 
                 departmentUsers.map((user) => {
                   const standardHours = getStandardWorkingHours(currentDate, settings);
@@ -415,41 +471,33 @@ export default function SchedulesPage() {
                     <Link
                       key={user.rowIndex}
                       href={`/member-schedule?user=${encodeURIComponent(user.data[0])}`}
-                      className="block"
+                      className="block h-full"
                     >
-                      <div className="bg-white rounded-xl p-4
+                      <div className="bg-white rounded-xl p-4 h-full
                         shadow-sm relative
                         transition-all duration-200
                         hover:shadow-md hover:bg-gray-50/50
                         active:bg-gray-100/70">
                         
-                        {/* タップ詳細メッセージ */}
-                        <span className="absolute top-2.5 right-3 text-xs
-                          flex items-center gap-0.5 
-                          text-blue-500 font-medium
-                          before:content-[''] before:w-1 before:h-1 before:rounded-full before:bg-blue-400 before:animate-pulse">
-                          タップで詳細
-                        </span>
-                        
-                        {/* ユーザー情報部分（区切り線なし） */}
-                        <div className="flex items-center gap-3 mb-3">
-                          {user.data[6] ? (
-                            <img
-                              src={user.data[6]}
-                              alt={user.data[0]}
-                              className="w-14 h-14 rounded-full object-cover border-2 border-gray-100"
-                            />
-                          ) : (
-                            <UserCircleIcon className="w-14 h-14 text-gray-400" />
-                          )}
-                          <div>
-                            <h2 className="text-2xl font-bold text-gray-900">{user.data[0]}</h2>
-                            <div className="flex items-center gap-2">
-                              <span
-                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full ${
-                                  accountTypes[user.data[5]]?.bgColor || 'bg-gray-100'
-                                } ${accountTypes[user.data[5]]?.textColor || 'text-gray-700'}`}
-                              >
+                        {/* ユーザー情報部分 - レイアウトを調整 */}
+                        <div className="flex items-start gap-4 mb-4">
+                          <div className="flex-shrink-0">
+                            {user.data[6] ? (
+                              <img
+                                src={user.data[6]}
+                                alt={user.data[0]}
+                                className="w-16 h-16 rounded-full object-cover border-2 border-gray-100"
+                              />
+                            ) : (
+                              <UserCircleIcon className="w-16 h-16 text-gray-400" />
+                            )}
+                          </div>
+                          <div className="flex-grow min-w-0">
+                            <h2 className="text-2xl font-bold text-gray-900 truncate">{user.data[0]}</h2>
+                            <div className="flex flex-wrap items-center gap-2 mt-1">
+                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full ${
+                                accountTypes[user.data[5]]?.bgColor || 'bg-gray-100'
+                              } ${accountTypes[user.data[5]]?.textColor || 'text-gray-700'}`}>
                                 {accountTypes[user.data[5]]?.icon}
                                 <span className="text-xs font-medium">{user.data[5]}</span>
                               </span>
@@ -458,164 +506,173 @@ export default function SchedulesPage() {
                               </span>
                             </div>
                           </div>
+                          {/* タップ詳細メッセージ */}
+                          <span className="text-xs flex items-center gap-0.5 text-blue-500 font-medium">
+                            <span className="w-1 h-1 rounded-full bg-blue-400 animate-pulse"></span>
+                            詳細
+                          </span>
                         </div>
 
-                        {/* 以降のセクションに区切り線を適用 */}
-                        <div className="divide-y divide-gray-100">
+                        {/* 以降のコンテンツ - グリッドレイアウトに変更 */}
+                        <div className="flex gap-4">
                           {/* 勤務時間セクション */}
-                          <div className="pt-2 flex flex-row justify-between gap-2">
-                            <div className={`relative flex flex-col pt-2 pb-2 px-3 rounded-lg border w-3/5 ${
-                              isWorkTimeUser
-                                ? 'bg-purple-50/80 border-purple-100' 
-                                : 'bg-blue-50/80 border-blue-100'
-                            }`}>
-                              <span className="text-sm text-gray-500">
-                                {isWorkTimeUser ? '実勤務時間' : '予定勤務時間'}
-                              </span>
-                              <div className="flex mt-1">
-                                <div className="w-3/5 flex items-center justify-center">
-                                  <span className={`text-2xl font-bold ${
-                                    isWorkTimeUser ? 'text-purple-600' : 'text-blue-600'
-                                  }`}>
-                                    {isWorkTimeUser ? actualHours : plannedWorkingHours}
+                          <div className={`relative flex flex-col p-3 rounded-lg border ${
+                            isWorkTimeUser
+                              ? 'bg-purple-50/80 border-purple-100' 
+                              : 'bg-blue-50/80 border-blue-100'
+                          } w-3/5`}>
+                            <span className="text-sm text-gray-500">
+                              {isWorkTimeUser ? '実勤務時間' : '予定勤務時間'}
+                            </span>
+                            <div className="flex mt-1">
+                              <div className="w-1/2 flex items-center justify-center">
+                                <div className="flex items-baseline">
+                                  <span className={`${isWorkTimeUser ? 'text-2xl' : 'text-xl'} font-bold ${isWorkTimeUser ? 'text-purple-600' : 'text-blue-600'}`}>
+                                    {(isWorkTimeUser ? actualHours : plannedWorkingHours).toFixed(1)}
                                   </span>
-                                  <span className={`text-2xl ml-1 ${
-                                    isWorkTimeUser ? 'text-purple-500' : 'text-blue-500'
-                                  }`}>時間</span>
-                                </div>
-                                <div className={`w-px ${
-                                  isWorkTimeUser ? 'bg-purple-200' : 'bg-blue-200'
-                                }`}></div>
-                                <div className="w-2/5 flex items-center justify-center">
-                                  <span className={`text-2xl font-bold ${
-                                    isWorkTimeUser
-                                      ? Math.abs(actualHours - standardHours) <= 3
-                                        ? 'text-green-600'
-                                        : Math.abs(actualHours - standardHours) <= 9
-                                          ? 'text-yellow-600'
-                                          : 'text-red-500'
-                                      : Math.abs(plannedWorkingHours - standardHours) <= 3
-                                        ? 'text-green-600'
-                                        : Math.abs(plannedWorkingHours - standardHours) <= 9
-                                          ? 'text-yellow-600'
-                                          : 'text-red-500'
-                                  }`}>
-                                    {(isWorkTimeUser ? actualHours : plannedWorkingHours) >= standardHours ? '+' : '-'}
-                                    {Math.abs((isWorkTimeUser ? actualHours : plannedWorkingHours) - standardHours)}
+                                  <span className={`ml-1 ${isWorkTimeUser ? 'text-lg' : 'text-base'} ${isWorkTimeUser ? 'text-purple-500' : 'text-blue-500'}`}>
+                                    h
                                   </span>
                                 </div>
                               </div>
-                              <div 
-                                className={`absolute bottom-0 left-0 right-0 text-xs font-bold flex items-center justify-center text-center py-2 rounded 
-                                  ${
-                                    isWorkTimeUser
-                                      ? Math.abs(actualHours - standardHours) <= 3
-                                        ? 'bg-green-100 text-green-700'
-                                        : Math.abs(actualHours - standardHours) <= 9
-                                          ? 'bg-yellow-100 text-yellow-700'
-                                          : 'bg-red-100 text-red-700'
-                                      : Math.abs(plannedWorkingHours - standardHours) <= 3
-                                        ? 'bg-green-100 text-green-700'
-                                        : Math.abs(plannedWorkingHours - standardHours) <= 9
-                                          ? 'bg-yellow-100 text-yellow-700'
-                                          : 'bg-red-100 text-red-700'
-                                  }`}
-                              >
-                                {isWorkTimeUser
-                                  ? (actualHours >= standardHours)  // 実勤務時間が規定時間以上の場合のみメッセージを表示
-                                    ? Math.abs(actualHours - standardHours) <= 3
-                                      ? "OK"
-                                      : Math.abs(actualHours - standardHours) <= 9
-                                        ? "注意"
-                                        : "働きすぎ"
-                                    : ""  // 実勤務時間が規定時間未満の場合は空文字を表示
-                                  : Math.abs(plannedWorkingHours - standardHours) <= 3
-                                    ? "OK"
-                                    : Math.abs(plannedWorkingHours - standardHours) <= 9
-                                      ? "許容範囲"
-                                      : "予定の修正が必要"}
+                              <div className={`w-px ${isWorkTimeUser ? 'bg-purple-200' : 'bg-blue-200'}`}></div>
+                              <div className="w-1/2 flex items-center justify-center">
+                                {(() => {
+                                  const diff = Math.abs((isWorkTimeUser ? actualHours : plannedWorkingHours) - standardHours);
+                                  return (
+                                    <div className="flex items-baseline">
+                                      <span className={`text-xl font-bold ${isWorkTimeUser
+                                        ? Math.abs(actualHours - standardHours) <= 3
+                                          ? 'text-green-600'
+                                          : Math.abs(actualHours - standardHours) <= 9
+                                            ? 'text-yellow-600'
+                                            : 'text-red-500'
+                                        : Math.abs(plannedWorkingHours - standardHours) <= 3
+                                          ? 'text-green-600'
+                                          : Math.abs(plannedWorkingHours - standardHours) <= 9
+                                            ? 'text-yellow-600'
+                                            : 'text-red-500'
+                                      }`}>
+                                        {(isWorkTimeUser ? actualHours : plannedWorkingHours) >= standardHours ? '+' : '-'}{diff.toFixed(1)}
+                                      </span>
+                                      <span className="ml-1 text-lg">h</span>
+                                    </div>
+                                  );
+                                })()}
                               </div>
                             </div>
-                            <div className="flex flex-col items-center gap-1 w-2/5">
-                              <div className="relative w-28 h-28">
-                                <svg className="w-full h-full transform -rotate-90">
-                                  <circle
-                                    cx="56"
-                                    cy="56"
-                                    r="52"
-                                    className="stroke-current text-gray-100"
-                                    strokeWidth="3"
-                                    fill="none"
-                                  />
-                                  <circle
-                                    cx="56"
-                                    cy="56"
-                                    r="52"
-                                    className="stroke-current text-green-500"
-                                    strokeWidth="3"
-                                    fill="none"
-                                    strokeDasharray={`${(actualHours / standardHours) * 327} 327`}
-                                    strokeLinecap="round"
-                                  />
-                                </svg>
-                                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                  <span className="text-2xl font-bold text-gray-900">{actualHours}</span>
-                                  <span className="text-sm text-gray-500">/{standardHours}</span>
-                                </div>
-                              </div>
+                            <div 
+                              className={`absolute bottom-0 left-0 right-0 text-xs font-bold flex items-center justify-center text-center py-2 rounded 
+                                ${
+                                  isWorkTimeUser
+                                    ? Math.abs(actualHours - standardHours) <= 3
+                                      ? 'bg-green-100 text-green-700'
+                                      : Math.abs(actualHours - standardHours) <= 9
+                                        ? 'bg-yellow-100 text-yellow-700'
+                                        : 'bg-red-100 text-red-700'
+                                    : Math.abs(plannedWorkingHours - standardHours) <= 3
+                                      ? 'bg-green-100 text-green-700'
+                                      : Math.abs(plannedWorkingHours - standardHours) <= 9
+                                        ? 'bg-yellow-100 text-yellow-700'
+                                        : 'bg-red-100 text-red-700'
+                                }`}
+                            >
+                              {isWorkTimeUser
+                                ? (actualHours >= standardHours)  // 実勤務時間が規定時間以上の場合のみメッセージを表示
+                                  ? Math.abs(actualHours - standardHours) <= 3
+                                    ? "OK"
+                                    : Math.abs(actualHours - standardHours) <= 9
+                                      ? "注意"
+                                      : "働きすぎ"
+                                  : ""  // 実勤務時間が規定時間未満の場合は空文字を表示
+                                : Math.abs(plannedWorkingHours - standardHours) <= 3
+                                  ? "OK"
+                                  : Math.abs(plannedWorkingHours - standardHours) <= 9
+                                    ? "許容範囲"
+                                    : "予定の修正が必要"}
                             </div>
                           </div>
 
-                          {/* 勤務種別チップ */}
-                          <div className="pt-4">
-                            <div className="bg-gray-50/50 rounded-lg px-3 py-2 space-y-2 border border-gray-100">
-                              {/* 予定セクション */}
-                              <div>
-                                <h3 className="text-xs font-medium text-gray-500 mb-1.5 flex items-center">
-                                  <div className="w-2 h-2 rounded-full bg-blue-400 mr-2"></div>
-                                  勤務種別（予定）
-                                </h3>
-                                <div className="flex flex-wrap gap-1.5">
-                                  {Object.entries(WORK_TYPES).map(([type, { bgColor, textColor }]) => {
-                                    const count = plannedCounts[type];
-                                    if (count === 0) return null;
-                                    return (
-                                      <div
-                                        key={`予定-${type}`}
-                                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium 
-                                          ${bgColor} ${textColor}`}
-                                      >
-                                        {type} {count}
-                                      </div>
-                                    );
-                                  })}
-                                </div>
+                          {/* 進捗グラフセクション */}
+                          <div className="w-2/5 flex flex-col items-center justify-center">
+                            <div className="relative w-28 h-28">
+                              <svg className="w-full h-full transform -rotate-90">
+                                <circle
+                                  cx="56"
+                                  cy="56"
+                                  r="52"
+                                  className="stroke-current text-gray-100"
+                                  strokeWidth="3"
+                                  fill="none"
+                                />
+                                <circle
+                                  cx="56"
+                                  cy="56"
+                                  r="52"
+                                  className="stroke-current text-green-500"
+                                  strokeWidth="3"
+                                  fill="none"
+                                  strokeDasharray={`${(actualHours / standardHours) * 327} 327`}
+                                  strokeLinecap="round"
+                                />
+                              </svg>
+                              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                <span className="text-2xl font-bold text-gray-900">{actualHours}</span>
+                                <span className="text-sm text-gray-500">/{standardHours}</span>
                               </div>
+                            </div>
+                          </div>
+                        </div>
 
-                              {/* 区切り線 */}
-                              <div className="border-t border-gray-100"></div>
+                        {/* 勤務種別チップ - 幅を最大に */}
+                        <div className="mt-4 w-full">
+                          <div className="bg-gray-50/50 rounded-lg px-3 py-2 space-y-2 border border-gray-100">
+                            {/* 予定セクション */}
+                            <div>
+                              <h3 className="text-xs font-medium text-gray-500 mb-1.5 flex items-center">
+                                <div className="w-2 h-2 rounded-full bg-blue-400 mr-2"></div>
+                                勤務種別（予定）
+                              </h3>
+                              <div className="flex flex-wrap gap-1.5">
+                                {Object.entries(WORK_TYPES).map(([type, { bgColor, textColor }]) => {
+                                  const count = plannedCounts[type];
+                                  if (count === 0) return null;
+                                  return (
+                                    <div
+                                      key={`予定-${type}`}
+                                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium 
+                                        ${bgColor} ${textColor}`}
+                                    >
+                                      {type} {count}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
 
-                              {/* 出勤簿セクション */}
-                              <div>
-                                <h3 className="text-xs font-medium text-gray-500 mb-1.5 flex items-center">
-                                  <div className="w-2 h-2 rounded-full bg-green-400 mr-2"></div>
-                                  勤務種別（出勤簿）
-                                </h3>
-                                <div className="flex flex-wrap gap-1.5">
-                                  {Object.entries(WORK_TYPES).map(([type, { bgColor, textColor }]) => {
-                                    const count = clockbookCounts[type];
-                                    if (count === 0) return null;
-                                    return (
-                                      <div
-                                        key={`出勤簿-${type}`}
-                                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium 
-                                          ${bgColor} ${textColor}`}
-                                      >
-                                        {type} {count}
-                                      </div>
-                                    );
-                                  })}
-                                </div>
+                            {/* 区切り線 */}
+                            <div className="border-t border-gray-100"></div>
+
+                            {/* 出勤簿セクション */}
+                            <div>
+                              <h3 className="text-xs font-medium text-gray-500 mb-1.5 flex items-center">
+                                <div className="w-2 h-2 rounded-full bg-green-400 mr-2"></div>
+                                勤務種別（出勤簿）
+                              </h3>
+                              <div className="flex flex-wrap gap-1.5">
+                                {Object.entries(WORK_TYPES).map(([type, { bgColor, textColor }]) => {
+                                  const count = clockbookCounts[type];
+                                  if (count === 0) return null;
+                                  return (
+                                    <div
+                                      key={`出勤簿-${type}`}
+                                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium 
+                                        ${bgColor} ${textColor}`}
+                                    >
+                                      {type} {count}
+                                    </div>
+                                  );
+                                })}
                               </div>
                             </div>
                           </div>
@@ -629,6 +686,20 @@ export default function SchedulesPage() {
           </div>
         ))}
       </div>
+      <MonthlyListSection
+        currentDate={currentDate}
+        workDetails={workDetails}
+        userData={userData}
+        userSchedules={userSchedules}
+        breakData={breakData}
+        onAddButtonClick={handleAddButtonClick}
+        getLocalDateString={getLocalDateString}
+        onWorkDetailClick={handleWorkDetailClick}
+        showSummaryCard={showSummaryCard}
+        timeToHoursAndMinutes={timeToHoursAndMinutes}
+        parseJapaneseTimeString={parseJapaneseTimeString}
+        vacationRequests={vacationRequests}
+      />
     </div>
   );
 }
