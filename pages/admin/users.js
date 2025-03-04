@@ -348,7 +348,7 @@ export default function AdminUsersPage() {
                 password: formData.get('password'),
                 email: formData.get('email'),
                 affiliation: formData.get('affiliation'),
-                accountType: formData.get('isAdmin') ? '管理者' : formData.get('accountType'),
+                accountType: formData.get('accountType'),
                 iconUrl: selectedUser.data[6],
                 isAdmin: formData.get('isAdmin') ? true : false
               };
@@ -566,7 +566,7 @@ export default function AdminUsersPage() {
                   <label className="block text-sm font-medium text-gray-700">アカウント種別</label>
                   <select
                     name="accountType"
-                    defaultValue={selectedUser.data[5] === '管理者' ? '' : selectedUser.data[5]}
+                    defaultValue={selectedUser.data[5]}
                     className="mt-1 w-full p-2 border rounded-lg"
                     required
                   >

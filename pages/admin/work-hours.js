@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import { ChevronLeftIcon, ChevronRightIcon, FunnelIcon, DocumentArrowDownIcon } from '@heroicons/react/24/outline';
 import { useReactToPrint } from 'react-to-print';
 import * as XLSX from 'xlsx';
+import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
@@ -39,6 +40,7 @@ export default function WorkHoursPage() {
   
   // PDF出力用のref
   const printRef = useRef();
+  const printSectionRef = useRef();
 
   // 認証チェック
   useEffect(() => {
@@ -313,166 +315,148 @@ export default function WorkHoursPage() {
     return summary;
   };
 
-  // PDF出力用のハンドラ
-  const handlePrintPDF = () => {
+  // PDF出力用のハンドラ - html2canvasを使用する方法に変更
+  const handlePrintPDF = async () => {
     const userName = users.find(user => user.id === selectedUser)?.name || '';
     const fileName = `勤務記録_${userName}_${currentMonth.year}年${currentMonth.month}月.pdf`;
-    const summary = calculateMonthlySummary();
+    
+    if (!printSectionRef.current) {
+      alert('PDF出力対象のコンテンツが見つかりません。');
+      return;
+    }
     
     try {
-      // A4サイズ、横向き
-      const doc = new jsPDF({
+      // ローディング表示
+      const loadingDiv = document.createElement('div');
+      loadingDiv.style.position = 'fixed';
+      loadingDiv.style.top = '0';
+      loadingDiv.style.left = '0';
+      loadingDiv.style.width = '100%';
+      loadingDiv.style.height = '100%';
+      loadingDiv.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+      loadingDiv.style.display = 'flex';
+      loadingDiv.style.justifyContent = 'center';
+      loadingDiv.style.alignItems = 'center';
+      loadingDiv.style.zIndex = '9999';
+      loadingDiv.innerHTML = '<div style="padding: 20px; background-color: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);"><p style="margin: 0; font-size: 16px;">PDFを生成中...</p></div>';
+      document.body.appendChild(loadingDiv);
+      
+      // 印刷用のスタイルを適用
+      printSectionRef.current.classList.add('pdf-print-mode');
+      
+      // HTML要素をキャンバスに変換
+      const canvas = await html2canvas(printSectionRef.current, {
+        scale: 1.2, // 解像度を少し上げる
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+      
+      // 印刷用スタイルを元に戻す
+      printSectionRef.current.classList.remove('pdf-print-mode');
+      
+      // キャンバスをPDFに変換
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
         orientation: 'landscape',
         unit: 'mm',
         format: 'a4'
       });
       
-      // タイトルと基本情報
-      doc.setFontSize(18);
-      doc.text('勤務記録', 14, 15);
-      doc.setFontSize(12);
-      doc.text(`氏名: ${userName}`, 14, 25);
-      doc.text(`期間: ${currentMonth.year}年${currentMonth.month}月 (${currentMonth.month - 1}/21～${currentMonth.month}/20)`, 14, 32);
+      // 画像をPDFに配置
+      const imgWidth = 287; // A4横サイズ (210mm x 297mm)
+      const imgHeight = canvas.height * imgWidth / canvas.width;
+      pdf.addImage(imgData, 'PNG', 5, 5, imgWidth, imgHeight);
       
-      // サマリー情報
-      doc.setFontSize(14);
-      doc.text('勤務サマリー', 14, 42);
+      // PDFを保存
+      pdf.save(fileName);
       
-      // 基本情報テーブル
-      const summaryBasicData = [
-        ['対象期間', `${summary.totalDays}日`],
-        ['総労働時間', `${summary.totalWorkHours.toFixed(1)}時間`],
-        ['総休憩時間', `${summary.totalBreakHours.toFixed(1)}時間`],
-        ['残業時間', `${summary.overtimeHours.toFixed(1)}時間`]
-      ];
-      
-      doc.autoTable({
-        startY: 45,
-        head: [['項目', '値']],
-        body: summaryBasicData,
-        theme: 'grid',
-        headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0] },
-        styles: { fontSize: 10 },
-        margin: { left: 14 },
-        tableWidth: 80
-      });
-      
-      // 勤務種別の内訳テーブル
-      const workTypeData = Object.entries(summary.workTypes).map(([type, count]) => [type, `${count}日`]);
-      
-      doc.setFontSize(12);
-      doc.text('勤務種別の内訳', 110, 50);
-      
-      doc.autoTable({
-        startY: 53,
-        head: [['種別', '日数']],
-        body: workTypeData,
-        theme: 'grid',
-        headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0] },
-        styles: { fontSize: 10 },
-        margin: { left: 110 },
-        tableWidth: 80
-      });
-      
-      // 詳細データテーブル
-      doc.setFontSize(14);
-      doc.text('勤務詳細', 14, doc.autoTable.previous.finalY + 15);
-      
-      const detailTableData = monthlyData.dates.map(date => {
-        const dateStr = formatDateStr(date);
-        const formattedDate = formatDate(date);
-        const workRecord = monthlyData.workRecords[dateStr] || {};
-        const breakRecord = monthlyData.breakRecords[dateStr] || [];
-        const totalBreakMinutes = calculateTotalBreakTime(breakRecord);
-        
-        return [
-          formattedDate,
-          workRecord.workType || '-',
-          workRecord.startTime || '-',
-          workRecord.endTime || '-',
-          totalBreakMinutes > 0 ? `${Math.floor(totalBreakMinutes / 60)}:${String(totalBreakMinutes % 60).padStart(2, '0')}` : '-',
-          workRecord.totalWork || '-'
-        ];
-      });
-      
-      doc.autoTable({
-        startY: doc.autoTable.previous.finalY + 18,
-        head: [['日付', '勤務種別', '出勤時間', '退勤時間', '休憩時間', '実労働時間']],
-        body: detailTableData,
-        theme: 'grid',
-        headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0] },
-        styles: { fontSize: 9 },
-        margin: { left: 14, right: 14 },
-        columnStyles: {
-          0: { cellWidth: 30 },
-          1: { cellWidth: 25 },
-          2: { cellWidth: 25 },
-          3: { cellWidth: 25 },
-          4: { cellWidth: 25 },
-          5: { cellWidth: 30 }
-        }
-      });
-      
-      // フッター
-      const today = new Date();
-      doc.setFontSize(8);
-      doc.text(`出力日: ${today.getFullYear()}/${String(today.getMonth() + 1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}`, 14, 200);
-      
-      // ファイル保存
-      doc.save(fileName);
+      // ローディング表示を削除
+      document.body.removeChild(loadingDiv);
     } catch (error) {
       console.error('PDF生成エラー:', error);
       alert('PDFの生成中にエラーが発生しました。');
     }
   };
 
-  // Excel出力用のハンドラ
+  // Excel出力用のハンドラ - セル結合とスタイルを追加
   const handleExportExcel = () => {
-    // 選択されたユーザーの名前を取得
-    const userName = users.find(user => user.id === selectedUser)?.name;
-    
-    // サマリーデータを取得
+    const userName = users.find(user => user.id === selectedUser)?.name || '';
     const summary = calculateMonthlySummary();
-
-    // ワークブックとワークシートの作成
     const wb = XLSX.utils.book_new();
-
-    // 統合シートデータの作成（1シートに全データを配置）
-    const sheetData = [];
+    
+    // ワークシートの作成
+    const ws = XLSX.utils.aoa_to_sheet([['']]);
+    
+    // セルの値を設定する関数
+    const setCellValue = (cell, value) => {
+      ws[cell] = { v: value, t: typeof value === 'number' ? 'n' : 's' };
+    };
+    
+    // セル範囲をマージする関数
+    const mergeCells = (ranges) => {
+      if (!ws['!merges']) ws['!merges'] = [];
+      ranges.forEach(range => {
+        ws['!merges'].push(range);
+      });
+    };
     
     // タイトルと基本情報
-    sheetData.push(['勤務記録']);
-    sheetData.push([]);
-    sheetData.push([`氏名: ${userName}`]);
-    sheetData.push([`期間: ${currentMonth.year}年${currentMonth.month}月 (${currentMonth.month - 1}/21～${currentMonth.month}/20)`]);
-    sheetData.push([]);
+    setCellValue('A1', '勤務記録');
+    setCellValue('A3', `氏名: ${userName}`);
+    setCellValue('A4', `期間: ${currentMonth.year}年${currentMonth.month}月 (${currentMonth.month - 1}/21～${currentMonth.month}/20)`);
+    
+    // セル結合
+    mergeCells([
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }, // A1:F1
+      { s: { r: 2, c: 0 }, e: { r: 2, c: 5 } }, // A3:F3
+      { s: { r: 3, c: 0 }, e: { r: 3, c: 5 } }, // A4:F4
+    ]);
     
     // サマリー情報
-    sheetData.push(['勤務サマリー']);
-    sheetData.push([]);
+    setCellValue('A6', '勤務サマリー');
+    mergeCells([{ s: { r: 5, c: 0 }, e: { r: 5, c: 5 } }]); // A6:F6
     
     // 基本情報テーブル
-    sheetData.push(['基本情報']);
-    sheetData.push(['項目', '値']);
-    sheetData.push(['対象期間', `${summary.totalDays}日`]);
-    sheetData.push(['総労働時間', `${summary.totalWorkHours.toFixed(1)}時間`]);
-    sheetData.push(['総休憩時間', `${summary.totalBreakHours.toFixed(1)}時間`]);
-    sheetData.push(['残業時間', `${summary.overtimeHours.toFixed(1)}時間`]);
-    sheetData.push([]);
+    setCellValue('A8', '基本情報');
+    setCellValue('A9', '項目');
+    setCellValue('B9', '値');
+    setCellValue('A10', '対象期間');
+    setCellValue('B10', `${summary.totalDays}日`);
+    setCellValue('A11', '総労働時間');
+    setCellValue('B11', `${summary.totalWorkHours.toFixed(1)}時間`);
+    setCellValue('A12', '総休憩時間');
+    setCellValue('B12', `${summary.totalBreakHours.toFixed(1)}時間`);
+    setCellValue('A13', '残業時間');
+    setCellValue('B13', `${summary.overtimeHours.toFixed(1)}時間`);
     
     // 勤務種別の内訳テーブル
-    sheetData.push(['勤務種別の内訳']);
-    sheetData.push(['種別', '日数']);
-    Object.entries(summary.workTypes).forEach(([type, count]) => {
-      sheetData.push([type, `${count}日`]);
+    setCellValue('D8', '勤務種別の内訳');
+    setCellValue('D9', '種別');
+    setCellValue('E9', '日数');
+    
+    let rowIndex = 10;
+    Object.entries(summary.workTypes).forEach(([type, count], index) => {
+      setCellValue(`D${rowIndex}`, type);
+      setCellValue(`E${rowIndex}`, `${count}日`);
+      rowIndex++;
     });
-    sheetData.push([]);
-    sheetData.push([]);
     
     // 詳細データテーブル
-    sheetData.push(['勤務詳細']);
-    sheetData.push(['日付', '勤務種別', '出勤時間', '退勤時間', '休憩時間', '実労働時間']);
-
+    rowIndex = Math.max(15, rowIndex + 2);
+    
+    setCellValue(`A${rowIndex}`, '勤務詳細');
+    mergeCells([{ s: { r: rowIndex - 1, c: 0 }, e: { r: rowIndex - 1, c: 5 } }]);
+    
+    rowIndex++;
+    setCellValue(`A${rowIndex}`, '日付');
+    setCellValue(`B${rowIndex}`, '勤務種別');
+    setCellValue(`C${rowIndex}`, '出勤時間');
+    setCellValue(`D${rowIndex}`, '退勤時間');
+    setCellValue(`E${rowIndex}`, '休憩時間');
+    setCellValue(`F${rowIndex}`, '実労働時間');
+    
+    rowIndex++;
     monthlyData.dates.forEach((date) => {
       const dateStr = formatDateStr(date);
       const formattedDate = formatDate(date);
@@ -480,35 +464,33 @@ export default function WorkHoursPage() {
       const breakRecord = monthlyData.breakRecords[dateStr] || [];
       const totalBreakMinutes = calculateTotalBreakTime(breakRecord);
       
-      sheetData.push([
-        formattedDate,
-        workRecord.workType || '-',
-        workRecord.startTime || '-',
-        workRecord.endTime || '-',
-        totalBreakMinutes > 0 ? `${Math.floor(totalBreakMinutes / 60)}:${String(totalBreakMinutes % 60).padStart(2, '0')}` : '-',
-        workRecord.totalWork || '-'
-      ]);
+      setCellValue(`A${rowIndex}`, formattedDate);
+      setCellValue(`B${rowIndex}`, workRecord.workType || '-');
+      setCellValue(`C${rowIndex}`, workRecord.startTime || '-');
+      setCellValue(`D${rowIndex}`, workRecord.endTime || '-');
+      setCellValue(`E${rowIndex}`, totalBreakMinutes > 0 ? 
+        `${Math.floor(totalBreakMinutes / 60)}:${String(totalBreakMinutes % 60).padStart(2, '0')}` : '-');
+      setCellValue(`F${rowIndex}`, workRecord.totalWork || '-');
+      
+      rowIndex++;
     });
-
-    const ws = XLSX.utils.aoa_to_sheet(sheetData);
-
-    // シートのスタイル設定（列幅）
-    const colWidth = [
-      {wch: 20}, // A列
-      {wch: 15}, // B列
-      {wch: 15}, // C列
-      {wch: 15}, // D列
-      {wch: 15}, // E列
-      {wch: 15}  // F列
-    ];
-    ws['!cols'] = colWidth;
     
-    // シートプロパティ設定（横向き）
+    // 列幅の設定
+    ws['!cols'] = [
+      { wch: 20 }, // A列
+      { wch: 15 }, // B列
+      { wch: 15 }, // C列
+      { wch: 15 }, // D列
+      { wch: 15 }, // E列
+      { wch: 15 }  // F列
+    ];
+    
+    // シート向き - 横向き
     ws['!orient'] = 'landscape';
-
+    
     // ワークブックにシートを追加
     XLSX.utils.book_append_sheet(wb, ws, "勤務記録");
-
+    
     // Excelファイルとして出力
     XLSX.writeFile(wb, `勤務記録_${userName}_${currentMonth.year}年${currentMonth.month}月.xlsx`);
   };
@@ -523,9 +505,35 @@ export default function WorkHoursPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
+      {/* Head要素にスタイルを追加 */}
+      <style jsx global>{`
+        .pdf-print-mode {
+          background-color: white;
+          padding: 20mm;
+          width: 297mm; /* A4横サイズ */
+          min-height: 210mm;
+        }
+        .pdf-print-mode table {
+          border-collapse: collapse;
+          width: 100%;
+        }
+        .pdf-print-mode th,
+        .pdf-print-mode td {
+          border: 1px solid #ddd;
+          padding: 8px;
+        }
+        .pdf-print-mode th {
+          background-color: #f2f2f2;
+        }
+        @media print {
+          .no-print {
+            display: none !important;
+          }
+        }
+      `}</style>
 
       {/* フィルターセクション */}
-      <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
+      <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 no-print">
         <div className="flex items-center gap-3 mb-6">
           <div className="bg-indigo-100 p-2 rounded-xl">
             <FunnelIcon className="h-5 w-5 text-indigo-600" />
@@ -627,7 +635,7 @@ export default function WorkHoursPage() {
 
       {/* 出力ボタンセクション */}
       {selectedUser && !isDataLoading && (
-        <div className="flex justify-end gap-4 mb-6">
+        <div className="flex justify-end gap-4 mb-6 no-print">
           <button
             onClick={handlePrintPDF}
             className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
@@ -647,165 +655,298 @@ export default function WorkHoursPage() {
 
       {/* 印刷・エクスポート対象のコンテンツ */}
       <div ref={printRef}>
-        {/* 月間サマリーセクション */}
-        {selectedUser && !isDataLoading && (
-          <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="bg-green-100 p-2 rounded-xl">
-                  <svg className="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                </div>
-                <h2 className="text-lg font-medium text-gray-800">
-                  {users.find(user => user.id === selectedUser)?.name} - {currentMonth.year}年{currentMonth.month}月の勤務サマリー
-                </h2>
-              </div>
-              <div className="text-sm text-gray-500">
-                {currentMonth.month}月度 ({currentMonth.month - 1}/21～{currentMonth.month}/20)
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* 基本情報 */}
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-3">基本情報</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  {(() => {
-                    const summary = calculateMonthlySummary();
-                    return [
-                      {
-                        label: '対象期間',
-                        value: `${summary.totalDays}日`,
-                        color: 'bg-purple-50 text-purple-700 border border-purple-200'
-                      },
-                      {
-                        label: '総労働時間',
-                        value: `${summary.totalWorkHours.toFixed(1)}時間`,
-                        color: 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                      },
-                      {
-                        label: '総休憩時間',
-                        value: `${summary.totalBreakHours.toFixed(1)}時間`,
-                        color: 'bg-sky-50 text-sky-700 border border-sky-200'
-                      },
-                      {
-                        label: '残業時間',
-                        value: `${summary.overtimeHours.toFixed(1)}時間`,
-                        color: 'bg-rose-50 text-rose-700 border border-rose-200'
-                      }
-                    ].map((item, index) => (
-                      <div key={index} className={`${item.color} rounded-xl p-4 shadow-sm`}>
-                        <div className="text-sm font-medium mb-1 opacity-90">{item.label}</div>
-                        <div className="text-lg font-bold">{item.value}</div>
-                      </div>
-                    ));
-                  })()}
+        {/* PDF出力用のセクション */}
+        <div ref={printSectionRef}>
+          {selectedUser && !isDataLoading && (
+            <>
+              {/* ヘッダー情報 - PDF用 */}
+              <div className="mb-6">
+                <h1 className="text-2xl font-bold text-center mb-4">勤務記録</h1>
+                <div className="flex justify-between">
+                  <p className="font-medium">
+                    氏名: {users.find(user => user.id === selectedUser)?.name}
+                  </p>
+                  <p className="font-medium">
+                    期間: {currentMonth.year}年{currentMonth.month}月 ({currentMonth.month - 1}/21～{currentMonth.month}/20)
+                  </p>
                 </div>
               </div>
 
-              {/* 勤務種別の集計 */}
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-3">勤務種別の内訳</h3>
-                <div className="bg-gray-50 rounded-xl p-4">
+              {/* 月間サマリーセクション */}
+              <div className="bg-white rounded-xl shadow p-6 mb-8">
+                <h2 className="text-xl font-bold mb-4">勤務サマリー</h2>
+                
+                <div className="grid grid-cols-2 gap-6">
+                  {/* 基本情報 */}
+                  <div>
+                    <h3 className="text-lg font-medium mb-3">基本情報</h3>
+                    <table className="min-w-full border">
+                      <thead>
+                        <tr>
+                          <th className="border px-4 py-2 bg-gray-50">項目</th>
+                          <th className="border px-4 py-2 bg-gray-50">値</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(() => {
+                          const summary = calculateMonthlySummary();
+                          return [
+                            { label: '対象期間', value: `${summary.totalDays}日` },
+                            { label: '総労働時間', value: `${summary.totalWorkHours.toFixed(1)}時間` },
+                            { label: '総休憩時間', value: `${summary.totalBreakHours.toFixed(1)}時間` },
+                            { label: '残業時間', value: `${summary.overtimeHours.toFixed(1)}時間` }
+                          ].map((item, index) => (
+                            <tr key={index}>
+                              <td className="border px-4 py-2">{item.label}</td>
+                              <td className="border px-4 py-2 font-medium">{item.value}</td>
+                            </tr>
+                          ));
+                        })()}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* 勤務種別の集計 */}
+                  <div>
+                    <h3 className="text-lg font-medium mb-3">勤務種別の内訳</h3>
+                    <table className="min-w-full border">
+                      <thead>
+                        <tr>
+                          <th className="border px-4 py-2 bg-gray-50">種別</th>
+                          <th className="border px-4 py-2 bg-gray-50">日数</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(() => {
+                          const summary = calculateMonthlySummary();
+                          return Object.entries(summary.workTypes).map(([type, count], index) => (
+                            <tr key={index}>
+                              <td className="border px-4 py-2">{type}</td>
+                              <td className="border px-4 py-2 font-medium">{count}日</td>
+                            </tr>
+                          ));
+                        })()}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              {/* 勤務時間リスト */}
+              <div className="bg-white rounded-xl shadow">
+                <div className="p-6">
+                  <h2 className="text-xl font-bold mb-4">勤務詳細</h2>
+                  <table className="min-w-full border">
+                    <thead>
+                      <tr>
+                        <th className="border px-4 py-2 bg-gray-50">日付</th>
+                        <th className="border px-4 py-2 bg-gray-50">勤務種別</th>
+                        <th className="border px-4 py-2 bg-gray-50">出勤時間</th>
+                        <th className="border px-4 py-2 bg-gray-50">退勤時間</th>
+                        <th className="border px-4 py-2 bg-gray-50">休憩時間</th>
+                        <th className="border px-4 py-2 bg-gray-50">実労働時間</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {monthlyData.dates.map((date) => {
+                        const dateStr = formatDateStr(date);
+                        const workRecord = monthlyData.workRecords[dateStr] || {};
+                        const breakRecord = monthlyData.breakRecords[dateStr] || [];
+                        const totalBreakMinutes = calculateTotalBreakTime(breakRecord);
+
+                        return (
+                          <tr key={dateStr} className={
+                            date.getDay() === 0 ? 'text-red-600' : 
+                            date.getDay() === 6 ? 'text-blue-600' : ''
+                          }>
+                            <td className="border px-4 py-2">{formatDate(date)}</td>
+                            <td className="border px-4 py-2">{workRecord.workType || '-'}</td>
+                            <td className="border px-4 py-2">{workRecord.startTime || '-'}</td>
+                            <td className="border px-4 py-2">{workRecord.endTime || '-'}</td>
+                            <td className="border px-4 py-2">
+                              {totalBreakMinutes > 0 ? 
+                                `${Math.floor(totalBreakMinutes / 60)}:${String(totalBreakMinutes % 60).padStart(2, '0')}` : 
+                                '-'}
+                            </td>
+                            <td className="border px-4 py-2">{workRecord.totalWork || '-'}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              
+              {/* フッター - PDF用 */}
+              <div className="mt-6 text-sm text-gray-500 text-right">
+                出力日: {new Date().toLocaleDateString('ja-JP')}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* 実際に画面に表示されるコンテンツ - 元のデザイン */}
+        {selectedUser && !isDataLoading && !printSectionRef.current?.classList.contains('pdf-print-mode') && (
+          <>
+            {/* 月間サマリーセクション */}
+            <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="bg-green-100 p-2 rounded-xl">
+                    <svg className="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </div>
+                  <h2 className="text-lg font-medium text-gray-800">
+                    {users.find(user => user.id === selectedUser)?.name} - {currentMonth.year}年{currentMonth.month}月の勤務サマリー
+                  </h2>
+                </div>
+                <div className="text-sm text-gray-500">
+                  {currentMonth.month}月度 ({currentMonth.month - 1}/21～{currentMonth.month}/20)
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* 基本情報 */}
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500 mb-3">基本情報</h3>
                   <div className="grid grid-cols-2 gap-4">
                     {(() => {
                       const summary = calculateMonthlySummary();
-                      return Object.entries(summary.workTypes).map(([type, count], index) => (
-                        <div key={type} className="flex items-center justify-between bg-white rounded-lg p-3 shadow-sm">
-                          <div className="flex items-center gap-2">
-                            <div className={`w-2 h-2 rounded-full ${
-                              type === '出勤' ? 'bg-emerald-500' :
-                              type === '公休' ? 'bg-sky-500' :
-                              type === '有給' ? 'bg-amber-500' :
-                              type === '欠勤' ? 'bg-rose-500' :
-                              'bg-gray-500'
-                            }`} />
-                            <span className="text-sm font-medium text-gray-700">{type}</span>
-                          </div>
-                          <span className="text-sm font-bold text-gray-900">{count}日</span>
+                      return [
+                        {
+                          label: '対象期間',
+                          value: `${summary.totalDays}日`,
+                          color: 'bg-purple-50 text-purple-700 border border-purple-200'
+                        },
+                        {
+                          label: '総労働時間',
+                          value: `${summary.totalWorkHours.toFixed(1)}時間`,
+                          color: 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        },
+                        {
+                          label: '総休憩時間',
+                          value: `${summary.totalBreakHours.toFixed(1)}時間`,
+                          color: 'bg-sky-50 text-sky-700 border border-sky-200'
+                        },
+                        {
+                          label: '残業時間',
+                          value: `${summary.overtimeHours.toFixed(1)}時間`,
+                          color: 'bg-rose-50 text-rose-700 border border-rose-200'
+                        }
+                      ].map((item, index) => (
+                        <div key={index} className={`${item.color} rounded-xl p-4 shadow-sm`}>
+                          <div className="text-sm font-medium mb-1 opacity-90">{item.label}</div>
+                          <div className="text-lg font-bold">{item.value}</div>
                         </div>
                       ));
                     })()}
                   </div>
                 </div>
+
+                {/* 勤務種別の集計 */}
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500 mb-3">勤務種別の内訳</h3>
+                  <div className="bg-gray-50 rounded-xl p-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      {(() => {
+                        const summary = calculateMonthlySummary();
+                        return Object.entries(summary.workTypes).map(([type, count], index) => (
+                          <div key={type} className="flex items-center justify-between bg-white rounded-lg p-3 shadow-sm">
+                            <div className="flex items-center gap-2">
+                              <div className={`w-2 h-2 rounded-full ${
+                                type === '出勤' ? 'bg-emerald-500' :
+                                type === '公休' ? 'bg-sky-500' :
+                                type === '有給' ? 'bg-amber-500' :
+                                type === '欠勤' ? 'bg-rose-500' :
+                                'bg-gray-500'
+                              }`} />
+                              <span className="text-sm font-medium text-gray-700">{type}</span>
+                            </div>
+                            <span className="text-sm font-bold text-gray-900">{count}日</span>
+                          </div>
+                        ));
+                      })()}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        )}
 
-        {/* 勤務時間リスト */}
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-          {!selectedUser ? (
-            <div className="p-8 text-center text-gray-500">
-              表示するメンバーを選択してください
-            </div>
-          ) : isDataLoading ? (
-            <div className="p-8 text-center text-gray-500">
-              データを読み込み中...
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      日付
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      勤務種別
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      出勤時間
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      退勤時間
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      休憩時間
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      実労働時間
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {monthlyData.dates.map((date) => {
-                    const dateStr = formatDateStr(date);
-                    console.log('Checking date:', dateStr, 'Records:', monthlyData.workRecords[dateStr]);
-                    
-                    const workRecord = monthlyData.workRecords[dateStr] || {};
-                    const breakRecord = monthlyData.breakRecords[dateStr] || [];
-                    const totalBreakMinutes = calculateTotalBreakTime(breakRecord);
-
-                    return (
-                      <tr key={dateStr} className={date.getDay() === 0 ? 'text-red-500' : date.getDay() === 6 ? 'text-blue-500' : ''}>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm">
-                          {formatDate(date)}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm">
-                          {workRecord.workType || '-'}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm">
-                          {workRecord.startTime || '-'}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm">
-                          {workRecord.endTime || '-'}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm">
-                          {totalBreakMinutes > 0 ? `${Math.floor(totalBreakMinutes / 60)}:${String(totalBreakMinutes % 60).padStart(2, '0')}` : '-'}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm">
-                          {workRecord.totalWork || '-'}
-                        </td>
+            {/* 勤務時間リスト */}
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+              {!selectedUser ? (
+                <div className="p-8 text-center text-gray-500">
+                  表示するメンバーを選択してください
+                </div>
+              ) : isDataLoading ? (
+                <div className="p-8 text-center text-gray-500">
+                  データを読み込み中...
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          日付
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          勤務種別
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          出勤時間
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          退勤時間
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          休憩時間
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          実労働時間
+                        </th>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {monthlyData.dates.map((date) => {
+                        const dateStr = formatDateStr(date);
+                        console.log('Checking date:', dateStr, 'Records:', monthlyData.workRecords[dateStr]);
+                        
+                        const workRecord = monthlyData.workRecords[dateStr] || {};
+                        const breakRecord = monthlyData.breakRecords[dateStr] || [];
+                        const totalBreakMinutes = calculateTotalBreakTime(breakRecord);
+
+                        return (
+                          <tr key={dateStr} className={date.getDay() === 0 ? 'text-red-500' : date.getDay() === 6 ? 'text-blue-500' : ''}>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm">
+                              {formatDate(date)}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm">
+                              {workRecord.workType || '-'}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm">
+                              {workRecord.startTime || '-'}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm">
+                              {workRecord.endTime || '-'}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm">
+                              {totalBreakMinutes > 0 ? `${Math.floor(totalBreakMinutes / 60)}:${String(totalBreakMinutes % 60).padStart(2, '0')}` : '-'}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm">
+                              {workRecord.totalWork || '-'}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </>
+        )}
       </div>
     </div>
   );

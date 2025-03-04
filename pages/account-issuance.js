@@ -128,7 +128,7 @@ export default function AccountIssuancePage() {
     setError('');
 
     try {
-      // isAdmin フラグをチェックして accountType を決定
+      // 管理者権限とアカウント種別を独立して扱うように修正
       const res = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -138,8 +138,8 @@ export default function AccountIssuancePage() {
           password: formData.password,
           email: formData.email,
           affiliation: formData.affiliation,
-          accountType: formData.isAdmin ? '管理者' : formData.accountType, // 管理者チェックがオンなら '管理者'
-          iconUrl: formData.iconUrl || '', // アイコンURLを追加
+          accountType: formData.accountType, // アカウント種別をそのまま使用
+          iconUrl: formData.iconUrl || '',
           isAdmin: formData.isAdmin
         })
       });
