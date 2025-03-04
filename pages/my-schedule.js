@@ -661,7 +661,7 @@ export default function MySchedulePage() {
   const loading = isLoading || status === 'loading' || !session || !userData;
 
   return (
-    <>
+    <Layout hideNavigation={showScheduleForm || showClockbookForm || showVacationForm}>
       {loading ? (
         <LoadingSpinner />
       ) : (
@@ -954,6 +954,6 @@ export default function MySchedulePage() {
           <div className="text-white text-2xl">登録中...</div>
         </div>
       )}
-    </>
+    </Layout>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AttendanceForm from './AttendanceForm';
 
 export default function ClockbookForm({ 
@@ -49,20 +49,27 @@ export default function ClockbookForm({
     }
   };
 
+  useEffect(() => {
+    const modalContent = document.querySelector('.modal-content');
+    if (modalContent) {
+      modalContent.scrollTop = 0;
+    }
+  }, []);
+
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4">
+    <div className="fixed inset-0 flex items-start justify-center bg-black/60 backdrop-blur-sm z-50 p-4 pt-8 overflow-y-auto">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl 
-        overflow-y-auto max-h-[85vh] flex flex-col">
+        flex flex-col my-4 max-h-[calc(100vh-130px)]">
         <div className="flex justify-between items-center sticky top-0 bg-white p-4 border-b z-10">
-          <h2 className="text-xl font-semibold">{attendance.date} の勤務記録</h2>
+          <h2 className="text-xl font-semibold truncate">{attendance.date} の勤務記録</h2>
           <button 
             onClick={onClose} 
-            className="text-gray-600 hover:text-gray-800 text-2xl"
+            className="text-gray-600 hover:text-gray-800 text-2xl ml-2 flex-shrink-0"
           >
             &times;
           </button>
         </div>
-        <div className="overflow-y-auto p-4 flex-grow">
+        <div className="overflow-y-auto p-4 flex-grow modal-content">
           <form onSubmit={handleSubmit} className="space-y-6">
             <AttendanceForm 
               attendance={attendance}
