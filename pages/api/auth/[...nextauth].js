@@ -33,6 +33,7 @@ async function getUserById(userId) {
 
 // authOptions として設定内容を定義し、named export する
 export const authOptions = {
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     CredentialsProvider({
       name: 'Credentials',
