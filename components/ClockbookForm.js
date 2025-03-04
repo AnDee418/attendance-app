@@ -50,47 +50,49 @@ export default function ClockbookForm({
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50">
-      <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-3xl 
-        overflow-y-auto my-20 max-h-[calc(100vh-160px)]">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-semibold">{attendance.date} の勤務記録</h2>
+    <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl 
+        overflow-y-auto max-h-[85vh] flex flex-col">
+        <div className="flex justify-between items-center sticky top-0 bg-white p-4 border-b z-10">
+          <h2 className="text-xl font-semibold">{attendance.date} の勤務記録</h2>
           <button 
             onClick={onClose} 
-            className="text-gray-600 hover:text-gray-800 text-3xl"
+            className="text-gray-600 hover:text-gray-800 text-2xl"
           >
             &times;
           </button>
         </div>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <AttendanceForm 
-            attendance={attendance}
-            breakRecords={breakRecords}
-            onAttendanceChange={handleAttendanceChange}
-            onBreakChange={handleBreakChange}
-            onAddBreak={addBreakRecord}
-            onRemoveBreak={removeBreakRecord}
-          />
-
-          <div className="flex gap-4 mt-6">
-            <button 
-              type="submit" 
-              className="flex-1 bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 
-                transition-all duration-200 active:scale-95"
-            >
-              保存
-            </button>
-            <button 
-              type="button"
-              onClick={onClose}
-              className="flex-1 bg-gray-100 text-gray-700 p-3 rounded-lg hover:bg-gray-200 
-                transition-all duration-200 active:scale-95"
-            >
-              キャンセル
-            </button>
-          </div>
-        </form>
-        {message && <p className="mt-4 text-center text-red-600">{message}</p>}
+        <div className="overflow-y-auto p-4 flex-grow">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <AttendanceForm 
+              attendance={attendance}
+              breakRecords={breakRecords}
+              onAttendanceChange={handleAttendanceChange}
+              onBreakChange={handleBreakChange}
+              onAddBreak={addBreakRecord}
+              onRemoveBreak={removeBreakRecord}
+            />
+          </form>
+        </div>
+        <div className="sticky bottom-0 bg-white p-4 border-t flex gap-4">
+          <button 
+            type="submit" 
+            onClick={handleSubmit}
+            className="flex-1 bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 
+              transition-all duration-200 active:scale-95"
+          >
+            保存
+          </button>
+          <button 
+            type="button"
+            onClick={onClose}
+            className="flex-1 bg-gray-100 text-gray-700 p-3 rounded-lg hover:bg-gray-200 
+              transition-all duration-200 active:scale-95"
+          >
+            キャンセル
+          </button>
+        </div>
+        {message && <p className="p-4 text-center text-red-600 bg-red-50">{message}</p>}
       </div>
     </div>
   );
