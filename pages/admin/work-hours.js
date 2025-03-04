@@ -4,6 +4,8 @@ import { useRouter } from 'next/router';
 import { ChevronLeftIcon, ChevronRightIcon, FunnelIcon, DocumentArrowDownIcon } from '@heroicons/react/24/outline';
 import { useReactToPrint } from 'react-to-print';
 import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 export default function WorkHoursPage() {
   const { data: session, status } = useSession();
@@ -312,34 +314,117 @@ export default function WorkHoursPage() {
   };
 
   // PDF出力用のハンドラ
-  const handlePrintPDF = useReactToPrint({
-    content: () => printRef.current,
-    documentTitle: `勤務記録_${users.find(user => user.id === selectedUser)?.name}_${currentMonth.year}年${currentMonth.month}月`,
-    pageStyle: `
-      @page {
-        margin: 10mm;
-        size: A4;
-      }
-      @media print {
-        body {
-          font-family: sans-serif;
+  const handlePrintPDF = () => {
+    const userName = users.find(user => user.id === selectedUser)?.name || '';
+    const fileName = `勤務記録_${userName}_${currentMonth.year}年${currentMonth.month}月.pdf`;
+    const summary = calculateMonthlySummary();
+    
+    try {
+      // A4サイズ、横向き
+      const doc = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      // タイトルと基本情報
+      doc.setFontSize(18);
+      doc.text('勤務記録', 14, 15);
+      doc.setFontSize(12);
+      doc.text(`氏名: ${userName}`, 14, 25);
+      doc.text(`期間: ${currentMonth.year}年${currentMonth.month}月 (${currentMonth.month - 1}/21～${currentMonth.month}/20)`, 14, 32);
+      
+      // サマリー情報
+      doc.setFontSize(14);
+      doc.text('勤務サマリー', 14, 42);
+      
+      // 基本情報テーブル
+      const summaryBasicData = [
+        ['対象期間', `${summary.totalDays}日`],
+        ['総労働時間', `${summary.totalWorkHours.toFixed(1)}時間`],
+        ['総休憩時間', `${summary.totalBreakHours.toFixed(1)}時間`],
+        ['残業時間', `${summary.overtimeHours.toFixed(1)}時間`]
+      ];
+      
+      doc.autoTable({
+        startY: 45,
+        head: [['項目', '値']],
+        body: summaryBasicData,
+        theme: 'grid',
+        headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0] },
+        styles: { fontSize: 10 },
+        margin: { left: 14 },
+        tableWidth: 80
+      });
+      
+      // 勤務種別の内訳テーブル
+      const workTypeData = Object.entries(summary.workTypes).map(([type, count]) => [type, `${count}日`]);
+      
+      doc.setFontSize(12);
+      doc.text('勤務種別の内訳', 110, 50);
+      
+      doc.autoTable({
+        startY: 53,
+        head: [['種別', '日数']],
+        body: workTypeData,
+        theme: 'grid',
+        headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0] },
+        styles: { fontSize: 10 },
+        margin: { left: 110 },
+        tableWidth: 80
+      });
+      
+      // 詳細データテーブル
+      doc.setFontSize(14);
+      doc.text('勤務詳細', 14, doc.autoTable.previous.finalY + 15);
+      
+      const detailTableData = monthlyData.dates.map(date => {
+        const dateStr = formatDateStr(date);
+        const formattedDate = formatDate(date);
+        const workRecord = monthlyData.workRecords[dateStr] || {};
+        const breakRecord = monthlyData.breakRecords[dateStr] || [];
+        const totalBreakMinutes = calculateTotalBreakTime(breakRecord);
+        
+        return [
+          formattedDate,
+          workRecord.workType || '-',
+          workRecord.startTime || '-',
+          workRecord.endTime || '-',
+          totalBreakMinutes > 0 ? `${Math.floor(totalBreakMinutes / 60)}:${String(totalBreakMinutes % 60).padStart(2, '0')}` : '-',
+          workRecord.totalWork || '-'
+        ];
+      });
+      
+      doc.autoTable({
+        startY: doc.autoTable.previous.finalY + 18,
+        head: [['日付', '勤務種別', '出勤時間', '退勤時間', '休憩時間', '実労働時間']],
+        body: detailTableData,
+        theme: 'grid',
+        headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0] },
+        styles: { fontSize: 9 },
+        margin: { left: 14, right: 14 },
+        columnStyles: {
+          0: { cellWidth: 30 },
+          1: { cellWidth: 25 },
+          2: { cellWidth: 25 },
+          3: { cellWidth: 25 },
+          4: { cellWidth: 25 },
+          5: { cellWidth: 30 }
         }
-        .no-print {
-          display: none !important;
-        }
-        table {
-          page-break-inside: auto;
-        }
-        tr {
-          page-break-inside: avoid;
-          page-break-after: auto;
-        }
-        thead {
-          display: table-header-group;
-        }
-      }
-    `
-  });
+      });
+      
+      // フッター
+      const today = new Date();
+      doc.setFontSize(8);
+      doc.text(`出力日: ${today.getFullYear()}/${String(today.getMonth() + 1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}`, 14, 200);
+      
+      // ファイル保存
+      doc.save(fileName);
+    } catch (error) {
+      console.error('PDF生成エラー:', error);
+      alert('PDFの生成中にエラーが発生しました。');
+    }
+  };
 
   // Excel出力用のハンドラ
   const handleExportExcel = () => {
@@ -352,32 +437,41 @@ export default function WorkHoursPage() {
     // ワークブックとワークシートの作成
     const wb = XLSX.utils.book_new();
 
-    // サマリーデータをシート1に追加
-    const summaryData = [
-      ['勤務記録サマリー', '', '', ''],
-      [`氏名: ${userName}`, '', '', ''],
-      [`期間: ${currentMonth.year}年${currentMonth.month}月 (${currentMonth.month - 1}/21～${currentMonth.month}/20)`, '', '', ''],
-      ['', '', '', ''],
-      ['基本情報', '', '', ''],
-      ['対象期間', `${summary.totalDays}日`, '', ''],
-      ['総労働時間', `${summary.totalWorkHours.toFixed(1)}時間`, '', ''],
-      ['総休憩時間', `${summary.totalBreakHours.toFixed(1)}時間`, '', ''],
-      ['残業時間', `${summary.overtimeHours.toFixed(1)}時間`, '', ''],
-      ['', '', '', ''],
-      ['勤務種別の内訳', '', '', '']
-    ];
-
-    // 勤務種別データの追加
+    // 統合シートデータの作成（1シートに全データを配置）
+    const sheetData = [];
+    
+    // タイトルと基本情報
+    sheetData.push(['勤務記録']);
+    sheetData.push([]);
+    sheetData.push([`氏名: ${userName}`]);
+    sheetData.push([`期間: ${currentMonth.year}年${currentMonth.month}月 (${currentMonth.month - 1}/21～${currentMonth.month}/20)`]);
+    sheetData.push([]);
+    
+    // サマリー情報
+    sheetData.push(['勤務サマリー']);
+    sheetData.push([]);
+    
+    // 基本情報テーブル
+    sheetData.push(['基本情報']);
+    sheetData.push(['項目', '値']);
+    sheetData.push(['対象期間', `${summary.totalDays}日`]);
+    sheetData.push(['総労働時間', `${summary.totalWorkHours.toFixed(1)}時間`]);
+    sheetData.push(['総休憩時間', `${summary.totalBreakHours.toFixed(1)}時間`]);
+    sheetData.push(['残業時間', `${summary.overtimeHours.toFixed(1)}時間`]);
+    sheetData.push([]);
+    
+    // 勤務種別の内訳テーブル
+    sheetData.push(['勤務種別の内訳']);
+    sheetData.push(['種別', '日数']);
     Object.entries(summary.workTypes).forEach(([type, count]) => {
-      summaryData.push([type, `${count}日`, '', '']);
+      sheetData.push([type, `${count}日`]);
     });
-
-    const summaryWS = XLSX.utils.aoa_to_sheet(summaryData);
-
-    // 詳細データをシート2に追加
-    const detailData = [
-      ['日付', '勤務種別', '出勤時間', '退勤時間', '休憩時間', '実労働時間'],
-    ];
+    sheetData.push([]);
+    sheetData.push([]);
+    
+    // 詳細データテーブル
+    sheetData.push(['勤務詳細']);
+    sheetData.push(['日付', '勤務種別', '出勤時間', '退勤時間', '休憩時間', '実労働時間']);
 
     monthlyData.dates.forEach((date) => {
       const dateStr = formatDateStr(date);
@@ -386,7 +480,7 @@ export default function WorkHoursPage() {
       const breakRecord = monthlyData.breakRecords[dateStr] || [];
       const totalBreakMinutes = calculateTotalBreakTime(breakRecord);
       
-      detailData.push([
+      sheetData.push([
         formattedDate,
         workRecord.workType || '-',
         workRecord.startTime || '-',
@@ -396,31 +490,24 @@ export default function WorkHoursPage() {
       ]);
     });
 
-    const detailWS = XLSX.utils.aoa_to_sheet(detailData);
+    const ws = XLSX.utils.aoa_to_sheet(sheetData);
 
-    // シートのスタイル設定
-    // 列幅の設定
-    const summaryColWidth = [
-      {wch: 15}, // A列
+    // シートのスタイル設定（列幅）
+    const colWidth = [
+      {wch: 20}, // A列
       {wch: 15}, // B列
       {wch: 15}, // C列
-      {wch: 15}  // D列
-    ];
-    summaryWS['!cols'] = summaryColWidth;
-
-    const detailColWidth = [
-      {wch: 15}, // A列
-      {wch: 10}, // B列
-      {wch: 10}, // C列
-      {wch: 10}, // D列
-      {wch: 10}, // E列
+      {wch: 15}, // D列
+      {wch: 15}, // E列
       {wch: 15}  // F列
     ];
-    detailWS['!cols'] = detailColWidth;
+    ws['!cols'] = colWidth;
+    
+    // シートプロパティ設定（横向き）
+    ws['!orient'] = 'landscape';
 
     // ワークブックにシートを追加
-    XLSX.utils.book_append_sheet(wb, summaryWS, "勤務サマリー");
-    XLSX.utils.book_append_sheet(wb, detailWS, "勤務詳細");
+    XLSX.utils.book_append_sheet(wb, ws, "勤務記録");
 
     // Excelファイルとして出力
     XLSX.writeFile(wb, `勤務記録_${userName}_${currentMonth.year}年${currentMonth.month}月.xlsx`);
