@@ -118,89 +118,10 @@ export default function Layout({ children, title, hideNavigation = false }) {
     }
   }, [session]);
 
-  // ヘッダーコンポーネント
-  const Header = () => (
-    <header className="sticky top-0 bg-white shadow-sm z-20">
-      <div className="mx-auto px-4 py-3 flex justify-between items-center">
-        <h1 className="text-xl font-bold text-gray-900">{title || '勤怠管理アプリ'}</h1>
-        <div className="flex items-center gap-2">
-          {session?.user?.isAdmin && (
-            <Link href="/admin/vacation-requests">
-              <div className="relative cursor-pointer">
-                <ShieldCheckIcon className="h-6 w-6 text-blue-600" />
-                {pendingCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                    {pendingCount}
-                  </span>
-                )}
-              </div>
-            </Link>
-          )}
-          {!session?.user?.isAdmin && session?.user && (
-            <div
-              className="relative cursor-pointer"
-              onClick={() => setIsNotificationModalOpen(true)}
-            >
-              <BellIcon className="h-6 w-6 text-gray-600" />
-              {notificationCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                  {notificationCount}
-                </span>
-              )}
-            </div>
-          )}
-          <div className="ml-1">
-            <button
-              onClick={() => setIsAddMenuOpen(!isAddMenuOpen)}
-              className="bg-blue-600 text-white p-1.5 rounded-full hover:bg-blue-700"
-            >
-              <PlusCircleIcon className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-      </div>
-      {isAddMenuOpen && <AddMenu onClose={() => setIsAddMenuOpen(false)} />}
-      {isNotificationModalOpen && (
-        <NotificationModal
-          notifications={notifications}
-          onClose={() => setIsNotificationModalOpen(false)}
-          onMarkAsRead={handleMarkAsRead}
-        />
-      )}
-    </header>
-  );
-
-  // 下部ナビゲーションコンポーネント
-  const BottomNavigation = () => (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 pb-safe z-20">
-      <div className="grid grid-cols-4 h-16">
-        {navItems.map((item) => {
-          const isActive = router.pathname === item.href;
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={`flex flex-col items-center justify-center gap-1 ${
-                isActive ? 'text-blue-600' : 'text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              {typeof item.icon === 'function' ? (
-                item.icon({ className: 'w-6 h-6' })
-              ) : (
-                <item.icon className="w-6 h-6" />
-              )}
-              <span className="text-xs">{item.name}</span>
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
-  );
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <main className="pb-20">{children}</main>
+      <main className={hideNavigation ? "pb-0" : "pb-20"}>{children}</main>
       {!hideNavigation && <BottomNavigation />}
     </div>
   );
