@@ -7,13 +7,22 @@ const USERS_SHEET_NAME = 'Users';
 
 async function getUserById(userId) {
   try {
+    console.log('シート接続開始:', SPREADSHEET_ID);
+    console.log('シート名:', USERS_SHEET_NAME);
+    
     const result = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: `'${USERS_SHEET_NAME}'!A:H`,
     });
+    
+    console.log('シートデータ取得:', result.data ? '成功' : '失敗');
     const rows = result.data.values || [];
+    console.log('行数:', rows.length);
+    
     // 各行は [名前, ID, PASS, メールアドレス, 所属, アカウント種別, アイコンURL, isAdmin] の順
     const userRow = rows.find((row) => row[1] === userId);
+    console.log('ユーザー検索結果:', userRow ? '見つかりました' : '見つかりません');
+    
     if (!userRow) return null;
     return {
       name: userRow[0],
@@ -26,13 +35,15 @@ async function getUserById(userId) {
       isAdmin: userRow[7] === 'true',
     };
   } catch (error) {
-    console.error('ユーザー情報取得エラー:', error);
+    console.error('ユーザー情報取得エラー詳細:', error.message);
+    console.error('エラースタック:', error.stack);
     return null;
   }
 }
 
 // authOptions として設定内容を定義し、named export する
 export const authOptions = {
+  debug: true,  // デバッグモードを有効化
   secret: process.env.NEXTAUTH_SECRET,
   providers: [
     CredentialsProvider({
@@ -42,20 +53,31 @@ export const authOptions = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        const user = await getUserById(credentials.userId);
-        if (user && user.password === credentials.password) {
-          // 認証成功：必要な情報を返す
-          return {
-            id: user.userId,
-            name: user.name,
-            email: user.email,
-            affiliation: user.affiliation,
-            accountType: user.accountType,
-            isAdmin: user.isAdmin
-          };
+        console.log('認証リクエスト:', credentials.userId);
+        try {
+          const user = await getUserById(credentials.userId);
+          console.log('取得したユーザー情報:', user ? '成功' : '失敗');
+          
+          if (user) {
+            console.log('パスワード検証:', user.password === credentials.password);
+            if (user.password === credentials.password) {
+              return {
+                id: user.userId,
+                name: user.name,
+                email: user.email,
+                affiliation: user.affiliation,
+                accountType: user.accountType,
+                isAdmin: user.isAdmin
+              };
+            }
+          }
+          
+          console.log('認証失敗');
+          return null;
+        } catch (error) {
+          console.error('認証エラー:', error);
+          return null;
         }
-        // 認証失敗
-        return null;
       },
     }),
   ],
