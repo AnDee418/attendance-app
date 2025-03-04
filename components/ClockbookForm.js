@@ -57,9 +57,9 @@ export default function ClockbookForm({
   }, []);
 
   return (
-    <div className="fixed inset-0 flex items-start justify-center bg-black/60 backdrop-blur-sm z-50 p-4 pt-8 overflow-y-auto">
+    <div className="fixed inset-0 flex items-start justify-center bg-black/60 backdrop-blur-sm z-50 p-4 overflow-y-auto">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl 
-        flex flex-col my-4 max-h-[calc(100vh-130px)]">
+        my-8 flex flex-col max-h-[80vh]">
         <div className="flex justify-between items-center sticky top-0 bg-white p-4 border-b z-10">
           <h2 className="text-xl font-semibold truncate">{attendance.date} の勤務記録</h2>
           <button 
