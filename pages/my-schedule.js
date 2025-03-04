@@ -661,7 +661,7 @@ export default function MySchedulePage() {
   const loading = isLoading || status === 'loading' || !session || !userData;
 
   return (
-    <Layout hideNavigation={showScheduleForm || showClockbookForm || showVacationForm}>
+    <>
       {loading ? (
         <LoadingSpinner />
       ) : (
@@ -896,64 +896,71 @@ export default function MySchedulePage() {
           <WorkDetailModal 
             workDetail={selectedWorkDetail} 
             onClose={() => setSelectedWorkDetail(null)} 
+            className="z-[105]"
           />
 
           {/* ScheduleForm モーダル */}
           {showScheduleForm && scheduleAttendance && (
-            <ScheduleForm
-              initialAttendance={scheduleAttendance}
-              initialBreakRecords={editBreakRecords}
-              initialWorkDetails={editWorkDetails}
-              onSubmit={handleScheduleSubmit}
-              onClose={() => {
-                setShowScheduleForm(false);
-                setScheduleAttendance(null);
-                setEditBreakRecords([{ breakStart: '', breakEnd: '', recordType: '予定' }]);
-                setEditWorkDetails([{ 
-                  workTitle: '', 
-                  workStart: '', 
-                  workEnd: '', 
-                  detail: '', 
-                  workCategory: '業務',
-                  recordType: '予定' 
-                }]);
-              }}
-            />
+            <div className="z-[110]">
+              <ScheduleForm
+                initialAttendance={scheduleAttendance}
+                initialBreakRecords={editBreakRecords}
+                initialWorkDetails={editWorkDetails}
+                onSubmit={handleScheduleSubmit}
+                onClose={() => {
+                  setShowScheduleForm(false);
+                  setScheduleAttendance(null);
+                  setEditBreakRecords([{ breakStart: '', breakEnd: '', recordType: '予定' }]);
+                  setEditWorkDetails([{ 
+                    workTitle: '', 
+                    workStart: '', 
+                    workEnd: '', 
+                    detail: '', 
+                    workCategory: '業務',
+                    recordType: '予定' 
+                  }]);
+                }}
+              />
+            </div>
           )}
           
           {/* 新規追加: ClockbookForm モーダル */}
           {showClockbookForm && clockbookAttendance && (
-            <ClockbookForm
-              initialAttendance={clockbookAttendance}
-              onSubmit={handleClockbookSubmit}
-              onClose={() => {
-                setShowClockbookForm(false);
-                setClockbookAttendance(null);
-              }}
-            />
+            <div className="z-[110]">
+              <ClockbookForm
+                initialAttendance={clockbookAttendance}
+                onSubmit={handleClockbookSubmit}
+                onClose={() => {
+                  setShowClockbookForm(false);
+                  setClockbookAttendance(null);
+                }}
+              />
+            </div>
           )}
 
           {/* 休暇申請フォームを追加 */}
           {showVacationForm && vacationDate && (
-            <VacationRequestForm
-              initialDate={vacationDate.date}
-              employeeName={vacationDate.employeeName}
-              onSubmit={handleVacationSubmit}
-              onClose={() => {
-                setShowVacationForm(false);
-                setVacationDate(null);
-              }}
-            />
+            <div className="z-[110]">
+              <VacationRequestForm
+                initialDate={vacationDate.date}
+                employeeName={vacationDate.employeeName}
+                onSubmit={handleVacationSubmit}
+                onClose={() => {
+                  setShowVacationForm(false);
+                  setVacationDate(null);
+                }}
+              />
+            </div>
           )}
         </>
       )}
       
       {/* 送信中のオーバーレイ */}
       {isSubmitting && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+        <div className="fixed inset-0 flex items-center justify-center z-[120] bg-black bg-opacity-50">
           <div className="text-white text-2xl">登録中...</div>
         </div>
       )}
-    </Layout>
+    </>
   );
 }

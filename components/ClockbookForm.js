@@ -57,7 +57,7 @@ export default function ClockbookForm({
   }, []);
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4">
+    <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-[110] p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl 
         flex flex-col my-4 max-h-[90vh]">
         <div className="flex justify-between items-center sticky top-0 bg-white p-4 border-b z-10">
