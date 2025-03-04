@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/router';
 import {
   UserCircleIcon,
-  ShieldCheckIcon,
   BriefcaseIcon,
   DocumentTextIcon,
   UserIcon

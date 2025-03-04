@@ -19,13 +19,6 @@ const minutesToHours = (min) => (min / 60).toFixed(1);
 // ヘルパー関数: Date を "YYYY-MM-DD" (en-CA) 形式に変換
 const getLocalDateString = (date) => date.toLocaleDateString('en-CA');
 
-// 新しいヘルパー関数を追加
-const getProgressColor = (hours) => {
-  if (hours >= 160) return 'bg-green-500';
-  if (hours >= 120) return 'bg-blue-500';
-  return 'bg-blue-400';
-};
-
 // 追加: 新しいヘルパー関数群と WORK_TYPES の定義
 const calculatePlannedWorkingHours = (schedules, currentDate, userName) => {
   if (!schedules || !Array.isArray(schedules)) return 0;
@@ -146,24 +139,6 @@ const getStandardWorkingHours = (date, settingsData) => {
   return settingsData.workHours[configMonth.toString()] || 160;
 };
 
-// ユーザーアイコンの表示コンポーネント
-const UserAvatar = ({ user }) => {
-  return user?.iconUrl ? (
-    <img
-      src={user.iconUrl}
-      alt={user.name}
-      className="w-12 h-12 rounded-full object-cover"
-      onError={(e) => {
-        console.error('Image load error:', e);
-        e.target.src = ''; // エラー時はデフォルトアイコンを表示
-        e.target.onerror = null;
-      }}
-    />
-  ) : (
-    <UserCircleIcon className="h-12 w-12 text-gray-400" />
-  );
-};
-
 // timeToHoursAndMinutes 関数を修正
 const timeToHoursAndMinutes = (totalHours) => {
   if (isNaN(totalHours)) return { hours: 0, minutes: 0 };
@@ -195,7 +170,6 @@ export default function HomePage() {
   const [forceUpdate, setForceUpdate] = useState(false);
   const [plannedWorkingHours, setPlannedWorkingHours] = useState(0);
   const [todayBreak, setTodayBreak] = useState([]);
-  const standardHours = 160;
   const [schedules, setSchedules] = useState([]);
   const [settings, setSettings] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
