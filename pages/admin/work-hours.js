@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import { ChevronLeftIcon, ChevronRightIcon, FunnelIcon } from '@heroicons/react/24/outline';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
+import { DocumentArrowDownIcon } from '@heroicons/react/24/outline';
 
 export default function WorkHoursPage() {
   const { data: session, status } = useSession();
@@ -32,6 +37,9 @@ export default function WorkHoursPage() {
 
   // 規定労働時間を取得する関数を追加
   const [standardWorkHours, setStandardWorkHours] = useState(null);
+
+  // 新しいstate変数とハンドラを追加
+  const [isExporting, setIsExporting] = useState(false);
 
   // 認証チェック
   useEffect(() => {
@@ -306,6 +314,176 @@ export default function WorkHoursPage() {
     return summary;
   };
 
+  // PDF出力の処理を追加
+  const exportToPDF = () => {
+    try {
+      setIsExporting(true);
+      
+      const userName = users.find(user => user.id === selectedUser)?.name || '不明';
+      const periodLabel = `${currentMonth.year}年${currentMonth.month}月度 (${currentMonth.month - 1}/21～${currentMonth.month}/20)`;
+      const fileName = `勤務記録_${userName}_${currentMonth.year}年${currentMonth.month}月.pdf`;
+      
+      const doc = new jsPDF();
+      
+      // タイトルと期間を設定
+      doc.setFontSize(18);
+      doc.text(`勤務記録: ${userName}`, 14, 20);
+      doc.setFontSize(12);
+      doc.text(periodLabel, 14, 30);
+      
+      // サマリー情報を追加
+      const summary = calculateMonthlySummary();
+      doc.setFontSize(14);
+      doc.text('勤務サマリー', 14, 45);
+      
+      const summaryData = [
+        ['対象期間', `${summary.totalDays}日`],
+        ['出勤日数', `${summary.workDays}日`],
+        ['総労働時間', `${summary.totalWorkHours.toFixed(1)}時間`],
+        ['総休憩時間', `${summary.totalBreakHours.toFixed(1)}時間`],
+        ['残業時間', `${summary.overtimeHours.toFixed(1)}時間`]
+      ];
+      
+      doc.autoTable({
+        startY: 50,
+        head: [['項目', '値']],
+        body: summaryData,
+        theme: 'grid',
+        headStyles: { fillColor: [75, 85, 99] }
+      });
+      
+      // 勤務種別の内訳を追加
+      const workTypeArray = Object.entries(summary.workTypes).map(([type, count]) => [type, `${count}日`]);
+      
+      if (workTypeArray.length > 0) {
+        doc.text('勤務種別の内訳', 14, doc.autoTable.previous.finalY + 15);
+        doc.autoTable({
+          startY: doc.autoTable.previous.finalY + 20,
+          head: [['勤務種別', '日数']],
+          body: workTypeArray,
+          theme: 'grid',
+          headStyles: { fillColor: [75, 85, 99] }
+        });
+      }
+      
+      // 勤務詳細テーブルを追加
+      doc.text('勤務詳細', 14, doc.autoTable.previous.finalY + 15);
+      
+      const tableData = monthlyData.dates.map(date => {
+        const dateStr = formatDateStr(date);
+        const formattedDate = formatDate(date);
+        const workRecord = monthlyData.workRecords[dateStr] || {};
+        const breakRecord = monthlyData.breakRecords[dateStr] || [];
+        const totalBreakMinutes = calculateTotalBreakTime(breakRecord);
+        const breakTimeFormatted = totalBreakMinutes > 0 
+          ? `${Math.floor(totalBreakMinutes / 60)}:${String(totalBreakMinutes % 60).padStart(2, '0')}`
+          : '-';
+            
+        return [
+          formattedDate,
+          workRecord.workType || '-',
+          workRecord.startTime || '-',
+          workRecord.endTime || '-',
+          breakTimeFormatted,
+          workRecord.totalWork || '-'
+        ];
+      });
+      
+      doc.autoTable({
+        startY: doc.autoTable.previous.finalY + 20,
+        head: [['日付', '勤務種別', '出勤時間', '退勤時間', '休憩時間', '実労働時間']],
+        body: tableData,
+        theme: 'grid',
+        headStyles: { fillColor: [75, 85, 99] }
+      });
+      
+      doc.save(fileName);
+    } catch (error) {
+      console.error('PDF出力エラー:', error);
+      alert('PDF出力に失敗しました');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+  
+  // Excel出力の処理を追加
+  const exportToExcel = () => {
+    try {
+      setIsExporting(true);
+      
+      const userName = users.find(user => user.id === selectedUser)?.name || '不明';
+      const periodLabel = `${currentMonth.year}年${currentMonth.month}月度 (${currentMonth.month - 1}/21～${currentMonth.month}/20)`;
+      const fileName = `勤務記録_${userName}_${currentMonth.year}年${currentMonth.month}月.xlsx`;
+      
+      const summary = calculateMonthlySummary();
+      
+      // サマリーシートのデータ
+      const summaryData = [
+        ['勤務記録サマリー', null],
+        ['氏名', userName],
+        ['期間', periodLabel],
+        [null, null],
+        ['項目', '値'],
+        ['対象期間', `${summary.totalDays}日`],
+        ['出勤日数', `${summary.workDays}日`],
+        ['総労働時間', `${summary.totalWorkHours.toFixed(1)}時間`],
+        ['総休憩時間', `${summary.totalBreakHours.toFixed(1)}時間`],
+        ['残業時間', `${summary.overtimeHours.toFixed(1)}時間`],
+        [null, null],
+        ['勤務種別', '日数'],
+      ];
+      
+      // 勤務種別データを追加
+      Object.entries(summary.workTypes).forEach(([type, count]) => {
+        summaryData.push([type, `${count}日`]);
+      });
+      
+      // 詳細データシート
+      const detailData = [
+        ['日付', '勤務種別', '出勤時間', '退勤時間', '休憩時間', '実労働時間']
+      ];
+      
+      monthlyData.dates.forEach(date => {
+        const dateStr = formatDateStr(date);
+        const formattedDate = formatDate(date);
+        const workRecord = monthlyData.workRecords[dateStr] || {};
+        const breakRecord = monthlyData.breakRecords[dateStr] || [];
+        const totalBreakMinutes = calculateTotalBreakTime(breakRecord);
+        const breakTimeFormatted = totalBreakMinutes > 0 
+          ? `${Math.floor(totalBreakMinutes / 60)}:${String(totalBreakMinutes % 60).padStart(2, '0')}`
+          : '-';
+        
+        detailData.push([
+          formattedDate,
+          workRecord.workType || '-',
+          workRecord.startTime || '-',
+          workRecord.endTime || '-',
+          breakTimeFormatted,
+          workRecord.totalWork || '-'
+        ]);
+      });
+      
+      // ワークブックとシートを作成
+      const wb = XLSX.utils.book_new();
+      const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+      const detailSheet = XLSX.utils.aoa_to_sheet(detailData);
+      
+      // シート名を設定して追加
+      XLSX.utils.book_append_sheet(wb, summarySheet, 'サマリー');
+      XLSX.utils.book_append_sheet(wb, detailSheet, '勤務詳細');
+      
+      // ファイルを出力
+      const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
+      saveAs(data, fileName);
+    } catch (error) {
+      console.error('Excel出力エラー:', error);
+      alert('Excel出力に失敗しました');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   if (isInitialLoading) {
     return <div className="p-4 text-center">認証確認中...</div>;
   }
@@ -432,8 +610,29 @@ export default function WorkHoursPage() {
                 {users.find(user => user.id === selectedUser)?.name} - {currentMonth.year}年{currentMonth.month}月の勤務サマリー
               </h2>
             </div>
-            <div className="text-sm text-gray-500">
-              {currentMonth.month}月度 ({currentMonth.month - 1}/21～{currentMonth.month}/20)
+            <div className="flex items-center gap-3">
+              <div className="text-sm text-gray-500">
+                {currentMonth.month}月度 ({currentMonth.month - 1}/21～{currentMonth.month}/20)
+              </div>
+              {/* 出力ボタンをここに追加 */}
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={exportToPDF}
+                  disabled={isExporting}
+                  className="inline-flex items-center justify-center gap-1 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-medium transition-colors"
+                >
+                  <DocumentArrowDownIcon className="h-4 w-4" />
+                  <span>PDF出力</span>
+                </button>
+                <button
+                  onClick={exportToExcel}
+                  disabled={isExporting}
+                  className="inline-flex items-center justify-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-colors"
+                >
+                  <DocumentArrowDownIcon className="h-4 w-4" />
+                  <span>Excel出力</span>
+                </button>
+              </div>
             </div>
           </div>
 
