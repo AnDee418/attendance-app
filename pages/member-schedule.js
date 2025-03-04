@@ -75,66 +75,93 @@ const calculateActualWorkingHoursForClock = (schedules, currentDate, userName) =
   let totalMinutes = 0;
   const selectedMonth = currentDate.getMonth();
   const selectedYear = currentDate.getFullYear();
+  
+  // 正しい期間設定: 前月21日から当月20日まで
   const startDate = new Date(selectedYear, selectedMonth - 1, 21, 0, 0, 0);
   const endDate = new Date(selectedYear, selectedMonth, 20, 23, 59, 59);
 
-  // 対象データのフィルタリング
-  const targetSchedules = schedules.filter(schedule => {
-    if (!Array.isArray(schedule)) return false;
+  // デバッグログを追加
+  console.log('member-schedule: 計算期間', 
+    startDate.toLocaleDateString(), '〜', 
+    endDate.toLocaleDateString(), 
+    'Month:', selectedMonth + 1
+  );
+  console.log('member-schedule: 対象ユーザー:', userName);
+
+  let matchCount = 0;
+
+  // すべてのスケジュールを検査
+  for (const schedule of schedules) {
+    // 無効なデータをスキップ
+    if (!Array.isArray(schedule)) continue;
     
     const scheduleDate = new Date(schedule[0]);
-    if (isNaN(scheduleDate.getTime())) return false;
+    // 無効な日付をスキップ
+    if (isNaN(scheduleDate.getTime())) continue;
 
-    const isInDateRange = scheduleDate >= startDate && scheduleDate <= endDate;
-    const isMatchingUser = schedule[1] === userName;
-    const isClockbookRecord = schedule[5] === '出勤簿';
-    const hasWorkingHours = schedule[6] && typeof schedule[6] === 'string';
+    // 期間内、指定ユーザー、出勤簿タイプ、有効な勤務時間文字列を持つレコードのみ処理
+    if (
+      scheduleDate >= startDate &&
+      scheduleDate <= endDate &&
+      schedule[1] === userName &&
+      schedule[5] === '出勤簿' &&
+      schedule[6] && typeof schedule[6] === 'string'
+    ) {
+      matchCount++;
+      const workHours = parseJapaneseTimeString(schedule[6]);
+      totalMinutes += Math.round(workHours * 60);
+      
+      // デバッグ用：各レコードの詳細
+      console.log('該当レコード:', 
+        scheduleDate.toLocaleDateString(), 
+        schedule[1], 
+        '時間:', schedule[6], 
+        '→', workHours
+      );
+    }
+  }
 
-    return isInDateRange && isMatchingUser && isClockbookRecord && hasWorkingHours;
-  });
-
-  // フィルタリングされたデータの合計時間を計算
-  targetSchedules.forEach(schedule => {
-    const workHours = parseJapaneseTimeString(schedule[6]);
-    totalMinutes += Math.round(workHours * 60);  // 時間を分に変換して加算
-  });
-
-  // 最後に合計分を時間に戻す
+  console.log('合計該当レコード数:', matchCount, '合計時間(分):', totalMinutes);
+  
+  // 分を時間に変換して返す
   return totalMinutes / 60;
 };
 
-// 予定勤務時間計算関数も修正
+// 予定勤務時間計算関数も同様に修正
 const calculatePlannedWorkingHours = (schedules, currentDate, userName) => {
   if (!schedules || !Array.isArray(schedules)) return 0;
   
   let totalMinutes = 0;
   const selectedMonth = currentDate.getMonth();
   const selectedYear = currentDate.getFullYear();
+  
+  // 正しい期間設定: 前月21日から当月20日まで
   const startDate = new Date(selectedYear, selectedMonth - 1, 21, 0, 0, 0);
   const endDate = new Date(selectedYear, selectedMonth, 20, 23, 59, 59);
 
-  // 対象データのフィルタリング
-  const targetSchedules = schedules.filter(schedule => {
-    if (!Array.isArray(schedule)) return false;
+  // すべてのスケジュールを検査
+  for (const schedule of schedules) {
+    // 無効なデータをスキップ
+    if (!Array.isArray(schedule)) continue;
     
     const scheduleDate = new Date(schedule[0]);
-    if (isNaN(scheduleDate.getTime())) return false;
+    // 無効な日付をスキップ
+    if (isNaN(scheduleDate.getTime())) continue;
 
-    const isInDateRange = scheduleDate >= startDate && scheduleDate <= endDate;
-    const isMatchingUser = schedule[1] === userName;
-    const isPlannedRecord = schedule[5] === '予定';
-    const hasWorkingHours = schedule[6] && typeof schedule[6] === 'string';
-
-    return isInDateRange && isMatchingUser && isPlannedRecord && hasWorkingHours;
-  });
-
-  // フィルタリングされたデータの合計時間を計算
-  targetSchedules.forEach(schedule => {
-    const workHours = parseJapaneseTimeString(schedule[6]);
-    totalMinutes += Math.round(workHours * 60);  // 時間を分に変換して加算
-  });
-
-  // 最後に合計分を時間に戻す
+    // 期間内、指定ユーザー、予定タイプ、有効な勤務時間文字列を持つレコードのみ処理
+    if (
+      scheduleDate >= startDate &&
+      scheduleDate <= endDate &&
+      schedule[1] === userName &&
+      schedule[5] === '予定' &&
+      schedule[6] && typeof schedule[6] === 'string'
+    ) {
+      const workHours = parseJapaneseTimeString(schedule[6]);
+      totalMinutes += Math.round(workHours * 60);
+    }
+  }
+  
+  // 分を時間に変換して返す
   return totalMinutes / 60;
 };
 
@@ -305,12 +332,8 @@ export default function MemberSchedulePage() {
     setCurrentDate(newDate);
   };
   
-  // 対象ユーザーの勤務記録（当月のみ抽出）
-  const userSchedules = schedules.filter(s =>
-    userData && s[1] === userData.data[0] &&
-    new Date(s[0]).getMonth() === currentDate.getMonth() &&
-    new Date(s[0]).getFullYear() === currentDate.getFullYear()
-  );
+  // 現在のユーザースケジュールをフィルタリング
+  const userSchedules = schedules.filter(s => s[1] === userData?.data[0]);
   
   const standardHours = settings ? getStandardWorkingHours(currentDate, settings) : 160;
   const actualHoursValue = userData ? calculateActualWorkingHoursForClock(userSchedules, currentDate, userData.data[0]) : 0;
@@ -459,12 +482,12 @@ export default function MemberSchedulePage() {
                 }`} 
                 {...swipeHandlers}
               >
-                {/* その月のリストセクション を MonthlyListSection コンポーネントに置き換え */}
+                {/* その月のリストセクション */}
                 <MonthlyListSection
                   currentDate={currentDate}
                   workDetails={workDetails}
                   userData={userData}
-                  userSchedules={userSchedules}
+                  userSchedules={schedules}
                   breakData={breakData}
                   getLocalDateString={getLocalDateString}
                   onWorkDetailClick={(detail) => setSelectedWorkDetail(detail)}
@@ -514,7 +537,7 @@ export default function MemberSchedulePage() {
                   currentDate={currentDate}
                   workDetails={workDetails.filter(w => w.employeeName === compareUser.data[0])}
                   userData={compareUser}
-                  userSchedules={schedules.filter(s => s[1] === compareUser.data[0])}
+                  userSchedules={schedules}
                   breakData={breakData.filter(b => b.employeeName === compareUser.data[0])}
                   getLocalDateString={getLocalDateString}
                   onWorkDetailClick={(detail) => setSelectedWorkDetail(detail)}
@@ -526,7 +549,7 @@ export default function MemberSchedulePage() {
             ))}
           </div>
         ) : (
-          // モバイル表示の場合（既存の表示）
+          // モバイル表示の場合
           <>
             {/* ユーザー情報カード - スワイプ対象外 */}
             <div className="bg-white rounded-xl shadow-sm p-4 cursor-default mb-6">
@@ -568,12 +591,11 @@ export default function MemberSchedulePage() {
               }`} 
               {...swipeHandlers}
             >
-              {/* その月のリストセクション を MonthlyListSection コンポーネントに置き換え */}
               <MonthlyListSection
                 currentDate={currentDate}
                 workDetails={workDetails}
                 userData={userData}
-                userSchedules={userSchedules}
+                userSchedules={schedules}
                 breakData={breakData}
                 getLocalDateString={getLocalDateString}
                 onWorkDetailClick={(detail) => setSelectedWorkDetail(detail)}

@@ -40,24 +40,39 @@ export default function MonthlyListSection({
     let totalMinutes = 0;
     const selectedMonth = date.getMonth();
     const selectedYear = date.getFullYear();
+    
+    // 前月21日から当月20日までの期間を設定（修正）
     const startDate = new Date(selectedYear, selectedMonth - 1, 21, 0, 0, 0);
     const endDate = new Date(selectedYear, selectedMonth, 20, 23, 59, 59);
 
-    schedules.forEach(schedule => {
-      const scheduleDate = new Date(schedule[0]);
-      if (isNaN(scheduleDate.getTime())) return;
+    console.log('MonthlyListSection: 計算期間（予定）', 
+      startDate.toLocaleDateString(), '〜', 
+      endDate.toLocaleDateString(), 
+      'Month:', selectedMonth + 1
+    );
 
+    // for...ofループに変更して各スケジュールを処理
+    for (const schedule of schedules) {
+      if (!Array.isArray(schedule)) continue;
+      
+      const scheduleDate = new Date(schedule[0]);
+      if (isNaN(scheduleDate.getTime())) continue;
+
+      // 期間の条件を厳密に確認
       if (
         scheduleDate >= startDate &&
         scheduleDate <= endDate &&
         schedule[1] === userName &&
-        schedule[5] === '予定'
+        schedule[5] === '予定' &&
+        schedule[6] && typeof schedule[6] === 'string'
       ) {
         const workHours = parseJapaneseTimeString(schedule[6]);
         totalMinutes += Math.round(workHours * 60);
+        console.log('予定該当:', scheduleDate.toLocaleDateString(), schedule[6], '→', workHours);
       }
-    });
+    }
 
+    console.log('予定合計時間:', totalMinutes / 60);
     return totalMinutes / 60;
   };
 
@@ -67,24 +82,56 @@ export default function MonthlyListSection({
     let totalMinutes = 0;
     const selectedMonth = date.getMonth();
     const selectedYear = date.getFullYear();
+    
+    // 前月21日から当月20日までの期間を設定（修正）
     const startDate = new Date(selectedYear, selectedMonth - 1, 21, 0, 0, 0);
     const endDate = new Date(selectedYear, selectedMonth, 20, 23, 59, 59);
 
-    schedules.forEach(schedule => {
-      const scheduleDate = new Date(schedule[0]);
-      if (isNaN(scheduleDate.getTime())) return;
+    // デバッグ情報
+    console.log('MonthlyListSection: 計算期間（実績）', 
+      startDate.toLocaleDateString(), '〜', 
+      endDate.toLocaleDateString(), 
+      'Month:', selectedMonth + 1
+    );
+    console.log('対象ユーザー:', userName);
 
+    // 該当するデータを集計
+    let matchingRecords = 0;
+    
+    // for...ofループに変更して各スケジュールを処理
+    for (const schedule of schedules) {
+      if (!Array.isArray(schedule)) continue;
+      
+      const scheduleDate = new Date(schedule[0]);
+      if (isNaN(scheduleDate.getTime())) continue;
+
+      // 日付範囲のチェックを明確に
+      const isInDateRange = scheduleDate >= startDate && scheduleDate <= endDate;
+      if (!isInDateRange) continue;
+
+      // ユーザー名とレコードタイプのチェック
       if (
-        scheduleDate >= startDate &&
-        scheduleDate <= endDate &&
         schedule[1] === userName &&
-        schedule[5] === '出勤簿'
+        schedule[5] === '出勤簿' &&
+        schedule[6] && typeof schedule[6] === 'string'
       ) {
+        matchingRecords++;
         const workHours = parseJapaneseTimeString(schedule[6]);
         totalMinutes += Math.round(workHours * 60);
+        
+        console.log('実績該当:', 
+          scheduleDate.toLocaleDateString(), 
+          schedule[1], 
+          schedule[5], 
+          '時間:', schedule[6], 
+          '→', workHours, '時間'
+        );
       }
-    });
+    }
 
+    console.log('合計該当レコード数:', matchingRecords);
+    console.log('合計勤務時間(分):', totalMinutes, '時間:', totalMinutes / 60);
+    
     return totalMinutes / 60;
   };
 
@@ -111,8 +158,11 @@ export default function MonthlyListSection({
   // --- サマリーカード用の値を計算（showSummaryCardがtrueの場合のみ） ---
   let plannedWorkingHours, actualHours, plannedCounts, clockbookCounts, standardHours;
   if (showSummaryCard && userData && userSchedules) {
+    // 21日から20日の期間で勤務時間を計算
     plannedWorkingHours = calculatePlannedWorkingHours(userSchedules, currentDate, userData.data[0]);
     actualHours = calculateActualWorkingHoursForClock(userSchedules, currentDate, userData.data[0]);
+    
+    // 既存の関数を使って勤務種別を集計
     plannedCounts = calculateWorkTypeCounts(userSchedules, '予定');
     clockbookCounts = calculateWorkTypeCounts(userSchedules, '出勤簿');
     standardHours = getStandardWorkingHours(currentDate);
@@ -120,8 +170,16 @@ export default function MonthlyListSection({
 
   return (
     <>
+    {/* 勤務時間セクション */}
       {showSummaryCard && (
         <div className="bg-white rounded-xl shadow-sm p-4 divide-y divide-gray-100 cursor-default mb-6">
+          <div className="text-sm text-gray-500 mb-2 font-medium">
+            {/* 前月21日から当月20日の期間表示を強調 */}
+            <span className="bg-blue-50 px-2 py-1 rounded text-blue-600">
+              {`${new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 21).toLocaleDateString('ja-JP', { month: 'long' })}21日〜${currentDate.toLocaleDateString('ja-JP', { month: 'long' })}20日`}
+            </span>
+            の勤務状況（集計期間）
+          </div>
           <div className="pt-2 flex flex-row justify-between gap-2">
             {/* 予定勤務時間セクション - 業務とアルバイト以外のアカウントのみ表示 */}
             {userData && !['業務', 'アルバイト'].includes(userData.data[5]) && (
@@ -271,7 +329,16 @@ export default function MonthlyListSection({
           </div>
         </div>
       )}
+
+      {/* 行動予定セクション */}
       <div className="bg-white rounded-2xl shadow-lg p-4">
+        {/* 追加: 期間の表示 */}
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-lg font-medium text-gray-900">行動予定</h3>
+          <div className="bg-blue-50 px-3 py-1.5 rounded-lg text-blue-600 text-sm font-medium">
+            {`${currentDate.getFullYear()}年${currentDate.getMonth() + 1}月1日～${currentDate.getFullYear()}年${currentDate.getMonth() + 1}月${new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate()}日`}
+          </div>
+        </div>
         <div className="space-y-3">
           {getDaysInMonth(currentDate).map((date, idx) => {
             const dateKey = date.toLocaleDateString('ja-JP', { 

@@ -617,7 +617,7 @@ export default function SchedulesPage() {
                                 />
                               </svg>
                               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                <span className="text-2xl font-bold text-gray-900">{actualHours}</span>
+                                <span className="text-2xl font-bold text-gray-900">{actualHours.toFixed(1)}</span>
                                 <span className="text-sm text-gray-500">/{standardHours}</span>
                               </div>
                             </div>
