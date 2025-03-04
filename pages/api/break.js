@@ -7,23 +7,27 @@ const SHEET_NAME = '休憩記録';
 export default async function handler(req, res) {
   if (req.method === 'POST') {
     const { date, employeeName, breakStart, breakEnd, recordType } = req.body;
-    if (!date || !employeeName || !breakStart || !breakEnd || !recordType) {
-      return res.status(400).json({ error: '必要な項目が不足しています。' });
+    if (!date || !employeeName) {
+      return res.status(400).json({ error: '日付と社員名は必須です。' });
     }
-    try {
-      // 休憩記録では、範囲を A:E とし、最後の列に recordType を保存
-      await sheets.spreadsheets.values.append({
-        spreadsheetId: SPREADSHEET_ID,
-        range: `'${SHEET_NAME}'!A:E`,
-        valueInputOption: 'RAW',
-        requestBody: {
-          values: [[date, employeeName, breakStart, breakEnd, recordType]],
-        },
-      });
-      res.status(200).json({ message: '休憩記録を登録しました。' });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: '休憩記録の登録に失敗しました。' });
+    
+    if (breakStart && breakEnd) {
+      try {
+        await sheets.spreadsheets.values.append({
+          spreadsheetId: SPREADSHEET_ID,
+          range: `'${SHEET_NAME}'!A:E`,
+          valueInputOption: 'RAW',
+          requestBody: {
+            values: [[date, employeeName, breakStart, breakEnd, recordType]],
+          },
+        });
+        res.status(200).json({ message: '休憩記録を登録しました。' });
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: '休憩記録の登録に失敗しました。' });
+      }
+    } else {
+      res.status(200).json({ message: '休憩記録なし' });
     }
   } else if (req.method === 'GET') {
     try {

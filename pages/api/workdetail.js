@@ -41,31 +41,37 @@ export default async function handler(req, res) {
         recordType
       } = req.body;
 
-      // 必須フィールドの検証
-      if (!date || !employeeName || !workTitle) {
-        res.status(400).json({ error: 'Missing required fields.' });
+      // 必須フィールドの検証を修正：日付と社員名のみを必須とする
+      if (!date || !employeeName) {
+        res.status(400).json({ error: '日付と社員名は必須です。' });
         return;
       }
 
-      await sheets.spreadsheets.values.append({
-        spreadsheetId: SPREADSHEET_ID,
-        range: `${SHEET_NAME}!A:H`,
-        valueInputOption: 'RAW',
-        requestBody: {
-          values: [[
-            date,           // 日付
-            employeeName,   // 社員名
-            workTitle,      // 業務タイトル
-            workStart,      // 業務開始時間
-            workEnd,        // 業務終了時間
-            workCategory,   // 種別
-            recordType,     // 登録タイプ
-            detail         // 詳細 (H列)
-          ]],
-        },
-      });
-
-      res.status(200).json({ message: '業務詳細記録を登録しました。' });
+      // タイトルか詳細、または開始/終了時間のいずれかが入力されている場合のみ登録
+      if (workTitle || detail || workStart || workEnd) {
+        await sheets.spreadsheets.values.append({
+          spreadsheetId: SPREADSHEET_ID,
+          range: `${SHEET_NAME}!A:H`,
+          valueInputOption: 'RAW',
+          requestBody: {
+            values: [[
+              date,           // 日付
+              employeeName,   // 社員名
+              workTitle || '', // 業務タイトル
+              workStart || '', // 業務開始時間
+              workEnd || '',   // 業務終了時間
+              workCategory || '業務', // 種別
+              recordType,     // 登録タイプ
+              detail || ''    // 詳細 (H列)
+            ]],
+          },
+        });
+        
+        res.status(200).json({ message: '業務詳細記録を登録しました。' });
+      } else {
+        // 詳細情報がない場合は単に成功を返す
+        res.status(200).json({ message: '業務詳細なし' });
+      }
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: '業務詳細記録の登録に失敗しました。' });

@@ -420,12 +420,15 @@ export default function MySchedulePage() {
       });
       
       if (!resAttendance.ok) {
-        throw new Error('勤務記録送信エラー');
+        const errorData = await resAttendance.json();
+        console.error('送信エラー詳細:', errorData);
+        throw new Error(`勤務記録送信エラー: ${errorData.error || resAttendance.statusText}`);
       }
 
       // 休憩記録送信
       for (let record of breakRecords) {
-        if (record.breakStart || record.breakEnd) {
+        // 休憩開始と休憩終了の両方が入力されている場合のみ送信する
+        if (record.breakStart && record.breakEnd) {
           const resBreak = await fetch('/api/break', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -439,7 +442,9 @@ export default function MySchedulePage() {
           });
           
           if (!resBreak.ok) {
-            throw new Error('休憩記録送信エラー');
+            const errorData = await resBreak.json();
+            console.error('休憩記録送信エラー詳細:', errorData);
+            throw new Error(`休憩記録送信エラー: ${errorData.error || resBreak.statusText}`);
           }
         }
       }
@@ -509,9 +514,17 @@ export default function MySchedulePage() {
       setEditMessage('予定を保存しました');
       setTimeout(() => setEditMessage(''), 3000);
 
+      // 成功時のログ追加
+      console.log('データ保存成功:', { 
+        attendance, 
+        breakRecords: breakRecords.filter(r => r.breakStart && r.breakEnd),
+        workDetails: workDetails.filter(d => d.workTitle || d.detail)
+      });
+
     } catch (error) {
       console.error('Error submitting schedule:', error);
-      setEditMessage(error.message || '予定の保存に失敗しました');
+      // エラーメッセージをより具体的に
+      setEditMessage(`保存に失敗しました: ${error.message || 'サーバーエラー'}`);
     } finally {
       setIsSubmitting(false);
     }
