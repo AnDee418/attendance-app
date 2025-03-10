@@ -248,6 +248,24 @@ export default function ScheduleForm({
     typeof window !== 'undefined' && 
     window.localStorage.getItem('userAccountType') === '業務';
 
+  // 15分単位の時間オプションを生成する関数
+  const generateTimeOptions = () => {
+    const options = [];
+    for (let hour = 0; hour < 24; hour++) {
+      for (let minute = 0; minute < 60; minute += 15) {
+        const formattedHour = hour.toString().padStart(2, '0');
+        const formattedMinute = minute.toString().padStart(2, '0');
+        const timeValue = `${formattedHour}:${formattedMinute}`;
+        options.push(
+          <option key={timeValue} value={timeValue}>
+            {timeValue}
+          </option>
+        );
+      }
+    }
+    return options;
+  };
+
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-[110] p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl 
@@ -334,23 +352,27 @@ export default function ScheduleForm({
                     <div className="flex flex-col sm:flex-row sm:space-x-4 mb-1">
                       <div className="flex-1">
                         <label className="block mb-1">業務開始:</label>
-                        <input 
-                          type="time" 
+                        <select 
                           name="workStart" 
                           value={detail.workStart} 
                           onChange={(e) => handleWorkDetailChange(index, e)} 
                           className="w-full p-2 border rounded" 
-                        />
+                        >
+                          <option value="">時間を選択</option>
+                          {generateTimeOptions()}
+                        </select>
                       </div>
                       <div className="flex-1">
                         <label className="block mb-1">業務終了:</label>
-                        <input 
-                          type="time" 
+                        <select 
                           name="workEnd" 
                           value={detail.workEnd} 
                           onChange={(e) => handleWorkDetailChange(index, e)} 
                           className="w-full p-2 border rounded" 
-                        />
+                        >
+                          <option value="">時間を選択</option>
+                          {generateTimeOptions()}
+                        </select>
                       </div>
                     </div>
                     <div>

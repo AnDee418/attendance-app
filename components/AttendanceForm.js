@@ -62,6 +62,24 @@ export default function AttendanceForm({
     }
   }, [timeDetails]);
 
+  // 15分単位の時間オプションを生成する関数
+  const generateTimeOptions = () => {
+    const options = [];
+    for (let hour = 0; hour < 24; hour++) {
+      for (let minute = 0; minute < 60; minute += 15) {
+        const formattedHour = hour.toString().padStart(2, '0');
+        const formattedMinute = minute.toString().padStart(2, '0');
+        const timeValue = `${formattedHour}:${formattedMinute}`;
+        options.push(
+          <option key={timeValue} value={timeValue}>
+            {timeValue}
+          </option>
+        );
+      }
+    }
+    return options;
+  };
+
   return (
     <>
       {/* 勤務記録フォーム */}
@@ -101,25 +119,29 @@ export default function AttendanceForm({
             <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0">
               <div className="flex-1">
                 <label className="block mb-1">出社時間:</label>
-                <input 
-                  type="time" 
+                <select 
                   name="startTime" 
                   value={attendance.startTime} 
                   onChange={onAttendanceChange} 
                   required={!isLeaveType}
                   className="w-full p-3 border rounded-lg" 
-                />
+                >
+                  <option value="">時間を選択</option>
+                  {generateTimeOptions()}
+                </select>
               </div>
               <div className="flex-1">
                 <label className="block mb-1">退社時間:</label>
-                <input 
-                  type="time" 
+                <select 
                   name="endTime" 
                   value={attendance.endTime} 
                   onChange={onAttendanceChange} 
                   required={!isLeaveType}
                   className="w-full p-3 border rounded-lg" 
-                />
+                >
+                  <option value="">時間を選択</option>
+                  {generateTimeOptions()}
+                </select>
               </div>
             </div>
           )}
@@ -135,23 +157,27 @@ export default function AttendanceForm({
               <div className="space-y-3">
                 <div>
                   <label className="block text-sm text-gray-600 mb-1">休憩開始:</label>
-                  <input 
-                    type="time" 
+                  <select 
                     name="breakStart" 
                     value={record.breakStart} 
                     onChange={(e) => onBreakChange(index, e)} 
                     className="w-full p-3 border rounded-lg bg-gray-50" 
-                  />
+                  >
+                    <option value="">時間を選択</option>
+                    {generateTimeOptions()}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm text-gray-600 mb-1">休憩終了:</label>
-                  <input 
-                    type="time" 
+                  <select 
                     name="breakEnd" 
                     value={record.breakEnd} 
                     onChange={(e) => onBreakChange(index, e)} 
                     className="w-full p-3 border rounded-lg bg-gray-50" 
-                  />
+                  >
+                    <option value="">時間を選択</option>
+                    {generateTimeOptions()}
+                  </select>
                 </div>
                 {breakRecords.length > 1 && (
                   <button 
