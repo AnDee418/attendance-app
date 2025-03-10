@@ -13,6 +13,47 @@ export default async function handler(req, res) {
     
     if (breakStart && breakEnd) {
       try {
+        // 既存データの確認
+        const result = await sheets.spreadsheets.values.get({
+          spreadsheetId: SPREADSHEET_ID,
+          range: `'${SHEET_NAME}'!A:E`,
+        });
+        
+        const rows = result.data.values || [];
+        const existingRowIndex = rows.findIndex(row => 
+          row[0] === date && 
+          row[1] === employeeName && 
+          row[4] === recordType
+        );
+        
+        if (existingRowIndex !== -1) {
+          // 既存データを削除
+          const rowsToKeep = rows.filter((row, index) => 
+            !(row[0] === date && 
+              row[1] === employeeName && 
+              row[4] === recordType)
+          );
+          
+          // シートをクリアして新しいデータを書き込み
+          await sheets.spreadsheets.values.clear({
+            spreadsheetId: SPREADSHEET_ID,
+            range: `'${SHEET_NAME}'!A:E`,
+          });
+          
+          // フィルタリングした行を書き戻し
+          if (rowsToKeep.length > 0) {
+            await sheets.spreadsheets.values.append({
+              spreadsheetId: SPREADSHEET_ID,
+              range: `'${SHEET_NAME}'!A:E`,
+              valueInputOption: 'RAW',
+              requestBody: {
+                values: rowsToKeep,
+              },
+            });
+          }
+        }
+
+        // 新しいデータを追加
         await sheets.spreadsheets.values.append({
           spreadsheetId: SPREADSHEET_ID,
           range: `'${SHEET_NAME}'!A:E`,
@@ -21,10 +62,10 @@ export default async function handler(req, res) {
             values: [[date, employeeName, breakStart, breakEnd, recordType]],
           },
         });
-        res.status(200).json({ message: '休憩記録を登録しました。' });
+        res.status(200).json({ message: '休憩記録を更新しました。' });
       } catch (error) {
         console.error(error);
-        res.status(500).json({ error: '休憩記録の登録に失敗しました。' });
+        res.status(500).json({ error: '休憩記録の更新に失敗しました。' });
       }
     } else {
       res.status(200).json({ message: '休憩記録なし' });
@@ -44,6 +85,10 @@ export default async function handler(req, res) {
   } else if (req.method === 'DELETE') {
     try {
       const { date, employeeName, recordType } = req.query;
+      
+      if (!date || !employeeName || !recordType) {
+        return res.status(400).json({ error: '必要なパラメータが不足しています' });
+      }
       
       const result = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
@@ -73,9 +118,9 @@ export default async function handler(req, res) {
         });
       }
       
-      return res.status(200).json({ message: 'Successfully deleted' });
+      return res.status(200).json({ success: true, message: '休憩データが削除されました' });
     } catch (error) {
-      console.error('Error deleting break:', error);
+      console.error('Error deleting break records:', error);
       return res.status(500).json({ error: 'Internal server error' });
     }
   } else {

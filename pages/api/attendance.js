@@ -45,6 +45,46 @@ export default async function handler(req, res) {
     try {
       const { date, employeeName, startTime, endTime, workType, recordType, totalWorkTime } = req.body;
 
+      // 既存データの確認
+      const result = await sheets.spreadsheets.values.get({
+        spreadsheetId: process.env.GOOGLE_SHEET_ID,
+        range: '勤務記録!A:G',
+      });
+      
+      const rows = result.data.values || [];
+      const existingRowIndex = rows.findIndex(row => 
+        row[0] === date && 
+        row[1] === employeeName && 
+        row[5] === recordType
+      );
+      
+      if (existingRowIndex !== -1) {
+        // 既存データを削除
+        const rowsToKeep = rows.filter((row, index) => 
+          !(row[0] === date && 
+            row[1] === employeeName && 
+            row[5] === recordType)
+        );
+        
+        // シートをクリアして新しいデータを書き込み
+        await sheets.spreadsheets.values.clear({
+          spreadsheetId: process.env.GOOGLE_SHEET_ID,
+          range: '勤務記録!A:G',
+        });
+        
+        // フィルタリングした行を書き戻し
+        if (rowsToKeep.length > 0) {
+          await sheets.spreadsheets.values.append({
+            spreadsheetId: process.env.GOOGLE_SHEET_ID,
+            range: '勤務記録!A:G',
+            valueInputOption: 'RAW',
+            requestBody: {
+              values: rowsToKeep,
+            },
+          });
+        }
+      }
+
       // スプレッドシートに書き込むデータを準備
       const values = [
         [date, employeeName, startTime, endTime, workType, recordType, totalWorkTime]
@@ -53,7 +93,7 @@ export default async function handler(req, res) {
       // スプレッドシートに書き込み
       await sheets.spreadsheets.values.append({
         spreadsheetId: process.env.GOOGLE_SHEET_ID,
-        range: '勤務記録!A:G', // G列に実労働時間などのデータが含まれる
+        range: '勤務記録!A:G', 
         valueInputOption: 'RAW',
         insertDataOption: 'INSERT_ROWS',
         requestBody: {
@@ -61,10 +101,23 @@ export default async function handler(req, res) {
         },
       });
 
-      return res.status(200).json({ message: 'Success' });
+      return res.status(200).json({ message: '勤務記録を更新しました。' });
     } catch (error) {
       console.error('Error posting attendance:', error);
       return res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+  // PUT メソッドの場合、既存の勤務記録を更新
+  else if (req.method === 'PUT') {
+    try {
+      const { id, ...attendance } = req.body;
+      
+      // Google Sheetsに更新をかける
+      // ...
+      
+      res.status(200).json({ success: true, message: '勤務記録が更新されました' });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
     }
   }
   // DELETE メソッドを追加

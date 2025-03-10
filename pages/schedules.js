@@ -84,21 +84,47 @@ const timeToHoursAndMinutes = (totalHours) => {
   };
 };
 
-// 実働時間計算関数を修正
+// 実働時間計算関数を修正 - 明示的に日付パース処理を追加
 const calculateActualWorkingHoursForClock = (schedules, currentDate, userName) => {
   if (!schedules || !Array.isArray(schedules)) return 0;
   
   let totalMinutes = 0;
-  const selectedMonth = currentDate.getMonth();
+  const selectedMonth = currentDate.getMonth(); // 0-11の値
   const selectedYear = currentDate.getFullYear();
-  const startDate = new Date(selectedYear, selectedMonth - 1, 21, 0, 0, 0);
+  
+  // 集計開始日の計算 (1月選択時は前年12月対応)
+  let startYear = selectedYear;
+  let startMonth = selectedMonth - 1;
+  
+  // 1月の場合は前年12月になるよう調整
+  if (startMonth < 0) {
+    startMonth = 11; // 12月 (0ベースなので11)
+    startYear = selectedYear - 1;
+  }
+  
+  const startDate = new Date(startYear, startMonth, 21, 0, 0, 0);
   const endDate = new Date(selectedYear, selectedMonth, 20, 23, 59, 59);
+
+  // デバッグログを追加
+  console.log('schedules.js 計算期間:', 
+    startDate.toLocaleDateString(), '〜', 
+    endDate.toLocaleDateString(),
+    '対象ユーザー:', userName
+  );
 
   // 対象データのフィルタリング
   const targetSchedules = schedules.filter(schedule => {
     if (!Array.isArray(schedule)) return false;
     
-    const scheduleDate = new Date(schedule[0]);
+    // 日付文字列を明示的にパース - YYYY-MM-DD形式を想定
+    let scheduleDate;
+    if (typeof schedule[0] === 'string') {
+      const [year, month, day] = schedule[0].split('-').map(Number);
+      scheduleDate = new Date(year, month - 1, day);
+    } else {
+      scheduleDate = new Date(schedule[0]);
+    }
+    
     if (isNaN(scheduleDate.getTime())) return false;
 
     const isInDateRange = scheduleDate >= startDate && scheduleDate <= endDate;
@@ -109,33 +135,46 @@ const calculateActualWorkingHoursForClock = (schedules, currentDate, userName) =
     return isInDateRange && isMatchingUser && isClockbookRecord && hasWorkingHours;
   });
 
+  console.log(`${userName}の集計対象レコード数:`, targetSchedules.length);
+  
   // フィルタリングされたデータの合計時間を計算
   targetSchedules.forEach(schedule => {
     const workHours = parseJapaneseTimeString(schedule[6]);
     totalMinutes += Math.round(workHours * 60);  // 時間を分に変換して加算
+    
+    // 詳細なデバッグログ
+    console.log('集計:', new Date(schedule[0]).toLocaleDateString(), schedule[6], `→ ${workHours}h (${Math.round(workHours * 60)}分)`);
   });
+
+  console.log(`${userName}の合計時間:`, totalMinutes / 60, '時間');
 
   // 最後に合計分を時間に戻す
   return totalMinutes / 60;
 };
 
-// 予定勤務時間計算関数も同様に修正
+// 予定勤務時間計算関数を index.js と完全に同じ実装に修正
 const calculatePlannedWorkingHours = (schedules, currentDate, userName) => {
   if (!schedules || !Array.isArray(schedules)) return 0;
-  
-  let totalMinutes = 0;
+
+  let totalMinutes = 0;  // 分単位で合計を管理
   const selectedMonth = currentDate.getMonth();
   const selectedYear = currentDate.getFullYear();
+  
+  // 日付の範囲を修正（時刻を設定して確実に含める）
   const startDate = new Date(selectedYear, selectedMonth - 1, 21, 0, 0, 0);
   const endDate = new Date(selectedYear, selectedMonth, 20, 23, 59, 59);
+  
+  console.log(`${userName} 予定計算期間:`, startDate.toLocaleDateString(), '〜', endDate.toLocaleDateString());
 
   // 対象データのフィルタリング
   const targetSchedules = schedules.filter(schedule => {
     if (!Array.isArray(schedule)) return false;
     
+    // index.js と同じ日付解析方法に合わせる
     const scheduleDate = new Date(schedule[0]);
     if (isNaN(scheduleDate.getTime())) return false;
 
+    // 日付の比較も同様に
     const isInDateRange = scheduleDate >= startDate && scheduleDate <= endDate;
     const isMatchingUser = schedule[1] === userName;
     const isPlannedRecord = schedule[5] === '予定';
@@ -144,14 +183,21 @@ const calculatePlannedWorkingHours = (schedules, currentDate, userName) => {
     return isInDateRange && isMatchingUser && isPlannedRecord && hasWorkingHours;
   });
 
+  // 結果をログに出力
+  console.log(`${userName} 予定対象レコード:`, targetSchedules.length);
+  
   // フィルタリングされたデータの合計時間を計算
   targetSchedules.forEach(schedule => {
     const workHours = parseJapaneseTimeString(schedule[6]);
     totalMinutes += Math.round(workHours * 60);  // 時間を分に変換して加算
+    
+    console.log('予定加算:', schedule[0], schedule[6], `→ ${workHours}h`);
   });
 
   // 最後に合計分を時間に戻す
-  return totalMinutes / 60;
+  const totalHours = totalMinutes / 60;
+  console.log(`${userName} 予定合計時間:`, totalHours, '時間');
+  return totalHours;
 };
 
 // 進捗状況に応じた色を返す関数
@@ -223,25 +269,57 @@ const formatTimeWithDiff = (time, total) => {
   };
 };
 
-// 予定の休憩時間を計算する関数
+// 予定の休憩時間を計算する関数を修正
 const calculatePlannedBreakHours = (breakRecords, currentDate) => {
   let totalMinutes = 0;
-  const currentMonth = currentDate.getMonth();
-  const currentYear = currentDate.getFullYear();
+  
+  // 集計期間を前月21日から当月20日に統一
+  const selectedMonth = currentDate.getMonth();
+  const selectedYear = currentDate.getFullYear();
+  
+  // 集計開始日の計算 (1月選択時は前年12月対応)
+  let startYear = selectedYear;
+  let startMonth = selectedMonth - 1;
+  
+  // 1月の場合は前年12月になるよう調整
+  if (startMonth < 0) {
+    startMonth = 11;
+    startYear = selectedYear - 1;
+  }
+  
+  const startDate = new Date(startYear, startMonth, 21, 0, 0, 0);
+  const endDate = new Date(selectedYear, selectedMonth, 20, 23, 59, 59);
+
+  console.log('休憩時間の計算期間:', startDate.toLocaleDateString(), '〜', endDate.toLocaleDateString());
 
   breakRecords.forEach(breakRecord => {
-    const breakDate = new Date(breakRecord[0]);
+    // 日付文字列を明示的にパース
+    let breakDate;
+    if (typeof breakRecord[0] === 'string') {
+      const [year, month, day] = breakRecord[0].split('-').map(Number);
+      breakDate = new Date(year, month - 1, day);
+    } else {
+      breakDate = new Date(breakRecord[0]);
+    }
+    
+    if (isNaN(breakDate.getTime())) return;
+    
     if (
-      breakDate.getMonth() === currentMonth && 
-      breakDate.getFullYear() === currentYear &&
+      breakDate >= startDate && 
+      breakDate <= endDate &&
       breakRecord[4] === '予定'
     ) {
       const [startHour, startMin] = breakRecord[2].split(':').map(Number);
       const [endHour, endMin] = breakRecord[3].split(':').map(Number);
-      totalMinutes += (endHour * 60 + endMin) - (startHour * 60 + startMin);
+      const breakMinutes = (endHour * 60 + endMin) - (startHour * 60 + startMin);
+      totalMinutes += breakMinutes;
+      
+      console.log('休憩集計:', breakDate.toLocaleDateString(), `${startHour}:${startMin}〜${endHour}:${endMin}`, `→ ${breakMinutes}分`);
     }
   });
-  return Math.round(totalMinutes / 60);
+  
+  console.log('合計休憩時間:', totalMinutes / 60, '時間');
+  return totalMinutes / 60;  // 時間単位で返す
 };
 
 // 休暇申請データを取得する関数を追加
@@ -256,20 +334,37 @@ const fetchVacationRequests = async () => {
   }
 };
 
-// データフェッチ関数を最適化
+// データフェッチ関数を修正して前月のデータも取得するように変更
 const fetchUserSchedules = async (month, year) => {
   try {
-    const params = new URLSearchParams({
-      month: month,
-      year: year,
-      limit: '100' // 一度に取得するデータ数を制限
-    });
+    // 前月のデータも取得するために、前月の情報を計算
+    let prevMonth = month - 1;
+    let prevYear = year;
+    if (prevMonth < 1) {
+      prevMonth = 12;
+      prevYear = year - 1;
+    }
     
-    const response = await fetch(`/api/attendance?${params}`);
-    if (!response.ok) throw new Error('スケジュールの取得に失敗しました');
+    console.log(`データ取得: ${year}年${month}月と${prevYear}年${prevMonth}月`);
     
-    const data = await response.json();
-    return data.data || [];
+    // 現在の月と前月のデータを両方取得
+    const [currentMonthResponse, prevMonthResponse] = await Promise.all([
+      fetch(`/api/attendance?month=${month}&year=${year}&limit=500`), // 十分な量のデータを取得
+      fetch(`/api/attendance?month=${prevMonth}&year=${prevYear}&limit=500`)
+    ]);
+    
+    if (!currentMonthResponse.ok || !prevMonthResponse.ok) {
+      throw new Error('スケジュールの取得に失敗しました');
+    }
+    
+    const currentMonthData = await currentMonthResponse.json();
+    const prevMonthData = await prevMonthResponse.json();
+    
+    // 両方のデータを結合
+    const combinedData = [...(prevMonthData.data || []), ...(currentMonthData.data || [])];
+    console.log(`取得データ: 前月=${prevMonthData.data?.length || 0}件, 当月=${currentMonthData.data?.length || 0}件, 合計=${combinedData.length}件`);
+    
+    return combinedData;
   } catch (error) {
     console.error('Error:', error);
     return [];
@@ -285,6 +380,7 @@ export default function SchedulesPage() {
   const [breakRecords, setBreakRecords] = useState([]);
   const [vacationRequests, setVacationRequests] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [userWorkHours, setUserWorkHours] = useState({});
 
   // ユーザーの表示フィルタリング関数
   const filterUsers = (allUsers) => {
@@ -374,6 +470,27 @@ export default function SchedulesPage() {
     };
     getVacationRequests();
   }, []);
+
+  // ユーザー別の勤務時間計算
+  useEffect(() => {
+    if (users && schedules.length > 0) {
+      // 各ユーザーの勤務時間をここで事前計算
+      const userHours = {};
+      users.forEach(user => {
+        const userName = user.data[0];
+        userHours[userName] = {
+          planned: calculatePlannedWorkingHours(schedules, currentDate, userName),
+          actual: calculateActualWorkingHoursForClock(schedules, currentDate, userName)
+        };
+      });
+      
+      // 計算結果をログに出力して確認
+      console.log('全ユーザーの勤務時間計算結果:', userHours);
+      
+      // 計算結果をステート変数に保存
+      setUserWorkHours(userHours);
+    }
+  }, [users, schedules, currentDate]);
 
   const handleMonthChange = (delta) => {
     const newDate = new Date(currentDate);
@@ -476,15 +593,30 @@ export default function SchedulesPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {Object.entries(departments).map(([_, departmentUsers]) => 
                 departmentUsers.map((user) => {
+                  const userName = user.data[0];
+                  
+                  // userWorkHoursが確実に存在するか確認
+                  if (!userWorkHours[userName]) {
+                    console.warn(`${userName}の事前計算データがありません`);
+                  }
+                  
+                  // 事前計算の結果を使用（再計算しない）
+                  const userHour = userWorkHours[userName] || { planned: 0, actual: 0 };
+                  const actualHours = userHour.actual;
+                  const plannedWorkingHours = userHour.planned;
                   const standardHours = getStandardWorkingHours(currentDate, settings);
-                  const userSchedules = schedules.filter(s => s[1] === user.data[0]);
-                  const userBreakRecords = breakRecords.filter(b => b[1] === user.data[0]);
-                  const totalHours = calculateWorkingHours(userSchedules, currentDate);
-                  const actualHours = calculateActualWorkingHoursForClock(userSchedules, currentDate, user.data[0]);
-                  const plannedCounts = calculateWorkTypeCounts(userSchedules, '予定');
-                  const clockbookCounts = calculateWorkTypeCounts(userSchedules, '出勤簿');
-                  const plannedWorkingHours = calculatePlannedWorkingHours(userSchedules, currentDate, user.data[0]);
-                  const isWorkTimeUser = user.data[5] === '業務' || user.data[5] === 'アルバイト';
+                  
+                  console.log(`${userName} カード表示時間: 予定=${plannedWorkingHours.toFixed(1)}h, 実績=${actualHours.toFixed(1)}h, 標準=${standardHours}h`);
+                  
+                  // 勤務種別のカウント計算のみはユーザーフィルタが必要
+                  const plannedCounts = calculateWorkTypeCounts(
+                    schedules.filter(s => s[1] === userName),
+                    '予定'
+                  );
+                  const clockbookCounts = calculateWorkTypeCounts(
+                    schedules.filter(s => s[1] === userName),
+                    '出勤簿'
+                  );
 
                   return (
                     <Link
@@ -536,31 +668,31 @@ export default function SchedulesPage() {
                         <div className="flex gap-4">
                           {/* 勤務時間セクション */}
                           <div className={`relative flex flex-col p-3 rounded-lg border ${
-                            isWorkTimeUser
+                            ['業務', 'アルバイト'].includes(user.data[5])
                               ? 'bg-purple-50/80 border-purple-100' 
                               : 'bg-blue-50/80 border-blue-100'
                           } w-3/5`}>
                             <span className="text-sm text-gray-500">
-                              {isWorkTimeUser ? '実勤務時間' : '予定勤務時間'}
+                              {['業務', 'アルバイト'].includes(user.data[5]) ? '実勤務時間' : '予定勤務時間'}
                             </span>
                             <div className="flex mt-1">
                               <div className="w-1/2 flex items-center justify-center">
                                 <div className="flex items-baseline">
-                                  <span className={`${isWorkTimeUser ? 'text-2xl' : 'text-xl'} font-bold ${isWorkTimeUser ? 'text-purple-600' : 'text-blue-600'}`}>
-                                    {(isWorkTimeUser ? actualHours : plannedWorkingHours).toFixed(1)}
+                                  <span className={`${['業務', 'アルバイト'].includes(user.data[5]) ? 'text-2xl' : 'text-xl'} font-bold ${['業務', 'アルバイト'].includes(user.data[5]) ? 'text-purple-600' : 'text-blue-600'}`}>
+                                    {(['業務', 'アルバイト'].includes(user.data[5]) ? actualHours : plannedWorkingHours).toFixed(1)}
                                   </span>
-                                  <span className={`ml-1 ${isWorkTimeUser ? 'text-lg' : 'text-base'} ${isWorkTimeUser ? 'text-purple-500' : 'text-blue-500'}`}>
+                                  <span className={`ml-1 ${['業務', 'アルバイト'].includes(user.data[5]) ? 'text-lg' : 'text-base'} ${['業務', 'アルバイト'].includes(user.data[5]) ? 'text-purple-500' : 'text-blue-500'}`}>
                                     h
                                   </span>
                                 </div>
                               </div>
-                              <div className={`w-px ${isWorkTimeUser ? 'bg-purple-200' : 'bg-blue-200'}`}></div>
+                              <div className={`w-px ${['業務', 'アルバイト'].includes(user.data[5]) ? 'bg-purple-200' : 'bg-blue-200'}`}></div>
                               <div className="w-1/2 flex items-center justify-center">
                                 {(() => {
-                                  const diff = Math.abs((isWorkTimeUser ? actualHours : plannedWorkingHours) - standardHours);
+                                  const diff = Math.abs((['業務', 'アルバイト'].includes(user.data[5]) ? actualHours : plannedWorkingHours) - standardHours);
                                   return (
                                     <div className="flex items-baseline">
-                                      <span className={`text-xl font-bold ${isWorkTimeUser
+                                      <span className={`text-xl font-bold ${['業務', 'アルバイト'].includes(user.data[5])
                                         ? Math.abs(actualHours - standardHours) <= 3
                                           ? 'text-green-600'
                                           : Math.abs(actualHours - standardHours) <= 9
@@ -572,7 +704,7 @@ export default function SchedulesPage() {
                                             ? 'text-yellow-600'
                                             : 'text-red-500'
                                       }`}>
-                                        {(isWorkTimeUser ? actualHours : plannedWorkingHours) >= standardHours ? '+' : '-'}{diff.toFixed(1)}
+                                        {(['業務', 'アルバイト'].includes(user.data[5]) ? actualHours : plannedWorkingHours) >= standardHours ? '+' : '-'}{diff.toFixed(1)}
                                       </span>
                                       <span className="ml-1 text-lg">h</span>
                                     </div>
@@ -583,7 +715,7 @@ export default function SchedulesPage() {
                             <div 
                               className={`absolute bottom-0 left-0 right-0 text-xs font-bold flex items-center justify-center text-center py-2 rounded 
                                 ${
-                                  isWorkTimeUser
+                                  ['業務', 'アルバイト'].includes(user.data[5])
                                     ? Math.abs(actualHours - standardHours) <= 3
                                       ? 'bg-green-100 text-green-700'
                                       : Math.abs(actualHours - standardHours) <= 9
@@ -596,7 +728,7 @@ export default function SchedulesPage() {
                                         : 'bg-red-100 text-red-700'
                                 }`}
                             >
-                              {isWorkTimeUser
+                              {['業務', 'アルバイト'].includes(user.data[5])
                                 ? (actualHours >= standardHours)  // 実勤務時間が規定時間以上の場合のみメッセージを表示
                                   ? Math.abs(actualHours - standardHours) <= 3
                                     ? "OK"

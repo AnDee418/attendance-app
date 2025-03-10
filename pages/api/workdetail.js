@@ -47,8 +47,49 @@ export default async function handler(req, res) {
         return;
       }
 
+      // 既存データの確認
+      const result = await sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `${SHEET_NAME}!A:H`,
+      });
+      
+      const rows = result.data.values || [];
+      const existingRowIndex = rows.findIndex(row => 
+        row[0] === date && 
+        row[1] === employeeName && 
+        row[6] === recordType
+      );
+
       // タイトルか詳細、または開始/終了時間のいずれかが入力されている場合のみ登録
       if (workTitle || detail || workStart || workEnd) {
+        if (existingRowIndex !== -1) {
+          // 既存データを削除
+          const rowsToKeep = rows.filter((row, index) => 
+            !(row[0] === date && 
+              row[1] === employeeName && 
+              row[6] === recordType)
+          );
+          
+          // シートをクリアして新しいデータを書き込み
+          await sheets.spreadsheets.values.clear({
+            spreadsheetId: SPREADSHEET_ID,
+            range: `${SHEET_NAME}!A:H`,
+          });
+          
+          // フィルタリングした行を書き戻し
+          if (rowsToKeep.length > 0) {
+            await sheets.spreadsheets.values.append({
+              spreadsheetId: SPREADSHEET_ID,
+              range: `${SHEET_NAME}!A:H`,
+              valueInputOption: 'RAW',
+              requestBody: {
+                values: rowsToKeep,
+              },
+            });
+          }
+        }
+
+        // 新しいデータを追加
         await sheets.spreadsheets.values.append({
           spreadsheetId: SPREADSHEET_ID,
           range: `${SHEET_NAME}!A:H`,
@@ -67,40 +108,46 @@ export default async function handler(req, res) {
           },
         });
         
-        res.status(200).json({ message: '業務詳細記録を登録しました。' });
+        res.status(200).json({ message: '業務詳細記録を更新しました。' });
       } else {
         // 詳細情報がない場合は単に成功を返す
         res.status(200).json({ message: '業務詳細なし' });
       }
     } catch (error) {
       console.error(error);
-      res.status(500).json({ error: '業務詳細記録の登録に失敗しました。' });
+      res.status(500).json({ error: '業務詳細記録の更新に失敗しました。' });
     }
   } else if (req.method === 'DELETE') {
     try {
       const { date, employeeName, recordType } = req.query;
       
+      if (!date || !employeeName || !recordType) {
+        return res.status(400).json({ error: '必要なパラメータが不足しています' });
+      }
+      
+      // 該当する行を検索して削除
       const result = await sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range: `${SHEET_NAME}!A:H`,
+        spreadsheetId: process.env.GOOGLE_SHEET_ID,
+        range: '業務詳細!A:H',
       });
       
       const rows = result.data.values || [];
       const rowsToKeep = rows.filter(row => 
         !(row[0] === date && 
           row[1] === employeeName && 
-          row[6] === recordType)
+          row[7] === recordType)
       );
       
+      // シートをクリアして新しいデータを書き込み
       await sheets.spreadsheets.values.clear({
-        spreadsheetId: SPREADSHEET_ID,
-        range: `${SHEET_NAME}!A:H`,
+        spreadsheetId: process.env.GOOGLE_SHEET_ID,
+        range: '業務詳細!A:H',
       });
       
       if (rowsToKeep.length > 0) {
         await sheets.spreadsheets.values.append({
-          spreadsheetId: SPREADSHEET_ID,
-          range: `${SHEET_NAME}!A:H`,
+          spreadsheetId: process.env.GOOGLE_SHEET_ID,
+          range: '業務詳細!A:H',
           valueInputOption: 'RAW',
           requestBody: {
             values: rowsToKeep,
@@ -108,9 +155,9 @@ export default async function handler(req, res) {
         });
       }
       
-      return res.status(200).json({ message: 'Successfully deleted' });
+      return res.status(200).json({ success: true, message: '業務詳細データが削除されました' });
     } catch (error) {
-      console.error('Error deleting workdetail:', error);
+      console.error('Error deleting work details:', error);
       return res.status(500).json({ error: 'Internal server error' });
     }
   } else {

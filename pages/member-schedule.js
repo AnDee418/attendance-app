@@ -24,16 +24,24 @@ const formatMonth = (date) => {
 };
 
 // ヘルパー関数：規定勤務時間を取得（21日以降は翌月の設定を使用）
-const getStandardWorkingHours = (date, settingsData) => {
-  if (!settingsData || !settingsData.workHours) return 160;
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
-  let configMonth = month;
-  if (day >= 21) {
-    configMonth = month + 1;
-    if (configMonth > 12) configMonth = 1;
-  }
-  return settingsData.workHours[configMonth.toString()] || 160;
+const getStandardWorkingHours = (date, settings) => {
+  if (!settings || !settings.data) return 160;
+  
+  // 月の営業日数を取得（実装例）
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  
+  // 週末の日数を概算（単純化のため）
+  const weekends = Math.floor(daysInMonth / 7) * 2;
+  
+  // 平日の日数
+  const workdays = daysInMonth - weekends;
+  
+  // 1日の標準労働時間（設定から取得するか、デフォルト8時間）
+  const hoursPerDay = 8;
+  
+  return workdays * hoursPerDay;
 };
 
 // 時間文字列を数値に変換する関数を追加
@@ -257,9 +265,13 @@ export default function MemberSchedulePage() {
   // データの遅延読み込み実装
   const [isWorkDetailsLoaded, setIsWorkDetailsLoaded] = useState(false);
   
+  // 以下を追加：isLoading状態の追加
+  const [isLoading, setIsLoading] = useState(false);
+  
   // 初期表示時は基本情報のみ読み込み
   useEffect(() => {
     const fetchBasicData = async () => {
+      setIsLoading(true);
       try {
         // ユーザー情報と基本スケジュールのみ取得
         const [usersRes, schedulesRes] = await Promise.all([
@@ -541,6 +553,7 @@ export default function MemberSchedulePage() {
                   showSummaryCard={true}
                   timeToHoursAndMinutes={timeToHoursAndMinutes}
                   parseJapaneseTimeString={parseJapaneseTimeString}
+                  standardHours={standardHours}
                 />
               </div>
             </div>
@@ -591,6 +604,7 @@ export default function MemberSchedulePage() {
                   showSummaryCard={true}
                   timeToHoursAndMinutes={timeToHoursAndMinutes}
                   parseJapaneseTimeString={parseJapaneseTimeString}
+                  standardHours={standardHours}
                 />
               </div>
             ))}
@@ -649,6 +663,7 @@ export default function MemberSchedulePage() {
                 showSummaryCard={true}
                 timeToHoursAndMinutes={timeToHoursAndMinutes}
                 parseJapaneseTimeString={parseJapaneseTimeString}
+                standardHours={standardHours}
               />
             </div>
           </>
@@ -670,6 +685,13 @@ export default function MemberSchedulePage() {
         workDetail={selectedWorkDetail} 
         onClose={() => setSelectedWorkDetail(null)} 
       />
+
+      {/* isLoadingが使われていれば以下のようなローディング表示もあるはず */}
+      {isLoading && (
+        <div className="fixed inset-0 flex items-center justify-center z-[120] bg-black bg-opacity-50">
+          <div className="text-white text-2xl">読込中...</div>
+        </div>
+      )}
     </>
   );
 }
