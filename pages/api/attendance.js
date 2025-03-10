@@ -44,6 +44,11 @@ export default async function handler(req, res) {
   else if (req.method === 'POST') {
     try {
       const { date, employeeName, startTime, endTime, workType, recordType, totalWorkTime } = req.body;
+      
+      console.log("API受信データ:", req.body);
+      
+      // 勤務種別が「勤務種別」の場合は「出勤」に修正
+      const correctedWorkType = workType === '勤務種別' ? '出勤' : workType;
 
       // 既存データの確認
       const result = await sheets.spreadsheets.values.get({
@@ -87,8 +92,10 @@ export default async function handler(req, res) {
 
       // スプレッドシートに書き込むデータを準備
       const values = [
-        [date, employeeName, startTime, endTime, workType, recordType, totalWorkTime]
+        [date, employeeName, startTime, endTime, correctedWorkType, recordType, totalWorkTime]
       ];
+      
+      console.log("シートに書き込むデータ:", values);
 
       // スプレッドシートに書き込み
       await sheets.spreadsheets.values.append({

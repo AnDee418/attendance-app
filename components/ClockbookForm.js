@@ -40,7 +40,55 @@ export default function ClockbookForm({
     setMessage('');
 
     try {
-      await onSubmit(attendance, breakRecords);
+      // デバッグ用にログを追加
+      console.log("送信する勤務データ:", attendance);
+      
+      // 勤務種別に応じた処理
+      let submissionData = { ...attendance };
+      
+      // 公休の場合は時間をすべて空に
+      if (attendance.workType === '公休') {
+        submissionData = {
+          ...submissionData,
+          startTime: '',
+          endTime: '',
+          totalWorkTime: ''
+        };
+      }
+      
+      // 有給休暇の場合
+      if (attendance.workType === '有給休暇') {
+        // ユーザーアカウントタイプに応じて実労働時間を設定
+        const workTime = userAccountType === '業務' ? '7時間30分' : '7時間';
+        
+        submissionData = {
+          ...submissionData,
+          startTime: '',
+          endTime: '',
+          totalWorkTime: workTime
+        };
+      }
+      
+      // 送信前の最終データをログ出力
+      console.log("最終送信データ:", submissionData);
+      
+      // 明示的に必要なデータのみを抽出して送信
+      const cleanedData = {
+        date: submissionData.date,
+        employeeName: submissionData.employeeName,
+        startTime: submissionData.startTime,
+        endTime: submissionData.endTime,
+        workType: submissionData.workType || '出勤',
+        recordType: '出勤簿',
+        totalWorkTime: submissionData.totalWorkTime
+      };
+      
+      console.log("クリーンアップしたデータ:", cleanedData);
+      
+      // 親コンポーネントの送信関数を呼び出し（既存の機能を維持）
+      await onSubmit(cleanedData, breakRecords);
+      
+      // フォームをリセット
       setAttendance(prev => ({
         ...prev,
         startTime: '',
@@ -50,6 +98,7 @@ export default function ClockbookForm({
       setBreakRecords([{ breakStart: '', breakEnd: '', recordType: '出勤簿' }]);
       onClose();
     } catch (error) {
+      console.error("送信エラー:", error);
       setMessage(error.message || 'エラーが発生しました');
     }
   };
@@ -94,23 +143,26 @@ export default function ClockbookForm({
 
   const handleWorkTypeChange = (e) => {
     const newWorkType = e.target.value;
-    let newStartTime = attendance.startTime;
-    let newEndTime = attendance.endTime;
+    console.log("勤務種別変更:", newWorkType);
     
+    // 休暇系の場合は時間をリセット
     if (['公休', '有給休暇', '休暇'].includes(newWorkType)) {
-      newStartTime = '00:00';
-      newEndTime = '00:00';
+      setAttendance(prev => ({
+        ...prev,
+        workType: newWorkType,
+        startTime: '',
+        endTime: ''
+      }));
+    } else {
+      // 通常の勤務種別の場合は普通に更新
+      setAttendance(prev => ({
+        ...prev,
+        workType: newWorkType
+      }));
     }
-    
-    setAttendance(prev => ({
-      ...prev,
-      workType: newWorkType,
-      startTime: newStartTime,
-      endTime: newEndTime
-    }));
   };
 
-  // 既存データの取得
+  // 既存データの取得処理を修正
   useEffect(() => {
     const fetchExistingData = async () => {
       setIsLoading(true);
@@ -125,35 +177,48 @@ export default function ClockbookForm({
         
         // 既存データがあれば、それで初期化
         if (attendanceData.data && attendanceData.data.length > 0) {
-          const existingAttendance = attendanceData.data[0];
-          setAttendance(prev => ({
-            ...prev,
-            startTime: existingAttendance[2] || '',
-            endTime: existingAttendance[3] || '',
-            workType: existingAttendance[4] || '出勤',
-            totalWorkTime: existingAttendance[6] || ''
-          }));
-        }
-        
-        if (breakData.data && breakData.data.length > 0) {
-          // 休憩記録が存在する場合はそれを使用
-          const existingBreaks = breakData.data
-            .filter(row => row[0] === initialAttendance.date && 
-                          row[1] === initialAttendance.employeeName && 
-                          row[4] === '出勤簿')
-            .map(row => ({
-              breakStart: row[2] || '',
-              breakEnd: row[3] || '',
-              recordType: '出勤簿'
-            }));
+          const existingAttendance = attendanceData.data.find(row => 
+            row[0] === initialAttendance.date && 
+            row[1] === initialAttendance.employeeName && 
+            row[5] === '出勤簿'
+          );
           
-          if (existingBreaks.length > 0) {
-            setBreakRecords(existingBreaks);
+          if (existingAttendance) {
+            console.log("既存の勤務データ:", existingAttendance);
+            setAttendance(prev => ({
+              ...prev,
+              startTime: existingAttendance[2] || '',
+              endTime: existingAttendance[3] || '',
+              workType: existingAttendance[4] || '出勤',
+              totalWorkTime: existingAttendance[6] || ''
+            }));
           }
         }
+        
+        // 既存の休憩データがあれば、それで初期化
+        if (breakData.data && breakData.data.length > 0) {
+          const existingBreaks = breakData.data.filter(row => 
+            row[0] === initialAttendance.date && 
+            row[1] === initialAttendance.employeeName && 
+            row[4] === '出勤簿'
+          );
+          
+          if (existingBreaks.length > 0) {
+            console.log("既存の休憩データ:", existingBreaks);
+            setBreakRecords(
+              existingBreaks.map(row => ({
+                breakStart: row[2] || '',
+                breakEnd: row[3] || '',
+                recordType: '出勤簿'
+              }))
+            );
+          }
+        }
+        
+        setIsLoading(false);
       } catch (error) {
-        console.error('データ取得エラー:', error);
-      } finally {
+        console.error('Error fetching existing data:', error);
+        setMessage('データの取得中にエラーが発生しました');
         setIsLoading(false);
       }
     };
@@ -164,6 +229,18 @@ export default function ClockbookForm({
       setIsLoading(false);
     }
   }, [initialAttendance.date, initialAttendance.employeeName]);
+
+  // 初期値の設定を確認
+  useEffect(() => {
+    // 初期値を設定（ただし既存データがある場合は上書きしない）
+    if (!attendance.startTime && !attendance.endTime) {
+      setAttendance(initialAttendance);
+    }
+    
+    // デバッグ用にログを追加
+    console.log("初期値:", initialAttendance);
+    console.log("現在のフォーム値:", attendance);
+  }, [initialAttendance]);
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-[110] p-4">
@@ -195,22 +272,8 @@ export default function ClockbookForm({
                 onBreakChange={handleBreakChange}
                 onAddBreak={addBreakRecord}
                 onRemoveBreak={removeBreakRecord}
+                onWorkTypeChange={handleWorkTypeChange}
               />
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2">
-                  勤務種別
-                </label>
-                <select
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  value={attendance.workType}
-                  onChange={handleWorkTypeChange}
-                  required
-                >
-                  {getWorkTypeOptions().map(type => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-              </div>
             </form>
           </div>
         )}

@@ -7,6 +7,7 @@ export default function AttendanceForm({
   onBreakChange,
   onAddBreak,
   onRemoveBreak,
+  onWorkTypeChange,
 }) {
   // 休暇系の勤務種別かどうかを判定
   const isLeaveType = ['公休', '有給休暇'].includes(attendance.workType);
@@ -60,7 +61,55 @@ export default function AttendanceForm({
         }
       });
     }
-  }, [timeDetails]);
+  }, [timeDetails, onAttendanceChange]);
+
+  // 勤務種別の変更ハンドラを修正
+  const handleWorkTypeChange = (e) => {
+    // 親コンポーネントの関数を呼び出す
+    if (onWorkTypeChange) {
+      // 専用のハンドラがある場合はそれを使用
+      onWorkTypeChange(e);
+    } else {
+      // 通常のハンドラを使用
+      onAttendanceChange(e);
+      
+      // 休暇系の場合は時間をリセット
+      const newWorkType = e.target.value;
+      if (['公休', '有給休暇', '休暇'].includes(newWorkType)) {
+        onAttendanceChange({
+          target: {
+            name: 'startTime',
+            value: ''
+          }
+        });
+        onAttendanceChange({
+          target: {
+            name: 'endTime',
+            value: ''
+          }
+        });
+      }
+    }
+  };
+
+  // 勤務種別の選択肢を動的に生成する関数
+  const getWorkTypeOptions = () => {
+    // 基本の選択肢（すべてのユーザーに表示）
+    const options = [
+      '出勤',
+      '在宅',
+      '半休',
+      '早退',
+      '遅刻',
+      '公休',
+      '有給休暇',
+      '休日出勤',
+      '振替出勤',
+      '移動'
+    ];
+    
+    return options;
+  };
 
   // 15分単位の時間オプションを生成する関数
   const generateTimeOptions = () => {
@@ -90,19 +139,13 @@ export default function AttendanceForm({
             <select 
               name="workType" 
               value={attendance.workType} 
-              onChange={onAttendanceChange} 
+              onChange={handleWorkTypeChange}
               required 
               className="w-full p-3 border rounded-lg bg-white"
             >
-              <option value="出勤">出勤</option>
-              <option value="公休">公休</option>
-              <option value="半休">半休</option>
-              <option value="早退">早退</option>
-              <option value="遅刻">遅刻</option>
-              <option value="移動">移動</option>
-              <option value="有給休暇">有給休暇</option>
-              <option value="休日出勤">休日出勤</option>
-              <option value="振替出勤">振替出勤</option>
+              {getWorkTypeOptions().map(type => (
+                <option key={type} value={type}>{type}</option>
+              ))}
             </select>
           </div>
           <div>

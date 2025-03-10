@@ -18,6 +18,7 @@ import WorkDetailModal from '../components/WorkDetailModal';
 import Layout from '../components/Layout';
 import LoadingSpinner from '../components/LoadingSpinner';
 import VacationRequestForm from '../components/VacationRequestForm';
+import ActionSelectionModal from '../components/ActionSelectionModal';
 
 // アカウント種別の定義（member-schedule.js と同様）
 const accountTypes = {
@@ -90,7 +91,7 @@ export default function MySchedulePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showVacationForm, setShowVacationForm] = useState(false);
   const [vacationDate, setVacationDate] = useState(null);
-  
+
   // データ取得関数を整理して一元化
   const fetchAllData = async (date = currentDate) => {
     setIsLoading(true);
@@ -274,18 +275,8 @@ export default function MySchedulePage() {
 
   // handleActionButtonClickを修正
   const handleActionButtonClick = (type) => {
-    if (type === 'vacation') {
-      // 休暇申請フォームを表示
-      if (selectedDate && userData) {
-        const dateStr = getLocalDateString(selectedDate);
-        setVacationDate({
-          date: dateStr,
-          employeeName: userData.data[0]
-        });
-        setShowVacationForm(true);
-      }
-      setSelectedDate(null);
-    } else if (type === 'schedule') {
+    if (type === 'schedule') {
+      // 予定登録の処理
       if (selectedDate && userData) {
         const dateStr = getLocalDateString(selectedDate);
         
@@ -376,10 +367,15 @@ export default function MySchedulePage() {
       }
       setSelectedDate(null);
     } else if (type === 'attendance') {
+      // 勤務実績登録フォームを表示
       if (selectedDate && userData) {
         const dateStr = getLocalDateString(selectedDate);
+        
+        // 既存の出勤簿データを検索
         const existingAttendance = userSchedules.find(s => 
-          getLocalDateString(new Date(s[0])) === dateStr && s[5] === '出勤簿'
+          getLocalDateString(new Date(s[0])) === dateStr && 
+          s[1] === userData.data[0] && 
+          s[5] === '出勤簿'
         );
         
         if (existingAttendance) {
@@ -387,10 +383,11 @@ export default function MySchedulePage() {
           setClockbookAttendance({
             date: dateStr,
             employeeName: userData.data[0],
-            startTime: existingAttendance[2],
-            endTime: existingAttendance[3],
-            workType: existingAttendance[4],
-            recordType: '出勤簿'
+            startTime: existingAttendance[2] || '',
+            endTime: existingAttendance[3] || '',
+            workType: existingAttendance[4] || '出勤',
+            recordType: '出勤簿',
+            totalWorkTime: existingAttendance[6] || ''
           });
         } else {
           // 追加モード：空の出勤簿フォームを設定
@@ -400,150 +397,25 @@ export default function MySchedulePage() {
             startTime: '',
             endTime: '',
             workType: '出勤',
-            recordType: '出勤簿'
+            recordType: '出勤簿',
+            totalWorkTime: ''
           });
         }
         setShowClockbookForm(true);
       }
       setSelectedDate(null);
+    } else if (type === 'vacation') {
+      // 休暇申請フォームを表示
+      if (selectedDate && userData) {
+        const dateStr = getLocalDateString(selectedDate);
+        setVacationDate({
+          date: dateStr,
+          employeeName: userData.data[0]
+        });
+        setShowVacationForm(true);
+      }
+      setSelectedDate(null);
     }
-  };
-
-  // 日付選択時に既存データを確認する関数を修正
-  const handleDateSelect = (date) => {
-    setSelectedDate(date);
-    
-    // 選択された日の文字列形式
-    const dateString = getLocalDateString(date);
-    const userName = session?.user?.name || '';
-    
-    console.log("選択日:", dateString, "ユーザー:", userName);
-    console.log("現在のスケジュール:", schedules);
-    
-    // 選択された日の既存データをチェック（予定データ）
-    const existingSchedule = schedules.find(schedule => 
-      schedule[0] === dateString && 
-      schedule[1] === userName && 
-      schedule[5] === '予定'
-    );
-    
-    console.log("検出された予定データ:", existingSchedule);
-    
-    // 選択された日の既存データをチェック（出勤簿データ）
-    const existingClockbook = schedules.find(schedule => 
-      schedule[0] === dateString && 
-      schedule[1] === userName && 
-      schedule[5] === '出勤簿'
-    );
-    
-    console.log("検出された出勤簿データ:", existingClockbook);
-    
-    // 選択された日の休憩データ
-    const existingBreaks = breakData.filter(breakRecord => 
-      breakRecord.date === dateString && 
-      breakRecord.employeeName === userName
-    );
-    
-    console.log("検出された休憩データ:", existingBreaks);
-    
-    // 選択された日の業務詳細データ
-    const existingWorkDetails = workDetails.filter(detail => 
-      detail.date === dateString && 
-      detail.employeeName === userName
-    );
-    
-    console.log("検出された業務詳細データ:", existingWorkDetails);
-    
-    // 該当する予定データが存在する場合の処理
-    if (existingSchedule) {
-      console.log("予定データを編集します");
-      
-      // 予定データをフォームに読み込む
-      const scheduleData = {
-        date: dateString,
-        employeeName: userName,
-        startTime: existingSchedule[2] || '',
-        endTime: existingSchedule[3] || '',
-        workType: existingSchedule[4] || '出勤',
-        recordType: '予定',
-        id: existingSchedule[7] || '' // IDがあれば保存（更新用）
-      };
-      
-      setScheduleAttendance(scheduleData);
-      
-      // 関連する休憩データをフォームに読み込む
-      const scheduledBreaks = existingBreaks.filter(b => b.recordType === '予定') || [];
-      if (scheduledBreaks.length > 0) {
-        setEditBreakRecords(scheduledBreaks.map(b => ({
-          id: b.id || '',  // IDを保存
-          breakStart: b.breakStart || '',
-          breakEnd: b.breakEnd || '',
-          recordType: '予定'
-        })));
-      } else {
-        setEditBreakRecords([{ breakStart: '', breakEnd: '', recordType: '予定' }]);
-      }
-      
-      // 関連する業務詳細データをフォームに読み込む
-      const scheduledDetails = existingWorkDetails.filter(d => d.recordType === '予定') || [];
-      if (scheduledDetails.length > 0) {
-        setEditWorkDetails(scheduledDetails.map(d => ({
-          id: d.id || '',  // IDを保存
-          workTitle: d.workTitle || '',
-          workStart: d.workStart || '',
-          workEnd: d.workEnd || '',
-          detail: d.detail || '',
-          workCategory: d.workCategory || '業務',
-          recordType: '予定'
-        })));
-      } else {
-        setEditWorkDetails([{ 
-          workTitle: '', 
-          workStart: '', 
-          workEnd: '', 
-          detail: '', 
-          workCategory: '業務',
-          recordType: '予定' 
-        }]);
-      }
-      
-      // 予定フォームを表示
-      setShowScheduleForm(true);
-    } 
-    // 該当する実績データが存在する場合の処理
-    else if (existingClockbook) {
-      console.log("実績データを編集します");
-      
-      // 実績データをフォームに読み込む
-      const clockbookData = {
-        date: dateString,
-        employeeName: userName,
-        startTime: existingClockbook[2] || '',
-        endTime: existingClockbook[3] || '',
-        workType: existingClockbook[4] || '出勤',
-        recordType: '出勤簿',
-        id: existingClockbook[7] || '' // IDがあれば保存（更新用）
-      };
-      
-      setClockbookAttendance(clockbookData);
-      
-      // 関連する休憩データをフォームに読み込む
-      const clockbookBreaks = existingBreaks.filter(b => b.recordType === '出勤簿') || [];
-      if (clockbookBreaks.length > 0) {
-        setEditBreakRecords(clockbookBreaks.map(b => ({
-          id: b.id || '',  // IDを保存
-          breakStart: b.breakStart || '',
-          breakEnd: b.breakEnd || '',
-          recordType: '出勤簿'
-        })));
-      } else {
-        setEditBreakRecords([{ breakStart: '', breakEnd: '', recordType: '出勤簿' }]);
-      }
-      
-      // 出勤簿フォームを表示
-      setShowClockbookForm(true);
-    }
-    // どちらも存在しない場合は選択モーダルを表示（既存の挙動）
   };
 
   // 行動予定の送信処理を修正（上書き対応）
@@ -699,19 +571,31 @@ export default function MySchedulePage() {
     }
   };
 
-  // 出勤簿の送信処理も同様に修正（上書き対応）
+  // 出勤簿の送信処理を修正
   const handleClockbookSubmit = async (attendanceData, breakRecords) => {
     setIsSubmitting(true);
     try {
-      const startTime = attendanceData.startTime;
-      const endTime = attendanceData.endTime;
+      // デバッグ用にログを追加
+      console.log("受け取った勤務データ:", attendanceData);
       
-      // 勤務時間の計算（休暇系の場合は0時間）
-      let workingHours = 0;
+      const startTime = attendanceData.startTime || '';
+      const endTime = attendanceData.endTime || '';
+      const workType = attendanceData.workType || '出勤';
       
-      if (!['公休', '有給休暇', '休暇'].includes(attendanceData.workType) && 
-          startTime && endTime && startTime !== '00:00' && endTime !== '00:00') {
-        
+      // 勤務時間の計算（休暇系の場合は特別処理）
+      let totalWorkTime = attendanceData.totalWorkTime || '';
+      
+      // 公休の場合は空の勤務時間
+      if (workType === '公休') {
+        totalWorkTime = '';
+      }
+      // 有給休暇の場合はアカウントタイプに応じた固定時間
+      else if (workType === '有給休暇') {
+        const accountType = window.localStorage.getItem('userAccountType') || '';
+        totalWorkTime = accountType === '業務' ? '7時間30分' : '7時間';
+      }
+      // 通常の勤務の場合は計算
+      else if (startTime && endTime && startTime !== '00:00' && endTime !== '00:00') {
         // 時間を分に変換
         const [startHour, startMinute] = startTime.split(':').map(Number);
         const [endHour, endMinute] = endTime.split(':').map(Number);
@@ -761,18 +645,27 @@ export default function MySchedulePage() {
         const hours = Math.floor(netWorkMinutes / 60);
         const minutes = netWorkMinutes % 60;
         
-        workingHours = `${hours}時間${minutes > 0 ? `${minutes}分` : ''}`;
+        totalWorkTime = `${hours}時間${minutes > 0 ? `${minutes}分` : ''}`;
       }
+      
+      // 送信データを明示的に構築
+      const submitData = {
+        date: attendanceData.date,
+        employeeName: attendanceData.employeeName,
+        startTime: startTime,
+        endTime: endTime,
+        workType: workType,
+        recordType: '出勤簿',
+        totalWorkTime: totalWorkTime
+      };
+      
+      console.log("送信するデータ:", submitData);
       
       // 出勤簿データの送信（新規または更新）
       await fetch('/api/attendance', {
-        method: 'POST',  // PUTではなくPOST - 既存のAPIで上書き処理
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...attendanceData,
-          recordType: '出勤簿',
-          workingHours: workingHours
-        }),
+        body: JSON.stringify(submitData),
       });
       
       // 既存の休憩データをまず削除
@@ -844,6 +737,14 @@ export default function MySchedulePage() {
 
   // 代わりに、isLoadingの条件を更新
   const loading = isLoading || status === 'loading' || !session || !userData;
+
+  // 日付選択時の処理を追加
+  const handleDateSelect = (date) => {
+    setSelectedDate(date);
+    
+    // 選択された日付に対するアクションボタンを表示するだけ
+    // 具体的なアクションは handleActionButtonClick で処理
+  };
 
   return (
     <>
