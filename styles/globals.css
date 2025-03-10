@@ -54,3 +54,37 @@
 .hide-scrollbar::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
 }
+
+/* iOS向けのパフォーマンス最適化 */
+.ios-optimize {
+  transform: translate3d(0,0,0);
+  backface-visibility: hidden;
+  will-change: transform;
+  perspective: 1000;
+}
+
+.ios-text {
+  transform: translateZ(0);
+  text-rendering: optimizeLegibility;
+}
+
+/* アニメーションの最適化 */
+@media screen and (max-width: 768px) {
+  .transition-all {
+    transition-property: transform, opacity;
+    transition-duration: 200ms;
+  }
+  
+  /* 重いアニメーションを無効化 */
+  .ios-disable-animation {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* iOS向けのスクロール最適化 */
+.ios-scroll {
+  -webkit-overflow-scrolling: touch;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}

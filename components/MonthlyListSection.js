@@ -18,6 +18,10 @@ const getDaysInMonth = (date) => {
   return days;
 };
 
+// iOS向け最適化クラスを追加
+const IOS_OPTIMIZE_CLASS = "transform translate3d(0,0,0) backface-visibility-hidden";
+const IOS_TEXT_CLASS = "translate3d(0,0,0)";
+
 // コンポーネント定義
 function MonthlyListSection({ 
   currentDate, 
@@ -257,7 +261,7 @@ function MonthlyListSection({
     <>
       {/* サマリーカード - 開閉機能付き */}
       {showSummaryCard && userData && (
-        <div className="bg-white rounded-lg shadow-md mb-4 overflow-hidden">
+        <div className={`bg-white rounded-lg shadow-md mb-4 overflow-hidden ${IOS_OPTIMIZE_CLASS}`}>
           {/* コンパクト化したヘッダー部分 */}
           <div 
             className="bg-blue-600 text-white p-2.5 cursor-pointer flex justify-between items-center"
@@ -265,10 +269,10 @@ function MonthlyListSection({
           >
             <div className="flex flex-col w-full">
               <div className="flex flex-col sm:flex-row sm:items-center">
-                <h2 className="text-base font-semibold">
+                <h2 className={`text-base font-semibold ${IOS_TEXT_CLASS}`}>
                   {currentDate.getFullYear()}年{currentDate.getMonth() + 1}月度の勤務概要
                 </h2>
-                <span className="text-xs bg-blue-500 text-blue-50 px-2 py-0.5 rounded mt-1 sm:mt-0 sm:ml-2 inline-block">
+                <span className={`text-xs bg-blue-500 text-blue-50 px-2 py-0.5 rounded mt-1 sm:mt-0 sm:ml-2 inline-block ${IOS_TEXT_CLASS}`}>
                   {getPayrollPeriod(currentDate)}
                 </span>
               </div>
@@ -429,7 +433,7 @@ function MonthlyListSection({
       )}
 
       {/* 日付リスト */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+      <div className={`bg-white rounded-lg shadow-sm overflow-hidden ${IOS_OPTIMIZE_CLASS}`}>
         {/* 日付リストセクションのヘッダー - member-scheduleページに組み込み */}
         {isMemberSchedulePage && (
           <div className="bg-gray-50 p-3 border-b border-gray-200">
@@ -498,7 +502,7 @@ function MonthlyListSection({
             return (
               <div 
                 key={dateString} 
-                className={`ios-optimize rounded-lg border ${
+                className={`${IOS_OPTIMIZE_CLASS} rounded-lg border ${
                   isToday(day) ? 'border-blue-300 bg-blue-50/50' : 
                   isPlannedLeave || isActualLeave || vacationStatus ? 'border-purple-200 bg-purple-50/30' :
                   isWeekend(day) ? 'border-gray-200 bg-gray-50/50' : 'border-gray-100'
@@ -508,14 +512,14 @@ function MonthlyListSection({
                   {/* 日付ヘッダー */}
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center">
-                      <div className={`ios-text text-lg font-bold mr-2 ${
+                      <div className={`${IOS_TEXT_CLASS} text-lg font-bold mr-2 ${
                         isToday(day) ? 'text-blue-700' : 
                         day.getDay() === 0 ? 'text-red-600' : 
                         day.getDay() === 6 ? 'text-blue-600' : 'text-gray-800'
                       }`}>
                         {day.getDate()}
                       </div>
-                      <div className={`ios-text text-sm ${
+                      <div className={`${IOS_TEXT_CLASS} text-sm ${
                         isToday(day) ? 'text-blue-600' : 
                         day.getDay() === 0 ? 'text-red-500' : 
                         day.getDay() === 6 ? 'text-blue-500' : 'text-gray-500'
@@ -536,7 +540,7 @@ function MonthlyListSection({
                     {isMySchedulePage && (
                       <button
                         onClick={() => onAddButtonClick(day)}
-                        className="ios-optimize flex items-center text-xs font-medium px-2.5 py-1 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white rounded-full transition-colors border border-blue-600 active:translate-y-0.5 shadow-sm"
+                        className={`${IOS_OPTIMIZE_CLASS} flex items-center text-xs font-medium px-2.5 py-1 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white rounded-full transition-colors border border-blue-600 active:translate-y-0.5 shadow-sm`}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-0.5" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
@@ -551,8 +555,8 @@ function MonthlyListSection({
                     <div className="space-y-3">
                       {/* 公休・有休の場合は大きく表示 */}
                       {(isPlannedLeave || isActualLeave || (vacationStatus && vacationStatus.type)) && (
-                        <div className="ios-optimize bg-purple-50 border border-purple-200 rounded-lg p-4 flex items-center justify-center">
-                          <span className="ios-text text-xl font-bold text-purple-700">
+                        <div className={`${IOS_OPTIMIZE_CLASS} bg-purple-50 border border-purple-200 rounded-lg p-4 flex items-center justify-center`}>
+                          <span className={`${IOS_TEXT_CLASS} text-xl font-bold text-purple-700`}>
                             {(vacationStatus && vacationStatus.type) || 
                              (isActualLeave && clockbookSchedule[4]) ||
                              (isPlannedLeave && plannedSchedule[4]) || 
@@ -563,13 +567,13 @@ function MonthlyListSection({
               
                       {/* 予定の表示（休暇でない場合、かつ実績がない場合のみ） */}
                       {plannedSchedule && !isPlannedLeave && !clockbookSchedule && (
-                        <div className="ios-optimize rounded-lg border border-blue-200 bg-blue-50 p-3 shadow-sm">
+                        <div className={`${IOS_OPTIMIZE_CLASS} rounded-lg border border-blue-200 bg-blue-50 p-3 shadow-sm`}>
                           <div className="flex items-center justify-between mb-1.5">
-                            <span className="ios-text px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 text-xs font-medium">
+                            <span className={`${IOS_TEXT_CLASS} px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 text-xs font-medium`}>
                               予定: {plannedSchedule[4]}
                             </span>
                             {plannedSchedule[6] && (
-                              <span className="ios-text text-xs font-medium text-blue-700 bg-blue-100 px-2 py-0.5 rounded-lg border border-blue-200">
+                              <span className={`${IOS_TEXT_CLASS} text-xs font-medium text-blue-700 bg-blue-100 px-2 py-0.5 rounded-lg border border-blue-200`}>
                                 {plannedSchedule[6]}
                               </span>
                             )}
@@ -578,7 +582,7 @@ function MonthlyListSection({
                             <div className="flex-1">
                               {plannedSchedule[2] && plannedSchedule[3] ? (
                                 <div className="flex items-center">
-                                  <span className={`ios-text ${getWorkTypeStyle(plannedSchedule[4]).text}`}>
+                                  <span className={`${IOS_TEXT_CLASS} ${getWorkTypeStyle(plannedSchedule[4]).text}`}>
                                     {plannedSchedule[2]} - {plannedSchedule[3]}
                                   </span>
                                 </div>
@@ -592,13 +596,13 @@ function MonthlyListSection({
                       
                       {/* 実績の表示（休暇でない場合） */}
                       {clockbookSchedule && !isActualLeave && (
-                        <div className="ios-optimize rounded-lg border border-green-200 bg-green-50 p-3 shadow-sm">
+                        <div className={`${IOS_OPTIMIZE_CLASS} rounded-lg border border-green-200 bg-green-50 p-3 shadow-sm`}>
                           <div className="flex items-center justify-between mb-1.5">
-                            <span className="ios-text px-2.5 py-0.5 rounded-full bg-green-100 text-green-800 text-xs font-medium">
+                            <span className={`${IOS_TEXT_CLASS} px-2.5 py-0.5 rounded-full bg-green-100 text-green-800 text-xs font-medium`}>
                               実績: {clockbookSchedule[4]}
                             </span>
                             {clockbookSchedule[6] && (
-                              <span className="ios-text text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-lg border border-green-200">
+                              <span className={`${IOS_TEXT_CLASS} text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-lg border border-green-200`}>
                                 {clockbookSchedule[6]}
                               </span>
                             )}
@@ -607,7 +611,7 @@ function MonthlyListSection({
                             <div className="flex-1">
                               {clockbookSchedule[2] && clockbookSchedule[3] ? (
                                 <div className="flex items-center">
-                                  <span className="ios-text text-green-700">
+                                  <span className={`${IOS_TEXT_CLASS} text-green-700`}>
                                     {clockbookSchedule[2]} - {clockbookSchedule[3]}
                                   </span>
                                 </div>
@@ -651,7 +655,7 @@ function MonthlyListSection({
                         <div className="mt-4">
                           <div className="mb-3 flex items-center justify-between">
                             <div className="flex items-center">
-                              <span className="ios-text px-3 py-1 rounded-full bg-gray-200 text-gray-700 text-xs font-medium">
+                              <span className={`${IOS_TEXT_CLASS} px-3 py-1 rounded-full bg-gray-200 text-gray-700 text-xs font-medium`}>
                                 業務詳細
                               </span>
                             </div>
@@ -672,17 +676,17 @@ function MonthlyListSection({
                               return (
                               <div 
                                 key={idx} 
-                                  className={`ios-optimize group rounded-lg p-0.5 bg-gradient-to-r ${colorClasses.bg} hover:${colorClasses.hover} transition-all duration-200 transform hover:scale-[1.005] active:scale-[0.995] cursor-pointer ${colorClasses.shadow}`}
+                                  className={`${IOS_OPTIMIZE_CLASS} group rounded-lg p-0.5 bg-gradient-to-r ${colorClasses.bg} hover:${colorClasses.hover} transition-all duration-200 transform hover:scale-[1.005] active:scale-[0.995] cursor-pointer ${colorClasses.shadow}`}
                                   onClick={() => onWorkDetailClick(detail)}
                                 >
                                   <div className="bg-white rounded-lg p-3 h-full">
                                     <div className="flex flex-col">
                                       <div className="flex items-center justify-between mb-1.5">
-                                        <h4 className={`ios-text text-sm font-medium truncate group-hover:${colorClasses.text} transition-colors duration-200 flex-1`}>
+                                        <h4 className={`${IOS_TEXT_CLASS} text-sm font-medium truncate group-hover:${colorClasses.text} transition-colors duration-200 flex-1`}>
                                           {detail.workTitle}
                                         </h4>
                                         <div className="flex-shrink-0 ml-2">
-                                          <span className="ios-text px-2 py-0.5 text-xs font-medium bg-white rounded-md whitespace-nowrap transition-colors duration-200 border border-gray-100 text-gray-500">
+                                          <span className={`${IOS_TEXT_CLASS} px-2 py-0.5 text-xs font-medium bg-white rounded-md whitespace-nowrap transition-colors duration-200 border border-gray-100 text-gray-500`}>
                                             {detail.workStart}-{detail.workEnd}
                                           </span>
                                         </div>
@@ -690,7 +694,7 @@ function MonthlyListSection({
                                       
                                       {detail.detail && (
                                         <div className="relative overflow-hidden">
-                                          <p className="ios-text text-xs text-gray-500 line-clamp-1 group-hover:line-clamp-2 transition-all duration-300">
+                                          <p className={`${IOS_TEXT_CLASS} text-xs text-gray-500 line-clamp-1 group-hover:line-clamp-2 transition-all duration-300`}>
                                           {detail.detail}
                                         </p>
                                           <div className="absolute bottom-0 left-0 right-0 h-3 bg-gradient-to-t from-white to-transparent group-hover:opacity-0 transition-opacity duration-200"></div>
@@ -706,7 +710,7 @@ function MonthlyListSection({
                       )}
                     </div>
                   ) : (
-                    <div className="ios-text text-center text-gray-400 p-3 mt-2 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                    <div className={`${IOS_TEXT_CLASS} text-center text-gray-400 p-3 mt-2 bg-gray-50 rounded-lg border border-dashed border-gray-200`}>
                       {isMySchedulePage ? "予定がありません。「追加」から登録できます。" : "予定がありません。"}
                     </div>
                   )}
@@ -722,10 +726,12 @@ function MonthlyListSection({
 
 // コンポーネントをmemoでラップして、比較関数を第二引数として渡す
 export default memo(MonthlyListSection, (prevProps, nextProps) => {
-  // currentDateが同じ場合は再レンダリングしない
+  // 比較関数を強化して不要な再レンダリングを防止
   if (prevProps.currentDate.getTime() === nextProps.currentDate.getTime() &&
       JSON.stringify(prevProps.userData) === JSON.stringify(nextProps.userData) &&
-      prevProps.userSchedules.length === nextProps.userSchedules.length) {
+      prevProps.userSchedules.length === nextProps.userSchedules.length &&
+      prevProps.workDetails?.length === nextProps.workDetails?.length &&
+      prevProps.breakData?.length === nextProps.breakData?.length) {
     return true; // propsが実質的に同じなら再レンダリングしない
   }
   return false; // propsが変わったら再レンダリングする

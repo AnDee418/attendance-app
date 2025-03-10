@@ -110,7 +110,13 @@ export default function MySchedulePage() {
       if (schedulesRes.ok) {
         const data = await schedulesRes.json();
         if (data.data) {
-          setSchedules(data.data);
+          // 現在月のデータのみをフィルタリングして状態を更新
+          const filteredData = data.data.filter(s => {
+            const scheduleDate = new Date(s[0]);
+            return scheduleDate.getMonth() === date.getMonth() && 
+                   scheduleDate.getFullYear() === date.getFullYear();
+          });
+          setSchedules(filteredData);
         }
       }
       
@@ -207,7 +213,11 @@ export default function MySchedulePage() {
       setTimeout(() => setSwipeDirection(null), 300);
     },
     preventDefaultTouchmoveEvent: true,
-    trackMouse: false
+    trackMouse: false,
+    // iOS向けに最適化
+    delta: 10, // スワイプ検出の閾値を上げる
+    trackTouch: true,
+    rotationAngle: 0
   });
   
   // 現在月かつ該当ユーザーの勤務記録を抽出
@@ -860,7 +870,7 @@ export default function MySchedulePage() {
             </div>
           </div>
           
-          <div className="max-w-5xl mx-auto pb-24">
+          <div className="max-w-5xl mx-auto pb-24 ios-scroll">
             {/* ユーザー情報カード - マージンを調整 */}
             <div className="bg-white rounded-xl shadow-sm p-4 cursor-default">
               <div className="flex items-center gap-3">
@@ -895,11 +905,11 @@ export default function MySchedulePage() {
             <div className="mt-4">
               {/* スワイプ可能なコンテンツエリア */}
               <div 
-                className={`transition-transform duration-300 ${
+                className={`transition-all duration-300 ${
                   swipeDirection === 'left' ? 'translate-x-[-100px] opacity-0' :
                   swipeDirection === 'right' ? 'translate-x-[100px] opacity-0' :
                   'translate-x-0 opacity-100'
-                }`}
+                } ios-optimize`}
                 {...swipeHandlers}
               >
                 <MemoizedMonthlyListSection

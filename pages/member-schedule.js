@@ -264,6 +264,7 @@ export default function MemberSchedulePage() {
   
   // データの遅延読み込み実装
   const [isWorkDetailsLoaded, setIsWorkDetailsLoaded] = useState(false);
+  const [isDetailLoading, setIsDetailLoading] = useState(false);
   
   // 以下を追加：isLoading状態の追加
   const [isLoading, setIsLoading] = useState(false);
@@ -279,16 +280,38 @@ export default function MemberSchedulePage() {
           fetch('/api/attendance')
         ]);
         
-        // データ処理...
+        if (usersRes.ok) {
+          const userData = await usersRes.json();
+          if (userData.data) {
+            const foundUser = userData.data.find(u => u.data[0] === decodeURIComponent(userQuery));
+            setUserData(foundUser);
+          }
+        }
+        
+        if (schedulesRes.ok) {
+          const schedulesData = await schedulesRes.json();
+          if (schedulesData.data) {
+            // 現在月のデータのみをフィルタリング
+            const filteredData = schedulesData.data.filter(s => {
+              const scheduleDate = new Date(s[0]);
+              return scheduleDate.getMonth() === currentDate.getMonth() && 
+                     scheduleDate.getFullYear() === currentDate.getFullYear();
+            });
+            setSchedules(filteredData);
+          }
+        }
         
         setIsLoading(false);
       } catch (error) {
         console.error('Error fetching data:', error);
+        setIsLoading(false);
       }
     };
     
-    fetchBasicData();
-  }, [userQuery]);
+    if (userQuery) {
+      fetchBasicData();
+    }
+  }, [userQuery, currentDate]);
   
   // 詳細データは必要になったタイミングで読み込み
   const loadWorkDetails = async () => {
@@ -312,21 +335,6 @@ export default function MemberSchedulePage() {
       console.error('Error loading details:', error);
     }
   };
-  
-  // 対象ユーザーの情報を取得
-  useEffect(() => {
-    if (!userQuery) return;
-    fetch('/api/users')
-      .then(res => res.json())
-      .then(data => {
-        if (data.data) {
-          // schedules.js では user.data[0] が名前として使われている前提
-          const foundUser = data.data.find(u => u.data[0] === decodeURIComponent(userQuery));
-          setUserData(foundUser);
-        }
-      })
-      .catch(err => console.error('Error fetching users:', err));
-  }, [userQuery]);
   
   // /api/schedules から勤務記録を取得
   useEffect(() => {
@@ -489,7 +497,7 @@ export default function MemberSchedulePage() {
         </div>
       </div>
 
-      <div className={`mx-auto pb-24 ${isDesktop ? 'max-w-full px-4' : 'max-w-5xl'}`}>
+      <div className={`mx-auto pb-24 ios-scroll ${isDesktop ? 'max-w-full px-4' : 'max-w-5xl'}`}>
         {isDesktop ? (
           // PC表示の場合
           <div className={`grid gap-6 ${
@@ -534,7 +542,7 @@ export default function MemberSchedulePage() {
 
               {/* スワイプ可能なコンテンツエリア */}
               <div 
-                className={`transition-transform duration-300 ${
+                className={`transition-all duration-300 ios-optimize ${
                   swipeDirection === 'left' ? 'translate-x-[-100px] opacity-0' :
                   swipeDirection === 'right' ? 'translate-x-[100px] opacity-0' :
                   'translate-x-0 opacity-100'
@@ -645,7 +653,7 @@ export default function MemberSchedulePage() {
 
             {/* スワイプ可能なコンテンツエリア */}
             <div 
-              className={`transition-transform duration-300 ${
+              className={`transition-all duration-300 ios-optimize ${
                 swipeDirection === 'left' ? 'translate-x-[-100px] opacity-0' :
                 swipeDirection === 'right' ? 'translate-x-[100px] opacity-0' :
                 'translate-x-0 opacity-100'
