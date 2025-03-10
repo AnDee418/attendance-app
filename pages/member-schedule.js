@@ -254,6 +254,53 @@ export default function MemberSchedulePage() {
   const isDesktop = useMediaQuery({ minWidth: 1024 });
   const [selectedUsers, setSelectedUsers] = useState([]);
   
+  // データの遅延読み込み実装
+  const [isWorkDetailsLoaded, setIsWorkDetailsLoaded] = useState(false);
+  
+  // 初期表示時は基本情報のみ読み込み
+  useEffect(() => {
+    const fetchBasicData = async () => {
+      try {
+        // ユーザー情報と基本スケジュールのみ取得
+        const [usersRes, schedulesRes] = await Promise.all([
+          fetch('/api/users'),
+          fetch('/api/attendance')
+        ]);
+        
+        // データ処理...
+        
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+    
+    fetchBasicData();
+  }, [userQuery]);
+  
+  // 詳細データは必要になったタイミングで読み込み
+  const loadWorkDetails = async () => {
+    if (isWorkDetailsLoaded) return;
+    
+    try {
+      setIsDetailLoading(true);
+      const params = new URLSearchParams({
+        employeeName: userData?.data[0] || '',
+        date: new Date().toLocaleDateString('en-CA')
+      });
+      
+      const detailsRes = await fetch(`/api/workdetail?${params}`);
+      const breakRes = await fetch(`/api/break?${params}`);
+      
+      // データ処理...
+      
+      setIsWorkDetailsLoaded(true);
+      setIsDetailLoading(false);
+    } catch (error) {
+      console.error('Error loading details:', error);
+    }
+  };
+  
   // 対象ユーザーの情報を取得
   useEffect(() => {
     if (!userQuery) return;

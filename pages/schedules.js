@@ -256,6 +256,26 @@ const fetchVacationRequests = async () => {
   }
 };
 
+// データフェッチ関数を最適化
+const fetchUserSchedules = async (month, year) => {
+  try {
+    const params = new URLSearchParams({
+      month: month,
+      year: year,
+      limit: '100' // 一度に取得するデータ数を制限
+    });
+    
+    const response = await fetch(`/api/attendance?${params}`);
+    if (!response.ok) throw new Error('スケジュールの取得に失敗しました');
+    
+    const data = await response.json();
+    return data.data || [];
+  } catch (error) {
+    console.error('Error:', error);
+    return [];
+  }
+};
+
 export default function SchedulesPage() {
   const { data: session } = useSession();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -264,6 +284,7 @@ export default function SchedulesPage() {
   const [settings, setSettings] = useState(null);
   const [breakRecords, setBreakRecords] = useState([]);
   const [vacationRequests, setVacationRequests] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   // ユーザーの表示フィルタリング関数
   const filterUsers = (allUsers) => {
@@ -315,20 +336,18 @@ export default function SchedulesPage() {
 
   // スケジュールを取得
   useEffect(() => {
-    const fetchSchedules = async () => {
-      try {
-        const res = await fetch('/api/schedules');
-        const data = await res.json();
-        if (data.data) {
-          setSchedules(data.data);
-        }
-      } catch (error) {
-        console.error('Error fetching schedules:', error);
-      }
+    const loadData = async () => {
+      setIsLoading(true);
+      const scheduleData = await fetchUserSchedules(
+        currentDate.getMonth() + 1,
+        currentDate.getFullYear()
+      );
+      setSchedules(scheduleData);
+      setIsLoading(false);
     };
-
-    fetchSchedules();
-  }, []);
+    
+    loadData();
+  }, [currentDate]);
 
   // 設定を取得
   useEffect(() => {

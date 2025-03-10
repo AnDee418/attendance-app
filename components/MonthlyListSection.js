@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo, useCallback } from 'react';
 import { useRouter } from 'next/router';
 
 // ヘルパー関数：月の日付一覧を取得
@@ -14,7 +14,8 @@ const getDaysInMonth = (date) => {
   return days;
 };
 
-export default function MonthlyListSection({ 
+// コンポーネント定義
+function MonthlyListSection({ 
   currentDate, 
   workDetails, 
   userData, 
@@ -34,47 +35,38 @@ export default function MonthlyListSection({
   // ※ PC画面でのユーザー選択処理は親コンポーネント側で管理するため、ここからは削除
 
   // --- 以下、サマリーカード用のヘルパー関数を定義 ---
-  const calculatePlannedWorkingHours = (schedules, date, userName) => {
+  const calculatePlannedWorkingHours = useCallback((schedules, date, userName) => {
     if (!schedules || !Array.isArray(schedules)) return 0;
     
     let totalMinutes = 0;
-    const selectedMonth = date.getMonth();
-    const selectedYear = date.getFullYear();
+    const targetMonth = date.getMonth();
+    const targetYear = date.getFullYear();
     
-    // 前月21日から当月20日までの期間を設定（修正）
-    const startDate = new Date(selectedYear, selectedMonth - 1, 21, 0, 0, 0);
-    const endDate = new Date(selectedYear, selectedMonth, 20, 23, 59, 59);
+    // 日付の文字列比較ではなく数値比較にする（パフォーマンス向上）
+    const startDayValue = new Date(targetYear, targetMonth - 1, 21).valueOf();
+    const endDayValue = new Date(targetYear, targetMonth, 20, 23, 59, 59).valueOf();
 
-    console.log('MonthlyListSection: 計算期間（予定）', 
-      startDate.toLocaleDateString(), '〜', 
-      endDate.toLocaleDateString(), 
-      'Month:', selectedMonth + 1
-    );
-
-    // for...ofループに変更して各スケジュールを処理
-    for (const schedule of schedules) {
+    for (let i = 0; i < schedules.length; i++) {
+      const schedule = schedules[i];
       if (!Array.isArray(schedule)) continue;
       
       const scheduleDate = new Date(schedule[0]);
-      if (isNaN(scheduleDate.getTime())) continue;
-
-      // 期間の条件を厳密に確認
-      if (
-        scheduleDate >= startDate &&
-        scheduleDate <= endDate &&
-        schedule[1] === userName &&
-        schedule[5] === '予定' &&
-        schedule[6] && typeof schedule[6] === 'string'
-      ) {
+      if (isNaN(scheduleDate.valueOf())) continue;
+      
+      const scheduleDateValue = scheduleDate.valueOf();
+      if (scheduleDateValue >= startDayValue && 
+          scheduleDateValue <= endDayValue && 
+          schedule[1] === userName && 
+          schedule[5] === '予定' && 
+          schedule[6] && typeof schedule[6] === 'string') {
+        
         const workHours = parseJapaneseTimeString(schedule[6]);
         totalMinutes += Math.round(workHours * 60);
-        console.log('予定該当:', scheduleDate.toLocaleDateString(), schedule[6], '→', workHours);
       }
     }
-
-    console.log('予定合計時間:', totalMinutes / 60);
+    
     return totalMinutes / 60;
-  };
+  }, [parseJapaneseTimeString]);
 
   const calculateActualWorkingHoursForClock = (schedules, date, userName) => {
     if (!schedules || !Array.isArray(schedules)) return 0;
@@ -83,11 +75,10 @@ export default function MonthlyListSection({
     const selectedMonth = date.getMonth();
     const selectedYear = date.getFullYear();
     
-    // 前月21日から当月20日までの期間を設定（修正）
+    // 前月21日から当月20日までの期間を設定
     const startDate = new Date(selectedYear, selectedMonth - 1, 21, 0, 0, 0);
     const endDate = new Date(selectedYear, selectedMonth, 20, 23, 59, 59);
-
-    // デバッグ情報
+    
     console.log('MonthlyListSection: 計算期間（実績）', 
       startDate.toLocaleDateString(), '〜', 
       endDate.toLocaleDateString(), 
@@ -159,171 +150,217 @@ export default function MonthlyListSection({
   // --- サマリーカード用の値を計算（showSummaryCardがtrueの場合のみ） ---
   let plannedWorkingHours, actualHours, plannedCounts, clockbookCounts, standardHours;
   if (showSummaryCard && userData && userSchedules) {
-    // 21日から20日の期間で勤務時間を計算
-    plannedWorkingHours = calculatePlannedWorkingHours(userSchedules, currentDate, userData.data[0]);
-    actualHours = calculateActualWorkingHoursForClock(userSchedules, currentDate, userData.data[0]);
-    
-    // 既存の関数を使って勤務種別を集計
+    const userName = userData.data[0]; // ユーザー名
+    plannedWorkingHours = calculatePlannedWorkingHours(userSchedules, currentDate, userName);
+    actualHours = calculateActualWorkingHoursForClock(userSchedules, currentDate, userName);
     plannedCounts = calculateWorkTypeCounts(userSchedules, '予定');
     clockbookCounts = calculateWorkTypeCounts(userSchedules, '出勤簿');
     standardHours = getStandardWorkingHours(currentDate);
   }
 
+  // 月の全日付
+  const daysInMonth = getDaysInMonth(currentDate);
+
+  // 日付ごとに表示に必要なデータを作成
+  const daysData = daysInMonth.map(day => {
+    const dateString = getLocalDateString(day);
+    
+    // ユーザーがない場合は空のデータを返す
+    if (!userData) {
+      return { date: day, dateString };
+    }
+    
+    const userName = userData.data[0]; // ユーザー名
+
+    // ユーザーの当日のスケジュールを検索
+    const daySchedules = userSchedules.filter(
+      s => s[0] === dateString && s[1] === userName
+    );
+
+    // 予定と実績を分離
+    const plannedSchedule = daySchedules.find(s => s[5] === '予定');
+    const clockbookSchedule = daySchedules.find(s => s[5] === '出勤簿');
+
+    // 当日の業務詳細を検索
+    let dayDetails = [];
+    if (workDetails && Array.isArray(workDetails)) {
+      dayDetails = workDetails.filter(
+        detail => detail.date === dateString && detail.employeeName === userName
+      );
+    }
+
+    // 休憩データを検索
+    let dayBreaks = [];
+    if (breakData && Array.isArray(breakData)) {
+      dayBreaks = breakData.filter(
+        record => record.date === dateString && record.employeeName === userName
+      );
+    }
+
+    // 休暇申請データを検索
+    let dayVacation = null;
+    if (vacationRequests && vacationRequests.data && Array.isArray(vacationRequests.data)) {
+      dayVacation = vacationRequests.data.find(
+        req => req.date === dateString && req.employeeName === userName
+      );
+    }
+
+    return {
+      date: day,
+      dateString,
+      plannedSchedule,
+      clockbookSchedule,
+      dayDetails,
+      dayBreaks,
+      dayVacation
+    };
+  });
+
   return (
     <>
-    {/* 勤務時間セクション */}
-      {showSummaryCard && (
-        <div className="bg-white rounded-xl shadow-sm p-4 divide-y divide-gray-100 cursor-default mb-6">
-          <div className="text-sm text-gray-500 mb-2 font-medium">
-            {/* 前月21日から当月20日の期間表示を強調 */}
-            <span className="bg-blue-50 px-2 py-1 rounded text-blue-600">
-              {`${new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 21).toLocaleDateString('ja-JP', { month: 'long' })}21日〜${currentDate.toLocaleDateString('ja-JP', { month: 'long' })}20日`}
-            </span>
-            の勤務状況（集計期間）
-          </div>
-          <div className="pt-2 flex flex-row justify-between gap-2">
-            {/* 予定勤務時間セクション - 業務とアルバイト以外のアカウントのみ表示 */}
-            {userData && !['業務', 'アルバイト'].includes(userData.data[5]) && (
-              <div className="relative flex flex-col pt-2 pb-2 px-3 bg-blue-50/80 rounded-lg border border-blue-100 w-3/5">
-                <span className="text-sm text-gray-500">予定勤務時間</span>
-                <div className="flex mt-1">
-                  <div className="w-1/2 flex items-center justify-center">
-                    <div className="flex items-baseline">
-                      <span className="text-2xl font-bold text-blue-600">
-                        {plannedWorkingHours.toFixed(1)}
-                      </span>
-                      <span className="text-lg text-blue-500 mx-0.5">h</span>
+      {showSummaryCard && userData && (
+        <div className="mb-8 ios-optimize">
+          <div className="bg-white rounded-xl shadow-md overflow-hidden mb-4">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  {userData.data[6] ? (
+                    <img 
+                      src={userData.data[6]}
+                      alt={userData.data[0]}
+                      className="h-16 w-16 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center">
+                      <svg className="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+                <div className="ml-4">
+                  <h2 className="text-xl font-semibold text-gray-800">{userData.data[0]}</h2>
+                  <div className="flex items-center text-sm text-gray-600">
+                    <div className="mr-2">{userData.data[4]}</div>
+                    <span className="mx-2">•</span>
+                    <div className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                      {userData.data[5]}
                     </div>
                   </div>
-                  <div className="w-px bg-blue-200"></div>
-                  <div className="w-1/2 flex items-center justify-center">
-                    {(() => {
-                      const diff = Math.abs(plannedWorkingHours - standardHours);
+                </div>
+              </div>
+
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4">
+                  <h3 className="text-sm font-medium text-gray-500 mb-2">月間予定労働時間</h3>
+                  <div className="flex items-end">
+                    <div className="text-3xl font-bold text-blue-700">{plannedWorkingHours.toFixed(1)}</div>
+                    <div className="ml-1 text-xl text-blue-600">時間</div>
+                    <div className="ml-auto text-sm text-gray-500 flex items-center">
+                      <span>目標: {standardHours}h</span>
+                      <span className={`ml-2 px-1.5 py-0.5 rounded-full text-xs font-medium ${
+                        plannedWorkingHours >= standardHours 
+                          ? 'bg-green-100 text-green-700' 
+                          : 'bg-yellow-100 text-yellow-700'
+                      }`}>
+                        {plannedWorkingHours >= standardHours ? '達成' : '未達'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mt-2 w-full bg-white rounded-full h-2">
+                    <div 
+                      className={`h-2 rounded-full ${
+                        plannedWorkingHours >= standardHours 
+                          ? 'bg-green-500' 
+                          : 'bg-yellow-500'
+                      }`}
+                      style={{ width: `${Math.min((plannedWorkingHours / standardHours) * 100, 100)}%` }}
+                    ></div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4">
+                  <h3 className="text-sm font-medium text-gray-500 mb-2">月間実労働時間</h3>
+                  <div className="flex items-end">
+                    <div className="text-3xl font-bold text-emerald-700">{actualHours.toFixed(1)}</div>
+                    <div className="ml-1 text-xl text-emerald-600">時間</div>
+                    <div className="ml-auto text-sm text-gray-500 flex items-center">
+                      <span>目標: {standardHours}h</span>
+                      <span className={`ml-2 px-1.5 py-0.5 rounded-full text-xs font-medium ${
+                        actualHours >= standardHours 
+                          ? 'bg-green-100 text-green-700' 
+                          : 'bg-yellow-100 text-yellow-700'
+                      }`}>
+                        {actualHours >= standardHours ? '達成' : '未達'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mt-2 w-full bg-white rounded-full h-2">
+                    <div 
+                      className={`h-2 rounded-full ${
+                        actualHours >= standardHours 
+                          ? 'bg-green-500' 
+                          : 'bg-yellow-500'
+                      }`}
+                      style={{ width: `${Math.min((actualHours / standardHours) * 100, 100)}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-4">
+                <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
+                  <h3 className="text-sm font-medium text-gray-500 mb-2">
+                    予定
+                  </h3>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Object.entries(plannedCounts).map(([type, count]) => {
+                      if (count === 0) return null;
                       return (
-                        <div className="flex items-baseline">
-                          <span className={`text-2xl font-bold ${
-                            Math.abs(plannedWorkingHours - standardHours) <= 3
-                              ? 'text-green-600'
-                              : Math.abs(plannedWorkingHours - standardHours) <= 9
-                                ? 'text-yellow-600'
-                                : 'text-red-500'
-                          }`}>
-                            {plannedWorkingHours >= standardHours ? '+' : '-'}{diff.toFixed(1)}
-                          </span>
-                          <span className="ml-1 text-lg">h</span>
+                        <div
+                          key={`予定-${type}`}
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium 
+                            ${
+                              type === '出勤' ? 'bg-blue-50 text-blue-600' :
+                              type === '在宅' ? 'bg-green-50 text-green-600' :
+                              type === '移動' ? 'bg-purple-50 text-purple-600' :
+                              type === '公休' ? 'bg-red-50 text-red-600' :
+                              type === '半休' ? 'bg-yellow-50 text-yellow-600' :
+                              'bg-gray-50 text-gray-600'
+                            }`}
+                        >
+                          {type} {count}
                         </div>
                       );
-                    })()}
+                    })}
                   </div>
                 </div>
-                <div 
-                  className={`absolute bottom-0 left-0 right-0 text-xs font-bold flex items-center justify-center text-center py-2 rounded 
-                    ${
-                      Math.abs(plannedWorkingHours - standardHours) <= 3
-                        ? 'bg-green-100 text-green-700'
-                        : Math.abs(plannedWorkingHours - standardHours) <= 9
-                          ? 'bg-yellow-100 text-yellow-700'
-                          : 'bg-red-100 text-red-700'
-                    }`}
-                >
-                  {Math.abs(plannedWorkingHours - standardHours) <= 3
-                    ? "OK"
-                    : Math.abs(plannedWorkingHours - standardHours) <= 9
-                      ? "許容範囲"
-                      : "予定の修正が必要"}
-                </div>
-              </div>
-            )}
 
-            {/* 実勤務時間の円グラフ - 常に表示 */}
-            <div className={`flex flex-col items-center gap-1 ${!['業務', 'アルバイト'].includes(userData?.data[5]) ? 'w-2/5' : 'w-full'}`}>
-              <div className={`relative ${!['業務', 'アルバイト'].includes(userData?.data[5]) ? 'w-28 h-28' : 'w-36 h-36'}`}>
-                <svg className="w-full h-full transform -rotate-90">
-                  <circle
-                    cx={!['業務', 'アルバイト'].includes(userData?.data[5]) ? "56" : "72"}
-                    cy={!['業務', 'アルバイト'].includes(userData?.data[5]) ? "56" : "72"}
-                    r={!['業務', 'アルバイト'].includes(userData?.data[5]) ? "52" : "68"}
-                    className="stroke-current text-gray-100"
-                    strokeWidth="3"
-                    fill="none"
-                  />
-                  <circle
-                    cx={!['業務', 'アルバイト'].includes(userData?.data[5]) ? "56" : "72"}
-                    cy={!['業務', 'アルバイト'].includes(userData?.data[5]) ? "56" : "72"}
-                    r={!['業務', 'アルバイト'].includes(userData?.data[5]) ? "52" : "68"}
-                    className="stroke-current text-green-500"
-                    strokeWidth="3"
-                    fill="none"
-                    strokeDasharray={`${(actualHours / standardHours) * (!['業務', 'アルバイト'].includes(userData?.data[5]) ? 327 : 427)} ${!['業務', 'アルバイト'].includes(userData?.data[5]) ? 327 : 427}`}
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <div className="flex items-baseline">
-                    <span className={`font-bold text-gray-900 ${!['業務', 'アルバイト'].includes(userData?.data[5]) ? 'text-2xl' : 'text-3xl'}`}>
-                      {timeToHoursAndMinutes(actualHours).hours}
-                    </span>
-                    <span className={`text-gray-500 mx-0.5 ${!['業務', 'アルバイト'].includes(userData?.data[5]) ? 'text-lg' : 'text-xl'}`}>h</span>
-                    <span className={`font-bold text-gray-900 ${!['業務', 'アルバイト'].includes(userData?.data[5]) ? 'text-xl' : 'text-2xl'}`}>
-                      {timeToHoursAndMinutes(actualHours).minutes}
-                    </span>
-                    <span className={`text-gray-500 ${!['業務', 'アルバイト'].includes(userData?.data[5]) ? 'text-sm' : 'text-base'}`}>m</span>
+                <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
+                  <h3 className="text-sm font-medium text-gray-500 mb-2">
+                    実績
+                  </h3>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Object.entries(clockbookCounts).map(([type, count]) => {
+                      if (count === 0) return null;
+                      return (
+                        <div
+                          key={`実績-${type}`}
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium 
+                            ${
+                              type === '出勤' ? 'bg-blue-50 text-blue-600' :
+                              type === '在宅' ? 'bg-green-50 text-green-600' :
+                              type === '移動' ? 'bg-purple-50 text-purple-600' :
+                              type === '公休' ? 'bg-red-50 text-red-600' :
+                              type === '半休' ? 'bg-yellow-50 text-yellow-600' :
+                              'bg-gray-50 text-gray-600'
+                            }`}
+                        >
+                          {type} {count}
+                        </div>
+                      );
+                    })}
                   </div>
-                  <div className="flex items-baseline">
-                    <span className={`text-gray-500 ${!['業務', 'アルバイト'].includes(userData?.data[5]) ? 'text-sm' : 'text-base'}`}>/</span>
-                    <span className={`text-gray-500 ml-1 ${!['業務', 'アルバイト'].includes(userData?.data[5]) ? 'text-lg' : 'text-xl'}`}>{standardHours}</span>
-                    <span className={`text-gray-500 ${!['業務', 'アルバイト'].includes(userData?.data[5]) ? 'text-xs' : 'text-sm'}`}>h</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* 勤務種別チップ */}
-          <div className="pt-4">
-            <div className="bg-gray-50/50 rounded-lg px-3 py-2 space-y-2 border border-gray-100">
-              {/* 予定セクション */}
-              <div>
-                <h3 className="text-xs font-medium text-gray-500 mb-1.5 flex items-center">
-                  <div className="w-2 h-2 rounded-full bg-blue-400 mr-2"></div>
-                  勤務種別（予定）
-                </h3>
-                <div className="flex flex-wrap gap-1.5">
-                  {Object.entries(plannedCounts).map(([type, count]) => {
-                    if (count === 0) return null;
-                    return (
-                      <div
-                        key={`予定-${type}`}
-                        className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-600"
-                      >
-                        {type} {count}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* 区切り線 */}
-              <div className="border-t border-gray-100"></div>
-
-              {/* 出勤簿セクション */}
-              <div>
-                <h3 className="text-xs font-medium text-gray-500 mb-1.5 flex items-center">
-                  <div className="w-2 h-2 rounded-full bg-green-400 mr-2"></div>
-                  勤務種別（出勤簿）
-                </h3>
-                <div className="flex flex-wrap gap-1.5">
-                  {Object.entries(clockbookCounts).map(([type, count]) => {
-                    if (count === 0) return null;
-                    return (
-                      <div
-                        key={`出勤簿-${type}`}
-                        className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-600"
-                      >
-                        {type} {count}
-                      </div>
-                    );
-                  })}
                 </div>
               </div>
             </div>
@@ -331,296 +368,175 @@ export default function MonthlyListSection({
         </div>
       )}
 
-      {/* 行動予定セクション */}
-      <div className="bg-white rounded-2xl shadow-lg p-4">
-        {/* 追加: 期間の表示 */}
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-medium text-gray-900">行動予定</h3>
-          <div className="bg-blue-50 px-3 py-1.5 rounded-lg text-blue-600 text-sm font-medium">
-            {`${currentDate.getFullYear()}年${currentDate.getMonth() + 1}月1日～${currentDate.getFullYear()}年${currentDate.getMonth() + 1}月${new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate()}日`}
-          </div>
-        </div>
-        <div className="space-y-3">
-          {getDaysInMonth(currentDate).map((date, idx) => {
-            const dateKey = date.toLocaleDateString('ja-JP', { 
-              weekday: 'short', 
-              year: 'numeric', 
-              month: '2-digit', 
-              day: '2-digit' 
-            });
-            const isToday = date.toDateString() === new Date().toDateString();
-            const weekday = date.toLocaleDateString('ja-JP', { weekday: 'short' });
-            
-            // 該当日の業務詳細を取得（デバッグ用ログあり）
-            const dayDetails = workDetails.filter(rec => {
-              const recDate = getLocalDateString(new Date(rec.date));
-              const targetDate = getLocalDateString(date);
-              const clockbookDetails = workDetails.filter(cd => 
-                getLocalDateString(new Date(cd.date)) === targetDate &&
-                cd.employeeName === userData?.data[0] &&
-                cd.recordType === '出勤簿'
-              );
-              return (
-                userData &&
-                rec.employeeName === userData.data[0] &&
-                recDate === targetDate &&
-                (clockbookDetails.length > 0 ? 
-                  rec.recordType === '出勤簿' : 
-                  rec.recordType === '予定')
-              );
-            });
-            
-            // 該当日の出退勤の予定レコードを取得
-            const attendanceRecordForDate = userSchedules.find(s => {
-              const matchDate = new Date(s[0]).toDateString() === date.toDateString();
-              // 出勤簿データを優先的に検索
-              const clockbookRecord = userSchedules.find(cr => 
-                new Date(cr[0]).toDateString() === date.toDateString() && 
-                cr[5] === '出勤簿'
-              );
-              
-              // 出勤簿データがある場合はそれを返し、なければ予定データを返す
-              if (clockbookRecord) {
-                return true && s === clockbookRecord;
-              }
-              return matchDate && s[5] === '予定';
-            });
-            
-            // 該当日の休憩記録を取得
-            const breakRecordsForDate = breakData.filter(br => {
-              const matchDate = new Date(br.date).toDateString() === date.toDateString();
-              // 出勤簿データを優先的に検索
-              const clockbookBreaks = breakData.filter(cbr => 
-                new Date(cbr.date).toDateString() === date.toDateString() &&
-                cbr.employeeName === userData?.data[0] &&
-                cbr.recordType === '出勤簿'
-              );
-              
-              return clockbookBreaks.length > 0 ? 
-                (matchDate && br.recordType === '出勤簿' && br.employeeName === userData?.data[0]) :
-                (matchDate && br.recordType === '予定' && br.employeeName === userData?.data[0]);
-            });
-            
-            // 該当日の休日申請を確認
-            const pendingVacationRequest = vacationRequests?.data?.find(req => {
-              // デバッグ用ログは削除済み
-              return req.date === getLocalDateString(date) && 
-                     req.employeeName === userData?.data[0] && 
-                     req.status === '申請中';
-            });
-            
-            let bgClass = 'bg-gray-50';
-            let borderClass = 'border-gray-200';
-            
-            if (isToday) {
-              bgClass = 'bg-blue-50';
-              borderClass = 'border-blue-400';
-            } else if (weekday.includes('土')) {
-              bgClass = 'bg-indigo-50';
-              borderClass = 'border-indigo-300';
-            } else if (weekday.includes('日')) {
-              bgClass = 'bg-rose-50';
-              borderClass = 'border-rose-300';
-            }
+      <div className="ios-optimize">
+        <div className="space-y-6">
+          {daysData.map((dayData) => {
+            const isToday = dayData.date.toDateString() === new Date().toDateString();
+            const { 
+              date, 
+              dateString, 
+              plannedSchedule, 
+              clockbookSchedule, 
+              dayDetails,
+              dayBreaks,
+              dayVacation
+            } = dayData;
             
             return (
-              <div key={dateKey} className={`relative rounded-xl overflow-hidden ${bgClass} hover:bg-opacity-80 transition-all duration-300 shadow-sm hover:shadow-md`}>
-                {isMySchedulePage && (
-                  <>
-                    <button
-                      className="absolute top-2 right-2 text-xs font-medium bg-white text-gray-700 hover:text-blue-600 
-                        rounded-lg px-3 py-1.5 cursor-pointer shadow-sm hover:shadow transition-all duration-300 
-                        flex items-center space-x-1 border border-gray-200 hover:border-blue-200 hover:bg-blue-50 z-10"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onAddButtonClick(date);
-                      }}
-                    >
-                      <svg 
-                        className="w-3.5 h-3.5" 
-                        fill="none" 
-                        viewBox="0 0 24 24" 
-                        stroke="currentColor"
-                      >
-                        <path 
-                          strokeLinecap="round" 
-                          strokeLinejoin="round" 
-                          strokeWidth="2" 
-                          d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                        />
-                      </svg>
-                      <span>追加</span>
-                    </button>
-                  </>
-                )}
-                
-                <div className={`flex items-center px-4 py-3 border-l-4 ${borderClass} bg-white bg-opacity-50 backdrop-blur-sm`}>
-                  <div className="flex items-center space-x-3">
-                    <span className={`flex items-center justify-center w-10 h-10 rounded-xl text-sm font-bold ${
-                      isToday ? 'bg-blue-400 text-white shadow-sm' :
-                      weekday.includes('土') ? 'bg-indigo-400 text-white' :
-                      weekday.includes('日') ? 'bg-rose-400 text-white' :
-                      'bg-gray-600 text-white'
-                    }`}>
-                      {date.getDate()}
-                      <span className="text-xs ml-1">{weekday}</span>
-                    </span>
-                    {isToday && (
-                      <span className="px-2 py-1 text-xs bg-blue-100 text-blue-600 rounded-lg font-medium shadow-sm">
-                        Today
-                      </span>
-                    )}
-                    {/* 追加：申請中の休日申請がある場合のバッジ */}
-                    {pendingVacationRequest && (
-                      <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-600 rounded-lg font-medium shadow-sm animate-pulse">
-                        {pendingVacationRequest.type}申請中
-                      </span>
-                    )}
-                  </div>
-                </div>
-        
-                <div className="px-4 py-3 space-y-3">
-                  {attendanceRecordForDate && ['公休', '有休'].includes(attendanceRecordForDate[4]) ? (
-                    // 公休・有休の場合の表示
-                    <div className="bg-white bg-opacity-75 backdrop-blur-sm rounded-xl p-6 shadow-sm">
-                      <div className="flex items-center justify-between">
-                        <div className={`text-lg font-bold ${
-                          attendanceRecordForDate[4] === '公休' ? 'text-indigo-600' : 'text-emerald-600'
-                        }`}>
-                          {attendanceRecordForDate[4]}
-                        </div>
-                        <span className={`text-xs px-2 py-1 rounded-lg font-medium ${
-                          attendanceRecordForDate[5] === '出勤簿' 
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : 'bg-blue-100 text-blue-700'
-                        }`}>
-                          {attendanceRecordForDate[5] === '出勤簿' ? '実績' : '予定'}
+              <div 
+                key={dateString} 
+                className={`bg-white rounded-xl shadow-sm overflow-hidden border
+                  ${isToday ? 'border-blue-300 ring-1 ring-blue-300' : 'border-gray-100'}`}
+              >
+                <div className="p-4 ios-text">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-lg flex flex-col items-center justify-center
+                        ${isToday ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
+                        <span className="text-sm font-bold">{date.getDate()}</span>
+                        <span className="text-xs">
+                          {['日', '月', '火', '水', '木', '金', '土'][date.getDay()]}
                         </span>
                       </div>
-                    </div>
-                  ) : (
-                    // 通常の勤務の場合の表示
-                    <>
-                      {/* 勤務種別をバッジスタイルで表示 */}
-                      {attendanceRecordForDate && (
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <span className="px-2 py-1 text-xs font-medium bg-white rounded-lg shadow-sm border border-gray-200">
-                              {attendanceRecordForDate[4] || '未設定'}
-                            </span>
+                      
+                      <div>
+                        {plannedSchedule && (
+                          <div className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium mr-1
+                            ${
+                              plannedSchedule[4] === '出勤' ? 'bg-blue-50 text-blue-600' :
+                              plannedSchedule[4] === '在宅' ? 'bg-green-50 text-green-600' :
+                              plannedSchedule[4] === '移動' ? 'bg-purple-50 text-purple-600' :
+                              plannedSchedule[4] === '公休' ? 'bg-red-50 text-red-600' :
+                              plannedSchedule[4] === '半休' ? 'bg-yellow-50 text-yellow-600' :
+                              plannedSchedule[4] === '有給休暇' ? 'bg-red-50 text-red-600' :
+                              'bg-gray-50 text-gray-600'
+                            }`}
+                          >
+                            {plannedSchedule[4]}
                           </div>
-                          <span className={`text-xs px-2 py-1 rounded-lg font-medium ${
-                            attendanceRecordForDate[5] === '出勤簿' 
-                              ? 'bg-emerald-100 text-emerald-700'
-                              : 'bg-blue-100 text-blue-700'
-                          }`}>
-                            {attendanceRecordForDate[5] === '出勤簿' ? '実績' : '予定'}
-                          </span>
-                        </div>
-                      )}
-              
-                      {/* 業務アカウント以外の場合のみ勤務時間と休憩時間を表示 */}
-                      {(userData?.data[5] !== '業務' || attendanceRecordForDate?.[5] === '出勤簿') && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <div className="bg-white bg-opacity-75 backdrop-blur-sm rounded-xl p-3 shadow-sm hover:shadow transition-all duration-300">
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="flex items-center space-x-2">
-                                <div className="w-6 h-6 rounded-lg bg-blue-400 flex items-center justify-center">
-                                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        )}
+                        
+                        {clockbookSchedule && (
+                          <div className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 mr-1">
+                            実績
+                          </div>
+                        )}
+                        
+                        {dayVacation && dayVacation.status === '申請中' && (
+                          <div className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
+                            休暇申請中
+                          </div>
+                        )}
+                        
+                        {dayVacation && dayVacation.status === '許可' && (
+                          <div className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                            休暇承認済
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {isMySchedulePage && (
+                      <button
+                        type="button"
+                        onClick={() => onAddButtonClick(date)}
+                        className="px-3 py-1.5 bg-white text-blue-600 text-sm border border-blue-200 rounded-lg hover:bg-blue-50 transition-all"
+                      >
+                        登録
+                      </button>
+                    )}
+                  </div>
+                  
+                  {/* 勤務情報の表示 */}
+                  {(plannedSchedule || clockbookSchedule) && (
+                    <div className="mt-3 space-y-4">
+                      {/* 予定の表示 */}
+                      {plannedSchedule && (
+                        <div className="rounded-lg border border-gray-100 p-3">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <h3 className="text-sm font-semibold text-gray-700 flex items-center">
+                              <svg className="w-4 h-4 mr-1.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                              予定
+                            </h3>
+                            {plannedSchedule[6] && (
+                              <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                                {plannedSchedule[6]}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center text-sm text-gray-600">
+                            <div className="flex-1">
+                              {plannedSchedule[2] && plannedSchedule[3] ? (
+                                <div className="flex items-center">
+                                  <svg className="w-4 h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                   </svg>
+                                  {plannedSchedule[2]} - {plannedSchedule[3]}
                                 </div>
-                                <span className="text-sm font-medium text-gray-700">勤務時間</span>
-                              </div>
-                              {attendanceRecordForDate && (
-                                <span className={`text-xs px-2 py-1 rounded-lg font-medium ${
-                                  attendanceRecordForDate[5] === '出勤簿' 
-                                    ? 'bg-emerald-100 text-emerald-700'
-                                    : 'bg-blue-100 text-blue-700'
-                                }`}>
-                                  {attendanceRecordForDate[5] === '出勤簿' ? '実績' : '予定'}
-                                </span>
+                              ) : (
+                                <div className="text-gray-400">時間未設定</div>
                               )}
-                            </div>
-                            <div className="flex justify-between items-center px-2">
-                              <div>
-                                <div className="text-xs text-gray-500">出勤</div>
-                                <div className="text-base font-semibold text-blue-600">
-                                  {attendanceRecordForDate ? attendanceRecordForDate[2] : '--:--'}
-                                </div>
-                              </div>
-                              <div className="h-8 w-px bg-gray-200"></div>
-                              <div>
-                                <div className="text-xs text-gray-500">退勤</div>
-                                <div className="text-base font-semibold text-blue-600">
-                                  {attendanceRecordForDate ? attendanceRecordForDate[3] : '--:--'}
-                                </div>
-                              </div>
                             </div>
                           </div>
-                  
-                          <div className="bg-white bg-opacity-75 backdrop-blur-sm rounded-xl p-3 shadow-sm hover:shadow transition-all duration-300">
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="flex items-center space-x-2">
-                                <div className="w-6 h-6 rounded-lg bg-emerald-400 flex items-center justify-center">
-                                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </div>
+                      )}
+                      
+                      {/* 実績の表示 */}
+                      {clockbookSchedule && (
+                        <div className="rounded-lg border border-green-100 bg-green-50 p-3">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <h3 className="text-sm font-semibold text-gray-700 flex items-center">
+                              <svg className="w-4 h-4 mr-1.5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              実績
+                            </h3>
+                            {clockbookSchedule[6] && (
+                              <span className="text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded">
+                                {clockbookSchedule[6]}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center text-sm text-gray-600">
+                            <div className="flex-1">
+                              {clockbookSchedule[2] && clockbookSchedule[3] ? (
+                                <div className="flex items-center">
+                                  <svg className="w-4 h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                   </svg>
+                                  {clockbookSchedule[2]} - {clockbookSchedule[3]}
                                 </div>
-                                <span className="text-sm font-medium text-gray-700">休憩時間</span>
-                              </div>
-                              {breakRecordsForDate.length > 0 && (
-                                <span className={`text-xs px-2 py-1 rounded-lg font-medium ${
-                                  breakRecordsForDate[0].recordType === '出勤簿'
-                                    ? 'bg-emerald-100 text-emerald-700'
-                                    : 'bg-blue-100 text-blue-700'
-                                }`}>
-                                  {breakRecordsForDate[0].recordType === '出勤簿' ? '実績' : '予定'}
-                                </span>
+                              ) : (
+                                <div className="text-gray-400">時間未設定</div>
                               )}
                             </div>
-                            {breakRecordsForDate.length > 0 ? (
-                              <div className="space-y-1 px-2">
-                                {breakRecordsForDate.map((br, idx) => (
-                                  <div key={idx} className="flex justify-between items-center text-sm">
-                                    <div className="flex items-center space-x-2">
-                                      <span className="text-xs text-gray-500">開始</span>
-                                      <span className="font-medium text-emerald-600">{br.breakStart}</span>
-                                    </div>
-                                    <div className="h-4 w-px bg-gray-200 mx-2"></div>
-                                    <div className="flex items-center space-x-2">
-                                      <span className="text-xs text-gray-500">終了</span>
-                                      <span className="font-medium text-emerald-600">{br.breakEnd}</span>
-                                    </div>
-                                  </div>
+                            
+                            {dayBreaks && dayBreaks.length > 0 && (
+                              <div className="text-sm text-amber-600">
+                                休憩: {dayBreaks.map((brk, i) => (
+                                  <span key={i}>
+                                    {brk.breakStart}-{brk.breakEnd}
+                                    {i < dayBreaks.length - 1 ? ', ' : ''}
+                                  </span>
                                 ))}
                               </div>
-                            ) : (
-                              <p className="text-xs text-gray-400 text-center mt-2">休憩予定なし</p>
                             )}
                           </div>
                         </div>
                       )}
-              
-                      {/* 業務詳細は常に表示（データがある場合） */}
-                      {dayDetails.length > 0 && !['公休', '有休'].includes(attendanceRecordForDate?.[4]) && (
-                        <div className={`bg-white bg-opacity-75 backdrop-blur-sm rounded-xl p-3 shadow-sm ${userData?.data[5] === '業務' ? 'mt-0' : 'mt-3'}`}>
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center space-x-2">
-                              <div className="w-6 h-6 rounded-lg bg-purple-400 flex items-center justify-center">
-                                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                </svg>
-                              </div>
-                              <span className="text-sm font-medium text-gray-700">業務詳細</span>
-                            </div>
-                            <span className={`text-xs px-2 py-1 rounded-lg font-medium ${
-                              dayDetails[0].recordType === '出勤簿'
-                                ? 'bg-emerald-100 text-emerald-700'
-                                : 'bg-blue-100 text-blue-700'
-                            }`}>
-                              {dayDetails[0].recordType === '出勤簿' ? '実績' : '予定'}
-                            </span>
+                      
+                      {/* 業務詳細の表示 */}
+                      {dayDetails && dayDetails.length > 0 && (
+                        <div className="mt-3">
+                          <div className="mb-2 flex items-center">
+                            <h3 className="text-sm font-semibold text-gray-700 flex items-center">
+                              <svg className="w-4 h-4 mr-1.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                              </svg>
+                              業務詳細
+                            </h3>
                           </div>
                           <div className="space-y-2">
                             {dayDetails.map((detail, idx) => (
@@ -662,7 +578,7 @@ export default function MonthlyListSection({
                           </div>
                         </div>
                       )}
-                    </>
+                    </div>
                   )}
                 </div>
               </div>
@@ -672,4 +588,15 @@ export default function MonthlyListSection({
       </div>
     </>
   );
-} 
+}
+
+// コンポーネントをmemoでラップして、比較関数を第二引数として渡す
+export default memo(MonthlyListSection, (prevProps, nextProps) => {
+  // currentDateが同じ場合は再レンダリングしない
+  if (prevProps.currentDate.getTime() === nextProps.currentDate.getTime() &&
+      JSON.stringify(prevProps.userData) === JSON.stringify(nextProps.userData) &&
+      prevProps.userSchedules.length === nextProps.userSchedules.length) {
+    return true; // propsが実質的に同じなら再レンダリングしない
+  }
+  return false; // propsが変わったら再レンダリングする
+}); 

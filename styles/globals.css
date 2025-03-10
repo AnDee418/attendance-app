@@ -16,3 +16,31 @@
     -webkit-overflow-scrolling: touch;
   }
 }
+
+/* Safari最適化のための追加設定 */
+@supports (-webkit-touch-callout: none) {
+  /* iOSデバイス特有の設定 */
+  body {
+    /* オーバースクロールを無効にしてメモリ使用量を削減 */
+    overscroll-behavior: none;
+  }
+  
+  /* テーブルやリストの描画最適化 */
+  .ios-optimize {
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+    will-change: transform;
+  }
+  
+  /* スクロール処理の最適化 */
+  .ios-scroll {
+    -webkit-overflow-scrolling: touch;
+    overflow-y: auto;
+  }
+  
+  /* フォント描画の最適化 */
+  .ios-text {
+    -webkit-font-smoothing: antialiased;
+  }
+}

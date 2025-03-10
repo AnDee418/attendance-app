@@ -11,7 +11,30 @@ export default async function handler(req, res) {
         range: '勤務記録!A:G',
       });
       // result.data.values に勤務記録の各行が入っています
-      return res.status(200).json({ data: result.data.values });
+      const rows = result.data.values || [];
+      
+      // フィルタリングパラメータがある場合はデータを絞り込む
+      if (req.query.month && req.query.year) {
+        const targetMonth = parseInt(req.query.month, 10);
+        const targetYear = parseInt(req.query.year, 10);
+        
+        // 最大件数制限を設定
+        const limit = req.query.limit ? parseInt(req.query.limit, 10) : 500;
+        
+        // データをフィルタリング
+        const filteredRows = rows.filter((row, index) => {
+          if (index >= limit) return false;
+          
+          const rowDate = new Date(row[0]);
+          return !isNaN(rowDate.getTime()) &&
+                 rowDate.getMonth() + 1 === targetMonth &&
+                 rowDate.getFullYear() === targetYear;
+        });
+        
+        return res.status(200).json({ data: filteredRows });
+      }
+      
+      return res.status(200).json({ data: rows });
     } catch (error) {
       console.error("Error fetching attendance data:", error);
       return res.status(500).json({ error: 'Internal server error' });
