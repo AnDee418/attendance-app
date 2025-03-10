@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import { useSession } from 'next-auth/react';
 import { useSwipeable } from 'react-swipeable';
 import {
@@ -48,6 +48,9 @@ const formatMonth = (date) => `${date.getFullYear()}年${date.getMonth() + 1}月
 
 // ヘルパー関数：日付を "en-CA" 形式に変換
 const getLocalDateString = (date) => date.toLocaleDateString('en-CA');
+
+// MonthlyListSectionコンポーネントをメモ化
+const MemoizedMonthlyListSection = memo(MonthlyListSection);
 
 export default function MySchedulePage() {
   const { data: session, status } = useSession();
@@ -121,9 +124,15 @@ export default function MySchedulePage() {
     const fetchData = async () => {
       setIsLoading(true);
       try {
+        // ユーザーに関連するデータのみをフィルタリングするパラメータを追加
+        const params = new URLSearchParams({
+          employeeName: session?.user?.name || '',
+          date: new Date().toLocaleDateString('en-CA')
+        });
+        
         const [breakRes, workDetailRes] = await Promise.all([
-          fetch('/api/break'),
-          fetch('/api/workdetail')
+          fetch(`/api/break?${params}`),
+          fetch(`/api/workdetail?${params}`)
         ]);
 
         if (breakRes.ok) {
@@ -154,9 +163,10 @@ export default function MySchedulePage() {
     };
 
     fetchData();
-    const intervalId = setInterval(fetchData, 300000);
+    // 更新頻度を下げる（5分→10分）
+    const intervalId = setInterval(fetchData, 600000);
     return () => clearInterval(intervalId);
-  }, []); // 空の依存配列
+  }, [session]);
 
   // 休暇申請データを取得するためのuseEffectを追加
   useEffect(() => {
@@ -727,7 +737,7 @@ export default function MySchedulePage() {
                 }`}
                 {...swipeHandlers}
               >
-                <MonthlyListSection
+                <MemoizedMonthlyListSection
                   currentDate={currentDate}
                   workDetails={workDetails}
                   userData={userData}

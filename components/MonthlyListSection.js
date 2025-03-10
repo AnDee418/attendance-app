@@ -140,7 +140,8 @@ export default function MonthlyListSection({
     const WORK_TYPES = {
       '出勤': {},
       '在宅': {},
-      '休暇': {},
+      '移動': {},
+      '公休': {},
       '半休': {},
       '遅刻': {}
     };

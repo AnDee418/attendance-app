@@ -2,3 +2,17 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Safariでのアニメーションパフォーマンス向上 */
+@supports (-webkit-overflow-scrolling: touch) {
+  .animate-fade-in-down,
+  .transition-all {
+    -webkit-transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+  }
+  
+  /* スクロール処理を最適化 */
+  .overflow-y-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+}

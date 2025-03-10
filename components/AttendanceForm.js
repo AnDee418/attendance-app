@@ -81,6 +81,7 @@ export default function AttendanceForm({
               <option value="半休">半休</option>
               <option value="早退">早退</option>
               <option value="遅刻">遅刻</option>
+              <option value="移動">移動</option>
               <option value="有給休暇">有給休暇</option>
               <option value="休日出勤">休日出勤</option>
               <option value="振替出勤">振替出勤</option>
