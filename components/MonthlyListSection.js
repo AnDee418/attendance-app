@@ -477,8 +477,8 @@ function MonthlyListSection({
             
             // この日付の業務詳細を抽出
             const dayDetails = workDetails?.filter(detail => 
-              detail.date === dateString && detail.employeeName === userData?.data[0]
-            );
+              detail && detail.date === dateString && detail.employeeName === userData?.data[0]
+            ) || [];
             
             // この日付の休憩情報を抽出
             const dayBreaks = breakData?.filter(br => 
@@ -663,15 +663,20 @@ function MonthlyListSection({
                           </div>
                           <div className="space-y-2.5">
                             {dayDetails.map((detail, idx) => {
+                              // nullチェックを追加
+                              if (!detail || !detail.workTitle) {
+                                return null; // 無効なデータは描画しない
+                              }
+                              
                               // 業務内容に基づいて色を決定（バリエーションを増やす）- より落ち着いた色合い
-                              const colorIndex = Math.abs(detail.workTitle.charCodeAt(0) % 5);
+                              const colorIndex = Math.abs((detail.workTitle.charCodeAt(0) || 0) % 5);
                               const colorClasses = [
                                 { bg: 'from-blue-200 to-blue-100', shadow: 'shadow-sm', hover: 'from-blue-300 to-blue-200', text: 'text-blue-600' },
                                 { bg: 'from-purple-200 to-purple-100', shadow: 'shadow-sm', hover: 'from-purple-300 to-purple-200', text: 'text-purple-600' },
                                 { bg: 'from-amber-200 to-amber-100', shadow: 'shadow-sm', hover: 'from-amber-300 to-amber-200', text: 'text-amber-600' },
                                 { bg: 'from-emerald-200 to-emerald-100', shadow: 'shadow-sm', hover: 'from-emerald-300 to-emerald-200', text: 'text-emerald-600' },
                                 { bg: 'from-indigo-200 to-indigo-100', shadow: 'shadow-sm', hover: 'from-indigo-300 to-indigo-200', text: 'text-indigo-600' },
-                              ][colorIndex];
+                              ][colorIndex] || { bg: 'from-gray-200 to-gray-100', shadow: 'shadow-sm', hover: 'from-gray-300 to-gray-200', text: 'text-gray-600' };  // デフォルト値を追加
                               
                               return (
                               <div 
@@ -754,6 +759,7 @@ function WorkTypePieChart({ userSchedules, currentDate, userName }) {
       }
     });
     
+    // デフォルトの色マップを定義（未知のタイプにもフォールバック値を持つように）
     const colors = {
       '出勤': '#3b82f6',
       '在宅': '#10b981',
@@ -762,14 +768,18 @@ function WorkTypePieChart({ userSchedules, currentDate, userName }) {
       '有給休暇': '#f59e0b',
       '半休': '#ec4899',
       '移動': '#ef4444',
-      '未設定': '#9ca3af'
+      '未設定': '#9ca3af',
+      'default': '#9ca3af'  // デフォルト色を追加
     };
     
-    return Object.entries(typeCount).map(([type, count]) => ({
-      name: type,
-      value: count,
-      fill: colors[type] || '#9ca3af'
-    }));
+    // nullやundefinedなど異常値のチェックも追加
+    return Object.entries(typeCount)
+      .filter(([type, count]) => type && count) // 無効なデータをフィルタリング
+      .map(([type, count]) => ({
+        name: type || '未設定',
+        value: count || 0,
+        fill: colors[type] || colors['default']
+      }));
   }, [userSchedules, currentDate, userName]);
   
   return (

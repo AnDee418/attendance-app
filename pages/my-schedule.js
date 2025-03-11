@@ -41,6 +41,12 @@ const accountTypes = {
     icon: <UserIcon className="h-3.5 w-3.5" />,
     bgColor: 'bg-gray-100',
     textColor: 'text-gray-700'
+  },
+  // デフォルトのアカウントタイプを追加
+  'default': {
+    icon: <UserIcon className="h-3.5 w-3.5" />,
+    bgColor: 'bg-gray-100',
+    textColor: 'text-gray-700'
   }
 };
 
@@ -789,11 +795,11 @@ export default function MySchedulePage() {
                   <div className="flex items-center gap-2">
                     <span
                       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full ${
-                        accountTypes[userData.data[5]]?.bgColor || 'bg-gray-100'
-                      } ${accountTypes[userData.data[5]]?.textColor || 'text-gray-700'}`}
+                        accountTypes[userData.data[5]]?.bgColor || accountTypes['default'].bgColor
+                      } ${accountTypes[userData.data[5]]?.textColor || accountTypes['default'].textColor}`}
                     >
-                      {accountTypes[userData.data[5]]?.icon}
-                      <span className="text-xs font-medium">{userData.data[5]}</span>
+                      {accountTypes[userData.data[5]]?.icon || accountTypes['default'].icon}
+                      <span className="text-xs font-medium">{userData.data[5] || 'ユーザー'}</span>
                     </span>
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-100 text-xs font-medium text-gray-700">
                       {userData.data[4]}
