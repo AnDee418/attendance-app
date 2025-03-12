@@ -97,6 +97,27 @@ export default function MySchedulePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showVacationForm, setShowVacationForm] = useState(false);
   const [vacationDate, setVacationDate] = useState(null);
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [modalData, setModalData] = useState({
+    attendance: {
+      date: '',
+      employeeName: '',
+      startTime: '',
+      endTime: '',
+      workType: '出勤',
+      recordType: '予定',
+    },
+    breakRecords: [{ breakStart: '', breakEnd: '', recordType: '予定' }],
+    workDetails: [{ 
+      workTitle: '',
+      workStart: '',
+      workEnd: '',
+      detail: '',
+      workCategory: '業務',
+      recordType: '予定'
+    }]
+  });
+  const [submitError, setSubmitError] = useState('');
 
   // データ取得関数を整理して一元化
   const fetchAllData = async (date = currentDate) => {
@@ -104,6 +125,18 @@ export default function MySchedulePage() {
     try {
       // ユーザー名を取得
       const userName = session?.user?.name || '';
+      
+      // 月の初日と最終日を計算
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      
+      // 日付の範囲をフォーマット
+      const startDateStr = getLocalDateString(firstDay);
+      const endDateStr = getLocalDateString(lastDay);
+      
+      console.log(`データ取得期間: ${startDateStr} 〜 ${endDateStr}`);
       
       // 各APIのエンドポイントからデータを取得
       const [schedulesRes, breakRes, workDetailRes, vacationRes] = await Promise.all([
@@ -146,8 +179,32 @@ export default function MySchedulePage() {
       if (workDetailRes.ok) {
         const data = await workDetailRes.json();
         if (data.data) {
-          setWorkDetails(data.data);
+          console.log('業務詳細データ取得完了:', data.data.length, '件');
+          
+          // データをコンソールに出力（デバッグ用）
+          if (data.data.length > 0) {
+            console.log('最初の業務詳細:', data.data[0]);
+          }
+          
+          // 現在の月のデータだけをフィルタリング
+          const filteredWorkDetails = data.data.filter(item => {
+            if (!item.date) return false;
+            const itemDate = new Date(item.date);
+            return itemDate.getMonth() === date.getMonth() && 
+                   itemDate.getFullYear() === date.getFullYear();
+          });
+          
+          console.log(`フィルタリング後の業務詳細: ${filteredWorkDetails.length}件`);
+          
+          // 業務詳細データをステートに設定
+          setWorkDetails(filteredWorkDetails);
+        } else {
+          console.log('業務詳細データが存在しません');
+          setWorkDetails([]);
         }
+      } else {
+        console.error('業務詳細データの取得に失敗しました');
+        setWorkDetails([]);
       }
       
       // 休暇申請データの処理
@@ -426,152 +483,89 @@ export default function MySchedulePage() {
 
   // 行動予定の送信処理を修正（上書き対応）
   const handleScheduleSubmit = async (attendanceData, breakRecords, workDetailRecords) => {
-    setIsSubmitting(true);
     try {
-      const startTime = attendanceData.startTime;
-      const endTime = attendanceData.endTime;
-      
-      // 勤務時間の計算（休暇系の場合は0時間）
-      let workingHours = 0;
-      
-      if (!['公休', '有給休暇', '休暇'].includes(attendanceData.workType) && 
-          startTime && endTime && startTime !== '00:00' && endTime !== '00:00') {
-        
-        // 時間を分に変換
-        const [startHour, startMinute] = startTime.split(':').map(Number);
-        const [endHour, endMinute] = endTime.split(':').map(Number);
-        
-        let startTotalMinutes = startHour * 60 + startMinute;
-        let endTotalMinutes = endHour * 60 + endMinute;
-        
-        // 終了時間が開始時間より前なら日をまたいだと判断
-        if (endTotalMinutes < startTotalMinutes) {
-          endTotalMinutes += 24 * 60; // 24時間分を追加
-        }
-        
-        // 総勤務時間（分）
-        const totalWorkMinutes = endTotalMinutes - startTotalMinutes;
-        
-        // 休憩時間の計算
-        let totalBreakMinutes = 0;
-        
-        // 休憩レコードがある場合のみ計算（ここを修正）
-        if (breakRecords && breakRecords.length > 0) {
-          for (const breakRecord of breakRecords) {
-            // 空の休憩レコードはスキップ
-            if (!breakRecord.breakStart || !breakRecord.breakEnd || 
-                breakRecord.breakStart === '' || breakRecord.breakEnd === '') {
-              continue;
-            }
-            
-            const [breakStartHour, breakStartMinute] = breakRecord.breakStart.split(':').map(Number);
-            const [breakEndHour, breakEndMinute] = breakRecord.breakEnd.split(':').map(Number);
-            
-            let breakStartTotalMinutes = breakStartHour * 60 + breakStartMinute;
-            let breakEndTotalMinutes = breakEndHour * 60 + breakEndMinute;
-            
-            // 休憩終了時間が休憩開始時間より前なら日をまたいだと判断
-            if (breakEndTotalMinutes < breakStartTotalMinutes) {
-              breakEndTotalMinutes += 24 * 60;
-            }
-            
-            totalBreakMinutes += breakEndTotalMinutes - breakStartTotalMinutes;
-          }
-        }
-        
-        // 実労働時間 = 総勤務時間 - 休憩時間
-        const netWorkMinutes = totalWorkMinutes - totalBreakMinutes;
-        
-        // 時間と分に変換（例: 7時間30分）
-        const hours = Math.floor(netWorkMinutes / 60);
-        const minutes = netWorkMinutes % 60;
-        
-        workingHours = `${hours}時間${minutes > 0 ? `${minutes}分` : ''}`;
-      }
-      
-      console.log("送信するデータ:", attendanceData);
-      
-      // 予定データの送信（新規または更新）
-      await fetch('/api/attendance', {
-        method: 'POST',  // PUTではなくPOST - 既存のAPIで上書き処理を行う
-        headers: { 'Content-Type': 'application/json' },
+      setIsSubmitting(true);
+      setSubmitError('');
+
+      // 勤怠記録の送信
+      const attendanceRes = await fetch('/api/attendance', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
-          ...attendanceData,
+          date: attendanceData.date,
+          employeeName: attendanceData.employeeName,
+          startTime: attendanceData.startTime,
+          endTime: attendanceData.endTime,
+          workType: attendanceData.workType,
           recordType: '予定',
-          workingHours: workingHours
+          totalWorkTime: attendanceData.totalWorkTime
         }),
       });
-      
-      // 既存の休憩データをまず削除
-      if (attendanceData.date && attendanceData.employeeName) {
-        // 削除APIを呼び出し
-        await fetch(`/api/break?date=${encodeURIComponent(attendanceData.date)}&employeeName=${encodeURIComponent(attendanceData.employeeName)}&recordType=予定`, {
-          method: 'DELETE',
-        });
+
+      const attendanceJson = await attendanceRes.json();
+      if (!attendanceRes.ok) {
+        throw new Error(attendanceJson.error || '勤怠記録の送信に失敗しました');
       }
-      
-      // 新しい休憩データを送信
+
+      // 休憩記録の送信
       for (const breakRecord of breakRecords) {
-        if (!breakRecord.breakStart || !breakRecord.breakEnd) continue;
-        
-        await fetch('/api/break', {
+        if (breakRecord.breakStart && breakRecord.breakEnd) {
+          const breakRes = await fetch('/api/break', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              date: attendanceData.date,
+              employeeName: attendanceData.employeeName,
+              breakStart: breakRecord.breakStart,
+              breakEnd: breakRecord.breakEnd,
+              recordType: '予定'
+            }),
+          });
+
+          const breakJson = await breakRes.json();
+          if (!breakRes.ok) {
+            throw new Error(breakJson.error || '休憩記録の送信に失敗しました');
+          }
+        }
+      }
+
+      // 業務詳細の送信 - 複数の業務詳細を一括で送信するよう修正
+      if (workDetailRecords && workDetailRecords.length > 0) {
+        const workDetailRes = await fetch('/api/workdetail', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+          },
           body: JSON.stringify({
-            breakStart: breakRecord.breakStart,
-            breakEnd: breakRecord.breakEnd,
             date: attendanceData.date,
             employeeName: attendanceData.employeeName,
+            workDetails: workDetailRecords,  // 複数の業務詳細を配列として送信
             recordType: '予定'
           }),
         });
+
+        const workDetailJson = await workDetailRes.json();
+        if (!workDetailRes.ok) {
+          throw new Error(workDetailJson.error || '業務詳細の送信に失敗しました');
+        }
       }
+
+      // 送信成功後の処理
+      fetchAllData();
       
-      // 既存の業務詳細データをまず削除
-      if (attendanceData.date && attendanceData.employeeName) {
-        await fetch(`/api/workdetail?date=${encodeURIComponent(attendanceData.date)}&employeeName=${encodeURIComponent(attendanceData.employeeName)}&recordType=予定`, {
-          method: 'DELETE',
-        });
-      }
-      
-      // 新しい業務詳細データを送信
-      for (const detail of workDetailRecords) {
-        if (!detail.workTitle || detail.workTitle.trim() === '') continue;
-        
-        await fetch('/api/workdetail', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            workTitle: detail.workTitle,
-            workStart: detail.workStart,
-            workEnd: detail.workEnd,
-            detail: detail.detail,
-            workCategory: detail.workCategory || '業務',
-            date: attendanceData.date,
-            employeeName: attendanceData.employeeName,
-            recordType: '予定'
-          }),
-        });
-      }
-      
-      // データを再取得して表示を更新
-      await fetchAllData();
-      
-      // フォームをリセット
+      // 自動的にモーダルを閉じる
       setShowScheduleForm(false);
-      setScheduleAttendance(null);
-      setEditBreakRecords([{ breakStart: '', breakEnd: '', recordType: '予定' }]);
-      setEditWorkDetails([{ 
-        workTitle: '', workStart: '', workEnd: '', 
-        detail: '', workCategory: '業務', recordType: '予定' 
-      }]);
       
-      // 成功メッセージを表示
-      setEditMessage('予定を保存しました');
-      setTimeout(() => setEditMessage(''), 3000);
+      return true;
     } catch (error) {
-      console.error('Error:', error);
-      setEditMessage('予定の保存中にエラーが発生しました');
+      console.error('Submit error:', error);
+      setSubmitError(error.message);
+      alert(`エラーが発生しました: ${error.message}`);
+      return false;
     } finally {
       setIsSubmitting(false);
     }
@@ -579,139 +573,68 @@ export default function MySchedulePage() {
 
   // 出勤簿の送信処理を修正
   const handleClockbookSubmit = async (attendanceData, breakRecords) => {
-    setIsSubmitting(true);
     try {
-      // デバッグ用にログを追加
-      console.log("受け取った勤務データ:", attendanceData);
-      
-      const startTime = attendanceData.startTime || '';
-      const endTime = attendanceData.endTime || '';
-      const workType = attendanceData.workType || '出勤';
-      
-      // 勤務時間の計算（休暇系の場合は特別処理）
-      let totalWorkTime = attendanceData.totalWorkTime || '';
-      
-      // 公休の場合は空の勤務時間
-      if (workType === '公休') {
-        totalWorkTime = '';
+      setIsSubmitting(true);
+      setSubmitError('');
+
+      // 勤怠記録の送信
+      const attendanceRes = await fetch('/api/attendance', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          date: attendanceData.date,
+          employeeName: attendanceData.employeeName,
+          startTime: attendanceData.startTime,
+          endTime: attendanceData.endTime,
+          workType: attendanceData.workType,
+          recordType: '出勤簿',
+          totalWorkTime: attendanceData.totalWorkTime
+        }),
+      });
+
+      const attendanceJson = await attendanceRes.json();
+      if (!attendanceRes.ok) {
+        throw new Error(attendanceJson.error || '勤怠記録の送信に失敗しました');
       }
-      // 有給休暇の場合はアカウントタイプに応じた固定時間
-      else if (workType === '有給休暇') {
-        const accountType = window.localStorage.getItem('userAccountType') || '';
-        totalWorkTime = accountType === '業務' ? '7時間30分' : '7時間';
-      }
-      // 通常の勤務の場合は計算
-      else if (startTime && endTime && startTime !== '00:00' && endTime !== '00:00') {
-        // 時間を分に変換
-        const [startHour, startMinute] = startTime.split(':').map(Number);
-        const [endHour, endMinute] = endTime.split(':').map(Number);
-        
-        let startTotalMinutes = startHour * 60 + startMinute;
-        let endTotalMinutes = endHour * 60 + endMinute;
-        
-        // 終了時間が開始時間より前なら日をまたいだと判断
-        if (endTotalMinutes < startTotalMinutes) {
-          endTotalMinutes += 24 * 60; // 24時間分を追加
-        }
-        
-        // 総勤務時間（分）
-        const totalWorkMinutes = endTotalMinutes - startTotalMinutes;
-        
-        // 休憩時間の計算
-        let totalBreakMinutes = 0;
-        
-        // 休憩レコードがある場合のみ計算（ここを修正）
-        if (breakRecords && breakRecords.length > 0) {
-          for (const breakRecord of breakRecords) {
-            // 空の休憩レコードはスキップ
-            if (!breakRecord.breakStart || !breakRecord.breakEnd || 
-                breakRecord.breakStart === '' || breakRecord.breakEnd === '') {
-              continue;
-            }
-            
-            const [breakStartHour, breakStartMinute] = breakRecord.breakStart.split(':').map(Number);
-            const [breakEndHour, breakEndMinute] = breakRecord.breakEnd.split(':').map(Number);
-            
-            let breakStartTotalMinutes = breakStartHour * 60 + breakStartMinute;
-            let breakEndTotalMinutes = breakEndHour * 60 + breakEndMinute;
-            
-            // 休憩終了時間が休憩開始時間より前なら日をまたいだと判断
-            if (breakEndTotalMinutes < breakStartTotalMinutes) {
-              breakEndTotalMinutes += 24 * 60;
-            }
-            
-            totalBreakMinutes += breakEndTotalMinutes - breakStartTotalMinutes;
+
+      // 休憩記録の送信
+      for (const breakRecord of breakRecords) {
+        if (breakRecord.breakStart && breakRecord.breakEnd) {
+          const breakRes = await fetch('/api/break', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              date: attendanceData.date,
+              employeeName: attendanceData.employeeName,
+              breakStart: breakRecord.breakStart,
+              breakEnd: breakRecord.breakEnd,
+              recordType: '出勤簿'
+            }),
+          });
+
+          const breakJson = await breakRes.json();
+          if (!breakRes.ok) {
+            throw new Error(breakJson.error || '休憩記録の送信に失敗しました');
           }
         }
-        
-        // 実労働時間 = 総勤務時間 - 休憩時間
-        const netWorkMinutes = totalWorkMinutes - totalBreakMinutes;
-        
-        // 時間と分に変換（例: 7時間30分）
-        const hours = Math.floor(netWorkMinutes / 60);
-        const minutes = netWorkMinutes % 60;
-        
-        totalWorkTime = `${hours}時間${minutes > 0 ? `${minutes}分` : ''}`;
       }
+
+      // 送信成功後の処理
+      fetchAllData();
       
-      // 送信データを明示的に構築
-      const submitData = {
-        date: attendanceData.date,
-        employeeName: attendanceData.employeeName,
-        startTime: startTime,
-        endTime: endTime,
-        workType: workType,
-        recordType: '出勤簿',
-        totalWorkTime: totalWorkTime
-      };
-      
-      console.log("送信するデータ:", submitData);
-      
-      // 出勤簿データの送信（新規または更新）
-      await fetch('/api/attendance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(submitData),
-      });
-      
-      // 既存の休憩データをまず削除
-      if (attendanceData.date && attendanceData.employeeName) {
-        await fetch(`/api/break?date=${encodeURIComponent(attendanceData.date)}&employeeName=${encodeURIComponent(attendanceData.employeeName)}&recordType=出勤簿`, {
-          method: 'DELETE',
-        });
-      }
-      
-      // 新しい休憩データを送信
-      for (const breakRecord of breakRecords) {
-        if (!breakRecord.breakStart || !breakRecord.breakEnd) continue;
-        
-        await fetch('/api/break', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            breakStart: breakRecord.breakStart,
-            breakEnd: breakRecord.breakEnd,
-            date: attendanceData.date,
-            employeeName: attendanceData.employeeName,
-            recordType: '出勤簿'
-          }),
-        });
-      }
-      
-      // データを再取得して表示を更新
-      await fetchAllData();
-      
-      // フォームをリセット
+      // 自動的にモーダルを閉じる
       setShowClockbookForm(false);
-      setClockbookAttendance(null);
-      setEditBreakRecords([{ breakStart: '', breakEnd: '', recordType: '出勤簿' }]);
       
-      // 成功メッセージを表示
-      setEditMessage('出勤簿を保存しました');
-      setTimeout(() => setEditMessage(''), 3000);
+      return true;
     } catch (error) {
-      console.error('Error:', error);
-      setEditMessage('出勤簿の保存中にエラーが発生しました');
+      console.error('Submit error:', error);
+      setSubmitError(error.message);
+      alert(`エラーが発生しました: ${error.message}`);
+      return false;
     } finally {
       setIsSubmitting(false);
     }
@@ -719,20 +642,36 @@ export default function MySchedulePage() {
 
   // 休暇申請の送信処理を修正
   const handleVacationSubmit = async (formData) => {
-    setIsSubmitting(true);
     try {
-      // 既存のコード...
+      setIsSubmitting(true);
+      setSubmitError('');
+
+      const response = await fetch('/api/vacation-requests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || '休暇申請の送信に失敗しました');
+      }
+
+      // 送信成功後の処理
+      fetchAllData();
       
-      // フォーム送信後にすべてのデータを再取得
-      await fetchAllData();
-      
+      // 自動的にモーダルを閉じる
       setShowVacationForm(false);
-      setVacationDate(null);
-      setEditMessage('休暇申請を送信しました');
-      setTimeout(() => setEditMessage(''), 3000);
+      
+      return true;
     } catch (error) {
-      console.error('Error submitting vacation request:', error);
-      setEditMessage(error.message || '休暇申請の送信に失敗しました');
+      console.error('Submit error:', error);
+      setSubmitError(error.message);
+      alert(`エラーが発生しました: ${error.message}`);
+      return false;
     } finally {
       setIsSubmitting(false);
     }
@@ -750,6 +689,31 @@ export default function MySchedulePage() {
     
     // 選択された日付に対するアクションボタンを表示するだけ
     // 具体的なアクションは handleActionButtonClick で処理
+  };
+
+  const openScheduleModal = (date) => {
+    const localDateString = getLocalDateString(date);
+    setCurrentDate(date);
+    setModalData({
+      attendance: {
+        date: localDateString,
+        employeeName: session.user.name,
+        startTime: '',
+        endTime: '',
+        workType: '出勤',
+        recordType: '予定',
+      },
+      breakRecords: [{ breakStart: '', breakEnd: '', recordType: '予定' }],
+      workDetails: [{ 
+        workTitle: '',
+        workStart: '',
+        workEnd: '',
+        detail: '',
+        workCategory: '業務',
+        recordType: '予定'
+      }]
+    });
+    setIsScheduleModalOpen(true);
   };
 
   return (
@@ -1042,6 +1006,25 @@ export default function MySchedulePage() {
                   setVacationDate(null);
                 }}
               />
+            </div>
+          )}
+
+          {/* 予定登録・編集モーダル */}
+          {isScheduleModalOpen && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <div className="p-4">
+                  <h2 className="text-xl font-bold mb-4">予定登録・編集</h2>
+                  <ScheduleForm
+                    initialAttendance={modalData.attendance}
+                    initialBreakRecords={modalData.breakRecords}
+                    initialWorkDetails={modalData.workDetails}
+                    onSubmit={handleScheduleSubmit}
+                    onClose={() => setIsScheduleModalOpen(false)}
+                    onUpdateData={() => fetchAllData(currentDate)} // データ更新関数を渡す
+                  />
+                </div>
+              </div>
             </div>
           )}
         </>

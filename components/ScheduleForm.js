@@ -221,6 +221,7 @@ export default function ScheduleForm({
     setMessage('');
 
     try {
+      // 送信処理を呼び出す際に、業務詳細オブジェクトのリスト全体を渡す
       await onSubmit(attendance, breakRecords, workDetails);
       setAttendance((prev) => ({
         ...prev,

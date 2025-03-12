@@ -30,85 +30,91 @@ export default async function handler(req, res) {
     }
   } else if (req.method === 'POST') {
     try {
+      // リクエストボディを分析して複数の業務詳細データを処理できるように変更
       const {
         date,
         employeeName,
-        workTitle,
-        workStart,
-        workEnd,
-        detail,
-        workCategory,
+        workDetails,  // 複数の業務詳細を含む配列
         recordType
       } = req.body;
 
-      // 必須フィールドの検証を修正：日付と社員名のみを必須とする
+      // 必須フィールドの検証
       if (!date || !employeeName) {
         res.status(400).json({ error: '日付と社員名は必須です。' });
         return;
       }
 
-      // 既存データの確認
+      // 業務詳細データがない場合は早期リターン
+      if (!workDetails || !Array.isArray(workDetails) || workDetails.length === 0) {
+        res.status(200).json({ message: '業務詳細なし' });
+        return;
+      }
+
+      // 既存データの取得
       const result = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
         range: `${SHEET_NAME}!A:H`,
       });
       
-      const rows = result.data.values || [];
-      const existingRowIndex = rows.findIndex(row => 
+      const allRows = result.data.values || [];
+      
+      // 該当する日付と社員名の既存データを抽出
+      const existingRows = allRows.filter(row => 
         row[0] === date && 
         row[1] === employeeName && 
         row[6] === recordType
       );
 
-      // タイトルか詳細、または開始/終了時間のいずれかが入力されている場合のみ登録
-      if (workTitle || detail || workStart || workEnd) {
-        if (existingRowIndex !== -1) {
-          // 既存データを削除
-          const rowsToKeep = rows.filter((row, index) => 
-            !(row[0] === date && 
-              row[1] === employeeName && 
-              row[6] === recordType)
-          );
-          
-          // シートをクリアして新しいデータを書き込み
-          await sheets.spreadsheets.values.clear({
-            spreadsheetId: SPREADSHEET_ID,
-            range: `${SHEET_NAME}!A:H`,
-          });
-          
-          // フィルタリングした行を書き戻し
-          if (rowsToKeep.length > 0) {
-            await sheets.spreadsheets.values.append({
-              spreadsheetId: SPREADSHEET_ID,
-              range: `${SHEET_NAME}!A:H`,
-              valueInputOption: 'RAW',
-              requestBody: {
-                values: rowsToKeep,
-              },
-            });
-          }
-        }
-
-        // 新しいデータを追加
-        await sheets.spreadsheets.values.append({
+      // 既存データを含まない行だけを残す
+      const rowsToKeep = allRows.filter(row => 
+        !(row[0] === date && 
+          row[1] === employeeName && 
+          row[6] === recordType)
+      );
+      
+      // 新規および更新データを追加
+      const newRows = workDetails
+        .filter(detail => {
+          // タイトルか詳細、または開始/終了時間のいずれかが入力されている場合のみ登録
+          return detail.workTitle || detail.detail || detail.workStart || detail.workEnd;
+        })
+        .map(detail => [
+          date,                     // 日付
+          employeeName,             // 社員名
+          detail.workTitle || '',   // 業務タイトル
+          detail.workStart || '',   // 業務開始時間
+          detail.workEnd || '',     // 業務終了時間
+          detail.workCategory || '業務', // 種別
+          recordType,               // 登録タイプ
+          detail.detail || ''       // 詳細 (H列)
+        ]);
+      
+      if (newRows.length > 0) {
+        // シートをクリアして新しいデータを書き込み
+        await sheets.spreadsheets.values.clear({
           spreadsheetId: SPREADSHEET_ID,
           range: `${SHEET_NAME}!A:H`,
-          valueInputOption: 'RAW',
-          requestBody: {
-            values: [[
-              date,           // 日付
-              employeeName,   // 社員名
-              workTitle || '', // 業務タイトル
-              workStart || '', // 業務開始時間
-              workEnd || '',   // 業務終了時間
-              workCategory || '業務', // 種別
-              recordType,     // 登録タイプ
-              detail || ''    // 詳細 (H列)
-            ]],
-          },
         });
         
-        res.status(200).json({ message: '業務詳細記録を更新しました。' });
+        // 保持する行と新しい行を組み合わせて書き戻し
+        const allNewRows = [...rowsToKeep, ...newRows];
+        
+        if (allNewRows.length > 0) {
+          await sheets.spreadsheets.values.append({
+            spreadsheetId: SPREADSHEET_ID,
+            range: `${SHEET_NAME}!A:H`,
+            valueInputOption: 'RAW',
+            requestBody: {
+              values: allNewRows,
+            },
+          });
+        }
+        
+        res.status(200).json({ 
+          message: '業務詳細記録を更新しました。',
+          updated: existingRows.length,
+          added: newRows.length - existingRows.length
+        });
       } else {
         // 詳細情報がない場合は単に成功を返す
         res.status(200).json({ message: '業務詳細なし' });
