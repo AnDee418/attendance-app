@@ -850,52 +850,6 @@ export default function HomePage() {
               )}
             </div>
 
-            {/* 勤務種別内訳 */}
-            <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-3">
-              {/* 予定セクション */}
-              <div className="bg-gradient-to-br from-blue-50/50 to-indigo-50/50 rounded-xl p-3 border border-blue-100">
-                <h3 className="text-xs font-medium text-gray-600 mb-2 flex items-center">
-                  <div className="w-2 h-2 rounded-full bg-blue-400 mr-2"></div>
-                  勤務種別（予定）
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {Object.entries(plannedCounts).map(([type, count]) => {
-                    if (count === 0) return null;
-                    return (
-                      <div
-                        key={`予定-${type}`}
-                        className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium 
-                            bg-white text-blue-600 border border-blue-200 shadow-sm"
-                      >
-                        {type} <span className="ml-2 bg-blue-100 px-2 py-0.5 rounded-full text-xs">{count}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* 出勤簿セクション */}
-              <div className="bg-gradient-to-br from-green-50/50 to-emerald-50/50 rounded-xl p-3 border border-green-100">
-                <h3 className="text-xs font-medium text-gray-600 mb-2 flex items-center">
-                  <div className="w-2 h-2 rounded-full bg-green-400 mr-2"></div>
-                  勤務種別（出勤簿）
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {Object.entries(clockbookCounts).map(([type, count]) => {
-                    if (count === 0) return null;
-                    return (
-                      <div
-                        key={`出勤簿-${type}`}
-                        className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium 
-                            bg-white text-green-600 border border-green-200 shadow-sm"
-                      >
-                        {type} <span className="ml-2 bg-green-100 px-2 py-0.5 rounded-full text-xs">{count}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
           </section>
 
           {/* 今日の業務詳細セクション */}

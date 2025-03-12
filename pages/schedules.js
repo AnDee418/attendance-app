@@ -775,59 +775,6 @@ export default function SchedulesPage() {
                           </div>
                         </div>
 
-                        {/* 勤務種別チップ - 幅を最大に */}
-                        <div className="mt-4 w-full">
-                          <div className="bg-gray-50/50 rounded-lg px-3 py-2 space-y-2 border border-gray-100">
-                            {/* 予定セクション */}
-                            <div>
-                              <h3 className="text-xs font-medium text-gray-500 mb-1.5 flex items-center">
-                                <div className="w-2 h-2 rounded-full bg-blue-400 mr-2"></div>
-                                勤務種別（予定）
-                              </h3>
-                              <div className="flex flex-wrap gap-1.5">
-                                {Object.entries(WORK_TYPES).map(([type, { bgColor, textColor }]) => {
-                                  const count = plannedCounts[type];
-                                  if (count === 0) return null;
-                                  return (
-                                    <div
-                                      key={`予定-${type}`}
-                                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium 
-                                        ${bgColor} ${textColor}`}
-                                    >
-                                      {type} {count}
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-
-                            {/* 区切り線 */}
-                            <div className="border-t border-gray-100"></div>
-
-                            {/* 出勤簿セクション */}
-                            <div>
-                              <h3 className="text-xs font-medium text-gray-500 mb-1.5 flex items-center">
-                                <div className="w-2 h-2 rounded-full bg-green-400 mr-2"></div>
-                                勤務種別（出勤簿）
-                              </h3>
-                              <div className="flex flex-wrap gap-1.5">
-                                {Object.entries(WORK_TYPES).map(([type, { bgColor, textColor }]) => {
-                                  const count = clockbookCounts[type];
-                                  if (count === 0) return null;
-                                  return (
-                                    <div
-                                      key={`出勤簿-${type}`}
-                                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium 
-                                        ${bgColor} ${textColor}`}
-                                    >
-                                      {type} {count}
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
                       </div>
                     </Link>
                   );
