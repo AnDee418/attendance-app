@@ -162,6 +162,10 @@ export default function ClockbookForm({
     }
   };
 
+  // コメントを追加してClockbookFormもAttendanceFormを使用していることを明示
+  // AttendanceFormコンポーネントでは、時間選択UIが改善されたものを使用します。
+  // AttendanceFormの改善により、ここでも時間と分を別々に選択できるUIが利用できます。
+
   // 既存データの取得処理を修正
   useEffect(() => {
     const fetchExistingData = async () => {

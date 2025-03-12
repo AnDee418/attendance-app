@@ -267,6 +267,39 @@ export default function ScheduleForm({
     return options;
   };
 
+  // 時間フォーマット用の関数
+  const parseTime = (timeString) => {
+    if (!timeString) return { hour: '', minute: '' };
+    const [hour, minute] = timeString.split(':');
+    return { hour, minute };
+  };
+
+  // 選択した時間と分から時刻文字列を生成
+  const formatTime = (hour, minute) => {
+    if (!hour && !minute) return '';
+    return `${hour}:${minute}`;
+  };
+
+  // 業務詳細の時間部分の変更を処理
+  const handleWorkDetailHourChange = (index, fieldName, value) => {
+    const currentTime = workDetails[index][fieldName];
+    const { minute } = parseTime(currentTime);
+    
+    const newWorkDetails = [...workDetails];
+    newWorkDetails[index][fieldName] = formatTime(value, minute || '00');
+    setWorkDetails(newWorkDetails);
+  };
+
+  // 業務詳細の分部分の変更を処理
+  const handleWorkDetailMinuteChange = (index, fieldName, value) => {
+    const currentTime = workDetails[index][fieldName];
+    const { hour } = parseTime(currentTime);
+    
+    const newWorkDetails = [...workDetails];
+    newWorkDetails[index][fieldName] = formatTime(hour || '00', value);
+    setWorkDetails(newWorkDetails);
+  };
+
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-[110] p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl 
@@ -352,47 +385,116 @@ export default function ScheduleForm({
                     </div>
                     <div className="flex flex-col sm:flex-row sm:space-x-4 mb-1">
                       <div className="flex-1">
-                        <label className="block mb-1">業務開始:</label>
-                        <select 
-                          name="workStart" 
-                          value={detail.workStart} 
-                          onChange={(e) => handleWorkDetailChange(index, e)} 
-                          className="w-full p-2 border rounded" 
-                        >
-                          <option value="">時間を選択</option>
-                          {generateTimeOptions()}
-                        </select>
+                        <label className="block mb-2 font-medium text-gray-700">業務開始:</label>
+                        <div className="flex">
+                          <select 
+                            name="workStartHour" 
+                            value={parseTime(detail.workStart).hour || ''}
+                            onChange={(e) => {
+                              const hour = e.target.value;
+                              const { minute } = parseTime(detail.workStart);
+                              handleWorkDetailChange(index, {
+                                target: {
+                                  name: 'workStart',
+                                  value: formatTime(hour, minute || '00')
+                                }
+                              });
+                            }}
+                            className="flex-1 p-3 border border-gray-300 rounded-l-lg bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                          >
+                            <option value="">時間</option>
+                            {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0')).map(hour => (
+                              <option key={hour} value={hour}>{hour}時</option>
+                            ))}
+                          </select>
+                          <select 
+                            name="workStartMinute" 
+                            value={parseTime(detail.workStart).minute || ''}
+                            onChange={(e) => {
+                              const minute = e.target.value;
+                              const { hour } = parseTime(detail.workStart);
+                              handleWorkDetailChange(index, {
+                                target: {
+                                  name: 'workStart',
+                                  value: formatTime(hour || '09', minute)
+                                }
+                              });
+                            }}
+                            className="flex-1 p-3 border border-l-0 border-gray-300 rounded-r-lg bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                          >
+                            <option value="">分</option>
+                            {['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'].map(minute => (
+                              <option key={minute} value={minute}>{minute}分</option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
                       <div className="flex-1">
-                        <label className="block mb-1">業務終了:</label>
-                        <select 
-                          name="workEnd" 
-                          value={detail.workEnd} 
-                          onChange={(e) => handleWorkDetailChange(index, e)} 
-                          className="w-full p-2 border rounded" 
-                        >
-                          <option value="">時間を選択</option>
-                          {generateTimeOptions()}
-                        </select>
+                        <label className="block mb-2 font-medium text-gray-700">業務終了:</label>
+                        <div className="flex">
+                          <select 
+                            name="workEndHour" 
+                            value={parseTime(detail.workEnd).hour || ''}
+                            onChange={(e) => {
+                              const hour = e.target.value;
+                              const { minute } = parseTime(detail.workEnd);
+                              handleWorkDetailChange(index, {
+                                target: {
+                                  name: 'workEnd',
+                                  value: formatTime(hour, minute || '00')
+                                }
+                              });
+                            }}
+                            className="flex-1 p-3 border border-gray-300 rounded-l-lg bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                          >
+                            <option value="">時間</option>
+                            {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0')).map(hour => (
+                              <option key={hour} value={hour}>{hour}時</option>
+                            ))}
+                          </select>
+                          <select 
+                            name="workEndMinute" 
+                            value={parseTime(detail.workEnd).minute || ''}
+                            onChange={(e) => {
+                              const minute = e.target.value;
+                              const { hour } = parseTime(detail.workEnd);
+                              handleWorkDetailChange(index, {
+                                target: {
+                                  name: 'workEnd',
+                                  value: formatTime(hour || '17', minute)
+                                }
+                              });
+                            }}
+                            className="flex-1 p-3 border border-l-0 border-gray-300 rounded-r-lg bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                          >
+                            <option value="">分</option>
+                            {['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'].map(minute => (
+                              <option key={minute} value={minute}>{minute}分</option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
                     </div>
                     <div>
-                      <label className="block mb-1">詳細:</label>
+                      <label className="block mb-2 font-medium text-gray-700">詳細:</label>
                       <textarea
                         name="detail"
                         placeholder="詳細を記入してください"
                         value={detail.detail}
                         onChange={(e) => handleWorkDetailChange(index, e)}
-                        className="w-full p-2 border rounded h-24"
+                        className="w-full p-3 border border-gray-300 rounded-lg bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 h-24"
                       />
                     </div>
                     {workDetails.length > 1 && (
                       <button 
                         type="button" 
                         onClick={() => removeWorkDetail(index)}
-                        className="mt-2 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition"
+                        className="mt-3 bg-red-50 text-red-600 px-4 py-2 rounded-lg hover:bg-red-100 transition flex items-center space-x-1"
                       >
-                        削除
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                        <span>削除</span>
                       </button>
                     )}
                   </div>
@@ -400,9 +502,12 @@ export default function ScheduleForm({
                 <button 
                   type="button" 
                   onClick={addWorkDetail} 
-                  className="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600 transition"
+                  className="w-full bg-green-50 text-green-600 p-3 rounded-lg hover:bg-green-100 transition flex items-center justify-center space-x-1"
                 >
-                  業務詳細を追加
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                  </svg>
+                  <span>業務詳細を追加</span>
                 </button>
               </section>
             </form>
