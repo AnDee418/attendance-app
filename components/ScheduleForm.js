@@ -368,6 +368,7 @@ export default function ScheduleForm({
                           <option value="会議">会議</option>
                           <option value="電話">電話</option>
                           <option value="移動">移動</option>
+                          <option value="測定会">測定会</option>
                           <option value="その他">その他</option>
                         </select>
                       </div>

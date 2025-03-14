@@ -1147,6 +1147,7 @@ export default function HomePage() {
                           <option value="業務">業務</option>
                           <option value="販売会">販売会</option>
                           <option value="外出">外出</option>
+                          <option value="測定会">測定会</option>
                           <option value="ミーティング">ミーティング</option>
                         </select>
                       </div>
