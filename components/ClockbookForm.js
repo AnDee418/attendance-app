@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import AttendanceForm from './AttendanceForm';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
@@ -14,6 +15,8 @@ export default function ClockbookForm({
   const [message, setMessage] = useState('');
   const [userAccountType, setUserAccountType] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
+  const [portalContainer, setPortalContainer] = useState(null);
 
   const handleAttendanceChange = (e) => {
     setAttendance({ ...attendance, [e.target.name]: e.target.value });
@@ -103,13 +106,6 @@ export default function ClockbookForm({
     }
   };
 
-  useEffect(() => {
-    const modalContent = document.querySelector('.modal-content');
-    if (modalContent) {
-      modalContent.scrollTop = 0;
-    }
-  }, []);
-
   // コンポーネントのマウント時にユーザーのアカウントタイプを取得
   useEffect(() => {
     const accountType = window.localStorage.getItem('userAccountType') || '';
@@ -161,10 +157,6 @@ export default function ClockbookForm({
       }));
     }
   };
-
-  // コメントを追加してClockbookFormもAttendanceFormを使用していることを明示
-  // AttendanceFormコンポーネントでは、時間選択UIが改善されたものを使用します。
-  // AttendanceFormの改善により、ここでも時間と分を別々に選択できるUIが利用できます。
 
   // 既存データの取得処理を修正
   useEffect(() => {
@@ -246,29 +238,113 @@ export default function ClockbookForm({
     console.log("現在のフォーム値:", attendance);
   }, [initialAttendance]);
 
-  return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-[110] p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl 
-        flex flex-col my-4 max-h-[90vh]">
-        <div className="flex justify-between items-center sticky top-0 bg-white p-4 border-b z-10">
-          <h2 className="text-xl font-semibold truncate">
+  // クライアントサイドマウント検出のためのuseEffect
+  useEffect(() => {
+    setMounted(true);
+    
+    // bodyのスクロールを無効化
+    document.body.style.overflow = 'hidden';
+    
+    // ポータルコンテナ作成
+    let container = document.getElementById('modal-portal-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'modal-portal-container';
+      document.body.appendChild(container);
+    }
+    setPortalContainer(container);
+    
+    // クリーンアップ関数
+    return () => {
+      document.body.style.overflow = '';
+      setMounted(false);
+      // ポータルコンテナの削除はしない（他のモーダルが使うかもしれないため）
+    };
+  }, []);
+
+  // モーダルコンテンツのスクロール制御
+  useEffect(() => {
+    const modalContent = document.querySelector('.modal-content');
+    if (modalContent) {
+      modalContent.scrollTop = 0;
+    }
+  }, []);
+
+  // サーバーサイドレンダリング対応とポータルコンテナなしの場合
+  if (typeof window === 'undefined' || !mounted || !portalContainer) {
+    return null;
+  }
+
+  // モーダルコンテンツ
+  const modalContent = (
+    <div 
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        backdropFilter: 'blur(4px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1rem',
+        zIndex: 9999999,
+      }}
+    >
+      <div 
+        style={{
+          backgroundColor: '#fff',
+          borderRadius: '0.5rem',
+          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+          width: '100%',
+          maxWidth: '48rem',
+          display: 'flex',
+          flexDirection: 'column',
+          margin: '1rem',
+          maxHeight: '90vh',
+          position: 'relative',
+        }}
+      >
+        <div 
+          style={{
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            position: 'sticky', 
+            top: 0, 
+            backgroundColor: '#fff', 
+            padding: '1rem', 
+            borderBottom: '1px solid #e5e7eb',
+            zIndex: 1,
+          }}
+        >
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {attendance.date} の勤務記録 {isLoading ? '(読み込み中...)' : ''}
           </h2>
           <button 
             onClick={onClose} 
-            className="text-gray-600 hover:text-gray-800 text-2xl ml-2 flex-shrink-0"
+            style={{ color: '#4b5563', fontSize: '1.5rem', marginLeft: '0.5rem', flexShrink: 0 }}
           >
             &times;
           </button>
         </div>
         
         {isLoading ? (
-          <div className="flex items-center justify-center p-8">
-            <p className="text-gray-500">データを読み込んでいます...</p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+            <p style={{ color: '#6b7280' }}>データを読み込んでいます...</p>
           </div>
         ) : (
-          <div className="overflow-y-auto p-4 flex-grow modal-content">
-            <form onSubmit={handleSubmit} className="space-y-6">
+          <div 
+            className="modal-content"
+            style={{ 
+              overflowY: 'auto', 
+              padding: '1rem', 
+              flexGrow: 1,
+            }}
+          >
+            <form onSubmit={handleSubmit} style={{ marginTop: '1.5rem', marginBottom: '1.5rem' }}>
               <AttendanceForm 
                 attendance={attendance}
                 breakRecords={breakRecords}
@@ -281,26 +357,54 @@ export default function ClockbookForm({
             </form>
           </div>
         )}
-        <div className="sticky bottom-0 bg-white p-4 border-t flex gap-4">
+        <div 
+          style={{ 
+            position: 'sticky', 
+            bottom: 0, 
+            backgroundColor: '#fff', 
+            padding: '1rem', 
+            borderTop: '1px solid #e5e7eb', 
+            display: 'flex', 
+            gap: '1rem',
+            zIndex: 1,
+          }}
+        >
           <button 
             type="submit" 
             onClick={handleSubmit}
-            className="flex-1 bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 
-              transition-all duration-200 active:scale-95"
+            style={{ 
+              flex: 1, 
+              backgroundColor: '#2563eb', 
+              color: '#fff', 
+              padding: '0.75rem', 
+              borderRadius: '0.5rem', 
+              fontWeight: 500, 
+              transition: 'all 0.2s',
+            }}
           >
             保存
           </button>
           <button 
             type="button"
             onClick={onClose}
-            className="flex-1 bg-gray-100 text-gray-700 p-3 rounded-lg hover:bg-gray-200 
-              transition-all duration-200 active:scale-95"
+            style={{ 
+              flex: 1, 
+              backgroundColor: '#f3f4f6', 
+              color: '#374151', 
+              padding: '0.75rem', 
+              borderRadius: '0.5rem', 
+              fontWeight: 500, 
+              transition: 'all 0.2s',
+            }}
           >
             キャンセル
           </button>
         </div>
-        {message && <p className="p-4 text-center text-red-600 bg-red-50">{message}</p>}
+        {message && <p style={{ padding: '1rem', textAlign: 'center', color: '#dc2626', backgroundColor: '#fef2f2' }}>{message}</p>}
       </div>
     </div>
   );
+
+  // Reactのcreatecreateを使用してDOMツリーの最上位にモーダルをレンダリング
+  return createPortal(modalContent, portalContainer);
 } 

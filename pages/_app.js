@@ -3,6 +3,8 @@ import '../styles/globals.css';
 import { SessionProvider } from 'next-auth/react';
 import Layout from '../components/Layout';
 import Head from 'next/head';
+import Tutorial from '../components/Tutorial';
+import ContextualTutorial from '../components/ContextualTutorial';
 
 function MyApp({ Component, pageProps: { session, ...pageProps } }) {
   // 各ページは静的プロパティ title を設定可能。無ければデフォルト "My App"。
@@ -16,6 +18,8 @@ function MyApp({ Component, pageProps: { session, ...pageProps } }) {
       </Head>
       <SessionProvider session={session}>
         <Layout title={title}>
+          <Tutorial />
+          <ContextualTutorial />
           <Component {...pageProps} />
         </Layout>
       </SessionProvider>

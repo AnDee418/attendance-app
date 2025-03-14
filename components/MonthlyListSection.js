@@ -52,36 +52,40 @@ function MonthlyListSection({
     if (!schedules || !Array.isArray(schedules)) return 0;
     
     let totalMinutes = 0;
-    const targetMonth = date.getMonth();
-    const targetYear = date.getFullYear();
+    const selectedMonth = date.getMonth();
+    const selectedYear = date.getFullYear();
     
-    // 日付の文字列比較ではなく数値比較にする（パフォーマンス向上）
-    const startDayValue = new Date(targetYear, targetMonth - 1, 21).valueOf();
-    const endDayValue = new Date(targetYear, targetMonth, 20, 23, 59, 59).valueOf();
+    // 前月21日から当月20日までの期間を設定
+    const startDate = new Date(selectedYear, selectedMonth - 1, 21, 0, 0, 0);
+    const endDate = new Date(selectedYear, selectedMonth, 20, 23, 59, 59);
 
-    for (let i = 0; i < schedules.length; i++) {
-      const schedule = schedules[i];
+    // すべてのスケジュールを検査
+    for (const schedule of schedules) {
+      // 無効なデータをスキップ
       if (!Array.isArray(schedule)) continue;
       
       const scheduleDate = new Date(schedule[0]);
-      if (isNaN(scheduleDate.valueOf())) continue;
-      
-      const scheduleDateValue = scheduleDate.valueOf();
-      if (scheduleDateValue >= startDayValue && 
-          scheduleDateValue <= endDayValue && 
+      // 無効な日付をスキップ
+      if (isNaN(scheduleDate.getTime())) continue;
+
+      // 期間内、指定ユーザー、予定タイプ、有効な勤務時間文字列を持つレコードのみ処理
+      if (
+        scheduleDate >= startDate &&
+        scheduleDate <= endDate &&
         schedule[1] === userName &&
         schedule[5] === '予定' &&
-          schedule[6] && typeof schedule[6] === 'string') {
-        
+        schedule[6] && typeof schedule[6] === 'string'
+      ) {
         const workHours = parseJapaneseTimeString(schedule[6]);
         totalMinutes += Math.round(workHours * 60);
       }
     }
-
+    
+    // 分を時間に変換して返す
     return totalMinutes / 60;
   }, [parseJapaneseTimeString]);
 
-  const calculateActualWorkingHoursForClock = (schedules, date, userName) => {
+  const calculateActualWorkingHoursForClock = useCallback((schedules, date, userName) => {
     if (!schedules || !Array.isArray(schedules)) return 0;
     
     let totalMinutes = 0;
@@ -92,33 +96,31 @@ function MonthlyListSection({
     const startDate = new Date(selectedYear, selectedMonth - 1, 21, 0, 0, 0);
     const endDate = new Date(selectedYear, selectedMonth, 20, 23, 59, 59);
 
-    // 該当するデータを集計
-    let matchingRecords = 0;
-    
+    // すべてのスケジュールを検査
     for (const schedule of schedules) {
+      // 無効なデータをスキップ
       if (!Array.isArray(schedule)) continue;
       
       const scheduleDate = new Date(schedule[0]);
+      // 無効な日付をスキップ
       if (isNaN(scheduleDate.getTime())) continue;
 
-      // 日付範囲のチェックを明確に
-      const isInDateRange = scheduleDate >= startDate && scheduleDate <= endDate;
-      if (!isInDateRange) continue;
-
-      // ユーザー名とレコードタイプのチェック
+      // 期間内、指定ユーザー、出勤簿タイプ、有効な勤務時間文字列を持つレコードのみ処理
       if (
+        scheduleDate >= startDate &&
+        scheduleDate <= endDate &&
         schedule[1] === userName &&
         schedule[5] === '出勤簿' &&
         schedule[6] && typeof schedule[6] === 'string'
       ) {
-        matchingRecords++;
         const workHours = parseJapaneseTimeString(schedule[6]);
         totalMinutes += Math.round(workHours * 60);
       }
     }
     
+    // 分を時間に変換して返す
     return totalMinutes / 60;
-  };
+  }, [parseJapaneseTimeString]);
 
   const getVacationStatus = (date, employeeName) => {
     if (!vacationRequests || !vacationRequests.data) return null;
