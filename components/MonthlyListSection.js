@@ -32,7 +32,6 @@ function MonthlyListSection({
   onAddButtonClick,
   getLocalDateString,
   onWorkDetailClick,
-  showSummaryCard,
   timeToHoursAndMinutes,
   parseJapaneseTimeString,
   vacationRequests,
@@ -45,93 +44,6 @@ function MonthlyListSection({
   // 休暇系の勤務種別かどうかを判定
   const isLeaveType = (workType) => {
     return ['公休', '有給休暇', '有休'].includes(workType);
-  };
-
-  // --- 以下、サマリーカード用のヘルパー関数を定義 ---
-  const calculatePlannedWorkingHours = useCallback((schedules, date, userName) => {
-    if (!schedules || !Array.isArray(schedules)) return 0;
-    
-    let totalMinutes = 0;
-    const selectedMonth = date.getMonth();
-    const selectedYear = date.getFullYear();
-    
-    // 前月21日から当月20日までの期間を設定
-    const startDate = new Date(selectedYear, selectedMonth - 1, 21, 0, 0, 0);
-    const endDate = new Date(selectedYear, selectedMonth, 20, 23, 59, 59);
-
-    // すべてのスケジュールを検査
-    for (const schedule of schedules) {
-      // 無効なデータをスキップ
-      if (!Array.isArray(schedule)) continue;
-      
-      const scheduleDate = new Date(schedule[0]);
-      // 無効な日付をスキップ
-      if (isNaN(scheduleDate.getTime())) continue;
-
-      // 期間内、指定ユーザー、予定タイプ、有効な勤務時間文字列を持つレコードのみ処理
-      if (
-        scheduleDate >= startDate &&
-        scheduleDate <= endDate &&
-        schedule[1] === userName &&
-        schedule[5] === '予定' &&
-        schedule[6] && typeof schedule[6] === 'string'
-      ) {
-        const workHours = parseJapaneseTimeString(schedule[6]);
-        totalMinutes += Math.round(workHours * 60);
-      }
-    }
-    
-    // 分を時間に変換して返す
-    return totalMinutes / 60;
-  }, [parseJapaneseTimeString]);
-
-  const calculateActualWorkingHoursForClock = useCallback((schedules, date, userName) => {
-    if (!schedules || !Array.isArray(schedules)) return 0;
-    
-    let totalMinutes = 0;
-    const selectedMonth = date.getMonth();
-    const selectedYear = date.getFullYear();
-    
-    // 前月21日から当月20日までの期間を設定
-    const startDate = new Date(selectedYear, selectedMonth - 1, 21, 0, 0, 0);
-    const endDate = new Date(selectedYear, selectedMonth, 20, 23, 59, 59);
-
-    // すべてのスケジュールを検査
-    for (const schedule of schedules) {
-      // 無効なデータをスキップ
-      if (!Array.isArray(schedule)) continue;
-      
-      const scheduleDate = new Date(schedule[0]);
-      // 無効な日付をスキップ
-      if (isNaN(scheduleDate.getTime())) continue;
-
-      // 期間内、指定ユーザー、出勤簿タイプ、有効な勤務時間文字列を持つレコードのみ処理
-      if (
-        scheduleDate >= startDate &&
-        scheduleDate <= endDate &&
-        schedule[1] === userName &&
-        schedule[5] === '出勤簿' &&
-        schedule[6] && typeof schedule[6] === 'string'
-      ) {
-        const workHours = parseJapaneseTimeString(schedule[6]);
-        totalMinutes += Math.round(workHours * 60);
-      }
-    }
-    
-    // 分を時間に変換して返す
-    return totalMinutes / 60;
-  }, [parseJapaneseTimeString]);
-
-  const getVacationStatus = (date, employeeName) => {
-    if (!vacationRequests || !vacationRequests.data) return null;
-    
-    const dateStr = getLocalDateString(date);
-    const request = vacationRequests.data.find(r => 
-      r.date === dateStr && 
-      r.employeeName === employeeName
-    );
-    
-    return request;
   };
 
   // 月内の日付一覧を取得
@@ -149,6 +61,11 @@ function MonthlyListSection({
     return date.getDate() === today.getDate() &&
            date.getMonth() === today.getMonth() &&
            date.getFullYear() === today.getFullYear();
+  };
+
+  // 過去の日付かどうかを判定する関数を追加
+  const isPastDate = (date) => {
+    return date < today && !isToday(date);
   };
 
   // 勤務種別に応じたスタイルを返す関数
@@ -205,44 +122,16 @@ function MonthlyListSection({
     return `${totalMinutes}分`;
   };
 
-  // 月間進捗率を計算する関数を追加
-  const calculateProgressPercentage = (schedules, date, userName, standardHours) => {
-    const plannedHours = calculatePlannedWorkingHours(schedules, date, userName);
-    const actualHours = calculateActualWorkingHoursForClock(schedules, date, userName);
+  const getVacationStatus = (date, employeeName) => {
+    if (!vacationRequests || !vacationRequests.data) return null;
     
-    if (plannedHours <= 0) return 0;
+    const dateStr = getLocalDateString(date);
+    const request = vacationRequests.data.find(r => 
+      r.date === dateStr && 
+      r.employeeName === employeeName
+    );
     
-    const percent = (actualHours / plannedHours) * 100;
-    return Math.min(100, Math.max(0, Math.round(percent))); // 0〜100の範囲に制限
-  };
-
-  // サマリーカードの開閉状態を管理するステート（初期値はfalse=閉じた状態）
-  const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
-  
-  // 開閉を切り替える関数
-  const toggleSummary = () => {
-    setIsSummaryExpanded(prev => !prev);
-  };
-
-  // サマリーカード用の期間表示（21日〜20日）
-  const getPayrollPeriod = (date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    
-    // 前月21日
-    const startDate = new Date(year, month - 1, 21);
-    
-    // 当月20日
-    const endDate = new Date(year, month, 20);
-    
-    // 年をまたぐ場合の処理
-    const startYear = startDate.getFullYear();
-    const startMonth = startDate.getMonth() + 1; // JavaScriptの月は0始まり
-    const endYear = endDate.getFullYear();
-    const endMonth = endDate.getMonth() + 1;
-    
-    // 年月日の形式で返す
-    return `${startYear}年${startMonth}月21日〜${endYear}年${endMonth}月20日`;
+    return request;
   };
 
   // 日付リスト期間の取得（1日〜月末日）
@@ -261,179 +150,6 @@ function MonthlyListSection({
 
   return (
     <>
-      {/* サマリーカード - 開閉機能付き */}
-      {showSummaryCard && userData && (
-        <div className={`bg-white rounded-lg shadow-md mb-4 overflow-hidden ${IOS_OPTIMIZE_CLASS}`}>
-          {/* コンパクト化したヘッダー部分 */}
-          <div 
-            className="bg-blue-600 text-white p-2.5 cursor-pointer flex justify-between items-center"
-            onClick={toggleSummary}
-          >
-            <div className="flex flex-col w-full">
-              <div className="flex flex-col sm:flex-row sm:items-center">
-                <h2 className={`text-base font-semibold ${IOS_TEXT_CLASS}`}>
-                  {currentDate.getFullYear()}年{currentDate.getMonth() + 1}月度の勤務概要
-                </h2>
-                <span className={`text-xs bg-blue-500 text-blue-50 px-2 py-0.5 rounded mt-1 sm:mt-0 sm:ml-2 inline-block ${IOS_TEXT_CLASS}`}>
-                  {getPayrollPeriod(currentDate)}
-                </span>
-              </div>
-            </div>
-            <div className="flex items-center gap-1 ml-2 flex-shrink-0">
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                className={`h-4 w-4 transition-transform duration-300 ${isSummaryExpanded ? 'rotate-180' : ''}`}
-                fill="none" 
-                viewBox="0 0 24 24" 
-                stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-          </div>
-          
-          {/* 開閉するコンテンツ部分 */}
-          <div 
-            className={`transition-all duration-300 ease-in-out overflow-hidden ${
-              isSummaryExpanded 
-                ? 'max-h-[1000px] opacity-100' 
-                : 'max-h-0 opacity-0'
-            }`}
-          >
-            <div className="p-5">
-              {/* グリッドレイアウトをスマホ対応に修正 */}
-              <div className="grid grid-cols-1 gap-6">
-                {/* 勤務時間の棒グラフ */}
-                <div className="bg-gray-50 rounded-lg p-4 shadow-sm">
-                  <h3 className="text-md font-medium text-gray-700 mb-2">勤務時間分析</h3>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <BarChart
-                      data={[
-                        {
-                          name: '計画',
-                          時間: parseFloat(calculatePlannedWorkingHours(userSchedules, currentDate, userData.data[0]).toFixed(1)),
-                          color: '#3b82f6'
-                        },
-                        {
-                          name: '実績',
-                          時間: parseFloat(calculateActualWorkingHoursForClock(userSchedules, currentDate, userData.data[0]).toFixed(1)),
-                          color: '#10b981'
-                        },
-                        {
-                          name: '標準',
-                          時間: parseFloat(standardHours?.toFixed(1) || 0),
-                          color: '#6b7280'
-                        }
-                      ]}
-                      margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                      <YAxis unit="h" tick={{ fontSize: 12 }} />
-                      <Tooltip 
-                        formatter={(value) => [`${value}時間`, '勤務時間']}
-                        labelStyle={{ fontWeight: 'bold' }}
-                        contentStyle={{ border: '1px solid #e2e8f0', borderRadius: '0.375rem' }}
-                      />
-                      <Bar dataKey="時間" radius={[4, 4, 0, 0]}>
-                        {[0, 1, 2].map((index) => (
-                          <Cell key={`cell-${index}`} fill={[0, 1, 2][index] === 0 ? '#3b82f6' : [0, 1, 2][index] === 1 ? '#10b981' : '#6b7280'} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                  
-                  <div className="mt-3 grid grid-cols-3 gap-1 text-center text-xs">
-                    <div className="bg-blue-50 p-2 rounded-md">
-                      <div className="font-semibold text-blue-600">計画</div>
-                      <div className="text-lg mt-1">{calculatePlannedWorkingHours(userSchedules, currentDate, userData.data[0]).toFixed(1)}h</div>
-                    </div>
-                    <div className="bg-green-50 p-2 rounded-md">
-                      <div className="font-semibold text-green-600">実績</div>
-                      <div className="text-lg mt-1">{calculateActualWorkingHoursForClock(userSchedules, currentDate, userData.data[0]).toFixed(1)}h</div>
-                    </div>
-                    <div className="bg-gray-50 p-2 rounded-md">
-                      <div className="font-semibold text-gray-600">標準</div>
-                      <div className="text-lg mt-1">{standardHours?.toFixed(1) || 0}h</div>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* 勤務種別の円グラフ */}
-                <div className="bg-gray-50 rounded-lg p-4 shadow-sm">
-                  <h3 className="text-md font-medium text-gray-700 mb-2">勤務種別内訳</h3>
-                  <WorkTypePieChart 
-                    userSchedules={userSchedules} 
-                    currentDate={currentDate} 
-                    userName={userData.data[0]}
-                  />
-                </div>
-              </div>
-              
-              {/* 進捗状況表示 */}
-              <div className="mt-6 bg-gray-50 rounded-lg p-4 shadow-sm">
-                <h3 className="text-md font-medium text-gray-700 mb-3">月間進捗状況</h3>
-                <div className="relative pt-1">
-                  <div className="flex items-center justify-between mb-2">
-                    <div>
-                      <span className="text-xs font-semibold inline-block text-blue-600">
-                        勤務時間進捗
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-xs font-semibold inline-block text-blue-600">
-                        {calculateProgressPercentage(userSchedules, currentDate, userData.data[0], standardHours)}%
-                      </span>
-                    </div>
-                  </div>
-                  <div className="overflow-hidden h-2 text-xs flex rounded bg-blue-200">
-                    <div 
-                      style={{ width: `${calculateProgressPercentage(userSchedules, currentDate, userData.data[0], standardHours)}%` }} 
-                      className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500"
-                    ></div>
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    今月の予定勤務時間に対する実績: {calculateActualWorkingHoursForClock(userSchedules, currentDate, userData.data[0]).toFixed(1)}h / {calculatePlannedWorkingHours(userSchedules, currentDate, userData.data[0]).toFixed(1)}h
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* 閉じた状態でのサマリー表示（コンパクト版） */}
-          <div 
-            className={`transition-all duration-300 ease-in-out overflow-hidden ${
-              isSummaryExpanded 
-                ? 'max-h-0 opacity-0' 
-                : 'max-h-16 opacity-100 p-2'
-            }`}
-          >
-            <div className="flex justify-between items-center text-sm">
-              <div className="flex flex-wrap gap-3">
-                <div className="bg-blue-50 px-2 py-1 rounded">
-                  <span className="text-xs text-gray-500">計画:</span>
-                  <span className="font-medium ml-1 text-blue-700">
-                    {calculatePlannedWorkingHours(userSchedules, currentDate, userData.data[0]).toFixed(1)}h
-                  </span>
-                </div>
-                <div className="bg-green-50 px-2 py-1 rounded">
-                  <span className="text-xs text-gray-500">実績:</span>
-                  <span className="font-medium ml-1 text-green-700">
-                    {calculateActualWorkingHoursForClock(userSchedules, currentDate, userData.data[0]).toFixed(1)}h
-                  </span>
-                </div>
-                <div className="bg-gray-50 px-2 py-1 rounded">
-                  <span className="text-xs text-gray-500">標準:</span>
-                  <span className="font-medium ml-1 text-gray-700">
-                    {standardHours.toFixed(1)}h
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* 日付リスト */}
       <div className={`bg-white rounded-lg shadow-sm overflow-hidden ${IOS_OPTIMIZE_CLASS}`}>
         {/* 日付リストセクションのヘッダー - member-scheduleページに組み込み */}
@@ -495,6 +211,10 @@ function MonthlyListSection({
             const isPlannedLeave = plannedSchedule && isLeaveType(plannedSchedule[4]);
             const isActualLeave = clockbookSchedule && isLeaveType(clockbookSchedule[4]);
             
+            // 未報告状態を判定
+            const isUnreported = (isPastDate(day) || isToday(day)) && // 今日以前の日付
+                              (!clockbookSchedule); // 実績報告がない
+            
             // 曜日名を取得
             const dayOfWeekJP = ['日', '月', '火', '水', '木', '金', '土'][day.getDay()];
             
@@ -507,6 +227,7 @@ function MonthlyListSection({
                 className={`${IOS_OPTIMIZE_CLASS} rounded-lg border ${
                   isToday(day) ? 'border-blue-300 bg-blue-50/50' : 
                   isPlannedLeave || isActualLeave || vacationStatus ? 'border-purple-200 bg-purple-50/30' :
+                  isUnreported ? 'border-red-300 bg-red-50/30' : // 未報告の場合のスタイル
                   isWeekend(day) ? 'border-gray-200 bg-gray-50/50' : 'border-gray-100'
                 }`}
               >
@@ -555,6 +276,16 @@ function MonthlyListSection({
                   {/* スケジュールコンテンツ */}
                   {hasDayData ? (
                     <div className="space-y-3">
+                      {/* 未報告表示 */}
+                      {isUnreported && (
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-2 flex items-center justify-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-red-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                          </svg>
+                          <span className="text-sm font-medium text-red-600">未報告</span>
+                        </div>
+                      )}
+              
                       {/* 公休・有休の場合は大きく表示 */}
                       {(isPlannedLeave || isActualLeave || (vacationStatus && vacationStatus.type)) && (
                         <div className={`${IOS_OPTIMIZE_CLASS} bg-purple-50 border border-purple-200 rounded-lg p-4 flex items-center justify-center`}>
@@ -719,6 +450,15 @@ function MonthlyListSection({
                   ) : (
                     <div className={`${IOS_TEXT_CLASS} text-center text-gray-400 p-3 mt-2 bg-gray-50 rounded-lg border border-dashed border-gray-200`}>
                       {isMySchedulePage ? "予定がありません。「追加」から登録できます。" : "予定がありません。"}
+                      {/* 何もデータがない場合の未報告表示 */}
+                      {isUnreported && (
+                        <div className="mt-2 bg-red-50 border border-red-200 rounded-lg p-2 flex items-center justify-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-red-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                          </svg>
+                          <span className="text-sm font-medium text-red-600">未報告</span>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

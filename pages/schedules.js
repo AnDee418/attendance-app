@@ -54,19 +54,51 @@ const calculateWorkingHours = (schedules, currentDate) => {
 
 // 時間文字列を数値に変換する関数を追加
 const parseJapaneseTimeString = (timeStr) => {
-  if (!timeStr || typeof timeStr !== 'string') return 0;
+  if (!timeStr || typeof timeStr !== 'string') {
+    console.log('無効な時間文字列:', timeStr);
+    return 0;
+  }
   
-  // "7時間30分" のような形式から数値を抽出
-  const hoursMatch = timeStr.match(/(\d+)時間/);
-  const minutesMatch = timeStr.match(/(\d+)分/);
-  
-  const hours = hoursMatch ? parseInt(hoursMatch[1], 10) : 0;
-  const minutes = minutesMatch ? parseInt(minutesMatch[1], 10) : 0;
-  
-  // 分を時間に変換する際の丸め誤差を防ぐため、小数点以下10桁まで保持
-  const totalHours = Number((hours + (minutes / 60)).toFixed(10));
-  
-  return totalHours;
+  try {
+    // "8時間30分" のような形式から数値を抽出
+    const hoursMatch = timeStr.match(/(\d+)時間/);
+    const minutesMatch = timeStr.match(/(\d+)分/);
+    
+    const hours = hoursMatch ? parseInt(hoursMatch[1], 10) : 0;
+    const minutes = minutesMatch ? parseInt(minutesMatch[1], 10) : 0;
+    
+    // "N.M" のような小数点形式も処理
+    if (!hoursMatch && !minutesMatch) {
+      const floatMatch = timeStr.match(/(\d+(?:\.\d+)?)/);
+      if (floatMatch) {
+        const floatHours = parseFloat(floatMatch[1]);
+        
+        // デバッグ用：変換過程の表示
+        console.log('小数点形式の時間変換:', {
+          original: timeStr,
+          parsedValue: floatHours
+        });
+        
+        return floatHours;
+      }
+    }
+    
+    // 時間と分を別々に保持して計算
+    const totalHours = hours + (minutes / 60);
+    
+    // デバッグ用：変換過程の表示
+    console.log('時間文字列の変換 (schedules.js):', {
+      original: timeStr,
+      hours: hours,
+      minutes: minutes,
+      totalHours: totalHours
+    });
+    
+    return totalHours;
+  } catch (e) {
+    console.error('時間文字列の解析中にエラー:', e, timeStr);
+    return 0;
+  }
 };
 
 // timeToHoursAndMinutes 関数を追加
@@ -112,30 +144,49 @@ const calculateActualWorkingHoursForClock = (schedules, currentDate, userName) =
     '対象ユーザー:', userName
   );
 
-  // 対象データのフィルタリング
-  const targetSchedules = schedules.filter(schedule => {
-    if (!Array.isArray(schedule)) return false;
+  // 重複排除のための日付管理オブジェクト
+  const processedDates = {};
+  
+  // 対象データのフィルタリング（重複を排除）
+  const targetSchedules = [];
+  
+  schedules.forEach(schedule => {
+    if (!Array.isArray(schedule) || schedule.length < 7) return;
+    if (!schedule[0] || !schedule[1] || !schedule[5] || !schedule[6]) return;
     
-    // 日付文字列を明示的にパース - YYYY-MM-DD形式を想定
-    let scheduleDate;
-    if (typeof schedule[0] === 'string') {
-      const [year, month, day] = schedule[0].split('-').map(Number);
-      scheduleDate = new Date(year, month - 1, day);
-    } else {
-      scheduleDate = new Date(schedule[0]);
+    try {
+      // 日付文字列を明示的にパース - YYYY-MM-DD形式を想定
+      let scheduleDate;
+      if (typeof schedule[0] === 'string') {
+        const [year, month, day] = schedule[0].split('-').map(Number);
+        scheduleDate = new Date(year, month - 1, day);
+      } else {
+        scheduleDate = new Date(schedule[0]);
+      }
+      
+      if (isNaN(scheduleDate.getTime())) return;
+
+      const dateKey = scheduleDate.toLocaleDateString('en-CA');
+      const isInDateRange = scheduleDate >= startDate && scheduleDate <= endDate;
+      const isMatchingUser = schedule[1] === userName;
+      const isClockbookRecord = schedule[5] === '出勤簿';
+      const hasWorkingHours = schedule[6] && typeof schedule[6] === 'string';
+
+      if (isInDateRange && isMatchingUser && isClockbookRecord && hasWorkingHours) {
+        // 日付ベースでの重複排除
+        if (!processedDates[dateKey]) {
+          processedDates[dateKey] = true;
+          targetSchedules.push(schedule);
+        } else {
+          console.log(`重複データをスキップ - 出勤簿: ${dateKey} - ${schedule[6]}`);
+        }
+      }
+    } catch (e) {
+      console.error('フィルタリング中にエラー:', e, schedule);
     }
-    
-    if (isNaN(scheduleDate.getTime())) return false;
-
-    const isInDateRange = scheduleDate >= startDate && scheduleDate <= endDate;
-    const isMatchingUser = schedule[1] === userName;
-    const isClockbookRecord = schedule[5] === '出勤簿';
-    const hasWorkingHours = schedule[6] && typeof schedule[6] === 'string';
-
-    return isInDateRange && isMatchingUser && isClockbookRecord && hasWorkingHours;
   });
 
-  console.log(`${userName}の集計対象レコード数:`, targetSchedules.length);
+  console.log(`${userName}の集計対象レコード数(重複排除後):`, targetSchedules.length);
   
   // フィルタリングされたデータの合計時間を計算
   targetSchedules.forEach(schedule => {
@@ -161,37 +212,75 @@ const calculatePlannedWorkingHours = (schedules, currentDate, userName) => {
   const selectedYear = currentDate.getFullYear();
   
   // 日付の範囲を修正（時刻を設定して確実に含める）
-  const startDate = new Date(selectedYear, selectedMonth - 1, 21, 0, 0, 0);
+  let startMonth = selectedMonth - 1;
+  let startYear = selectedYear;
+  
+  // 1月の場合は前年12月になるよう調整
+  if (startMonth < 0) {
+    startMonth = 11; // 12月 (0ベースなので11)
+    startYear = selectedYear - 1;
+  }
+  
+  const startDate = new Date(startYear, startMonth, 21, 0, 0, 0);
   const endDate = new Date(selectedYear, selectedMonth, 20, 23, 59, 59);
   
   console.log(`${userName} 予定計算期間:`, startDate.toLocaleDateString(), '〜', endDate.toLocaleDateString());
 
-  // 対象データのフィルタリング
-  const targetSchedules = schedules.filter(schedule => {
-    if (!Array.isArray(schedule)) return false;
+  // 重複排除のための日付管理オブジェクト
+  const processedDates = {};
+  
+  // 対象データのフィルタリング（重複を排除）
+  const targetSchedules = [];
+  
+  schedules.forEach(schedule => {
+    if (!Array.isArray(schedule) || schedule.length < 7) return;
+    if (!schedule[0] || !schedule[1] || !schedule[5] || !schedule[6]) return;
     
-    // index.js と同じ日付解析方法に合わせる
-    const scheduleDate = new Date(schedule[0]);
-    if (isNaN(scheduleDate.getTime())) return false;
+    try {
+      // 日付文字列を明示的にパース
+      let scheduleDate;
+      if (typeof schedule[0] === 'string') {
+        const [year, month, day] = schedule[0].split('-').map(Number);
+        scheduleDate = new Date(year, month - 1, day);
+      } else {
+        scheduleDate = new Date(schedule[0]);
+      }
+      
+      if (isNaN(scheduleDate.getTime())) return;
+      
+      const dateKey = scheduleDate.toLocaleDateString('en-CA');
+      const isInDateRange = scheduleDate >= startDate && scheduleDate <= endDate;
+      const isMatchingUser = schedule[1] === userName;
+      const isPlannedRecord = schedule[5] === '予定';
+      const hasWorkingHours = schedule[6] && typeof schedule[6] === 'string';
 
-    // 日付の比較も同様に
-    const isInDateRange = scheduleDate >= startDate && scheduleDate <= endDate;
-    const isMatchingUser = schedule[1] === userName;
-    const isPlannedRecord = schedule[5] === '予定';
-    const hasWorkingHours = schedule[6] && typeof schedule[6] === 'string';
-
-    return isInDateRange && isMatchingUser && isPlannedRecord && hasWorkingHours;
+      if (isInDateRange && isMatchingUser && isPlannedRecord && hasWorkingHours) {
+        // 日付ベースでの重複排除
+        if (!processedDates[dateKey]) {
+          processedDates[dateKey] = true;
+          targetSchedules.push(schedule);
+        } else {
+          console.log(`重複データをスキップ - 予定: ${dateKey} - ${schedule[6]}`);
+        }
+      }
+    } catch (e) {
+      console.error('フィルタリング中にエラー:', e, schedule);
+    }
   });
 
   // 結果をログに出力
-  console.log(`${userName} 予定対象レコード:`, targetSchedules.length);
+  console.log(`${userName} 予定対象レコード(重複排除後):`, targetSchedules.length);
   
   // フィルタリングされたデータの合計時間を計算
   targetSchedules.forEach(schedule => {
-    const workHours = parseJapaneseTimeString(schedule[6]);
-    totalMinutes += Math.round(workHours * 60);  // 時間を分に変換して加算
-    
-    console.log('予定加算:', schedule[0], schedule[6], `→ ${workHours}h`);
+    try {
+      const workHours = parseJapaneseTimeString(schedule[6]);
+      totalMinutes += Math.round(workHours * 60);  // 時間を分に変換して加算
+      
+      console.log('予定加算:', schedule[0], schedule[6], `→ ${workHours}h (${Math.round(workHours * 60)}分)`);
+    } catch (e) {
+      console.error('予定データ計算エラー:', e, schedule);
+    }
   });
 
   // 最後に合計分を時間に戻す
@@ -260,12 +349,18 @@ const calculateHoursDifference = (total, standard) => {
   };
 };
 
+// 小数点以下1桁に丸める関数
+const roundToOneDecimalPlace = (value) => {
+  if (isNaN(value)) return 0;
+  return Math.round(value * 10) / 10;
+};
+
 // 時間のフォーマット関数
 const formatTimeWithDiff = (time, total) => {
   const diff = time - total;
   return {
     time,
-    diff: diff > 0 ? `+${diff}` : diff.toString()
+    diff: diff > 0 ? `+${roundToOneDecimalPlace(diff)}` : roundToOneDecimalPlace(diff).toString()
   };
 };
 
@@ -349,8 +444,8 @@ const fetchUserSchedules = async (month, year) => {
     
     // 現在の月と前月のデータを両方取得
     const [currentMonthResponse, prevMonthResponse] = await Promise.all([
-      fetch(`/api/attendance?month=${month}&year=${year}&limit=500`), // 十分な量のデータを取得
-      fetch(`/api/attendance?month=${prevMonth}&year=${prevYear}&limit=500`)
+      fetch(`/api/attendance?month=${month}&year=${year}&limit=1000`), // 十分な量のデータを取得
+      fetch(`/api/attendance?month=${prevMonth}&year=${prevYear}&limit=1000`)
     ]);
     
     if (!currentMonthResponse.ok || !prevMonthResponse.ok) {
@@ -363,6 +458,27 @@ const fetchUserSchedules = async (month, year) => {
     // 両方のデータを結合
     const combinedData = [...(prevMonthData.data || []), ...(currentMonthData.data || [])];
     console.log(`取得データ: 前月=${prevMonthData.data?.length || 0}件, 当月=${currentMonthData.data?.length || 0}件, 合計=${combinedData.length}件`);
+    
+    // 重複チェック - デバッグ用
+    const dateMap = {};
+    combinedData.forEach(item => {
+      if (Array.isArray(item) && item[0] && item[1] && item[5]) {
+        const key = `${item[0]}_${item[1]}_${item[5]}`;
+        if (dateMap[key]) {
+          console.log(`重複データ検出: ${item[0]} - ${item[1]} - ${item[5]}`);
+          dateMap[key]++;
+        } else {
+          dateMap[key] = 1;
+        }
+      }
+    });
+    
+    // 重複が多いエントリを表示
+    Object.entries(dateMap)
+      .filter(([_, count]) => count > 1)
+      .forEach(([key, count]) => {
+        console.log(`重複エントリ: ${key}, ${count}回出現`);
+      });
     
     return combinedData;
   } catch (error) {
@@ -476,12 +592,31 @@ export default function SchedulesPage() {
     if (users && schedules.length > 0) {
       // 各ユーザーの勤務時間をここで事前計算
       const userHours = {};
+      console.log('ユーザー数:', users.length);
+      console.log('スケジュールデータ数:', schedules.length);
+      
       users.forEach(user => {
         const userName = user.data[0];
+        // スケジュールデータが大きい場合、処理に時間がかかることを警告
+        if (schedules.length > 500) {
+          console.warn(`大量のスケジュールデータ(${schedules.length}件)を処理中。パフォーマンスに影響する可能性があります。`);
+        }
+        
+        console.log(`${userName}の勤務時間計算開始...`);
+        
+        // 重複を排除した正確な計算を行う
+        const actual = calculateActualWorkingHoursForClock(schedules, currentDate, userName);
+        const planned = calculatePlannedWorkingHours(schedules, currentDate, userName);
+        
         userHours[userName] = {
-          planned: calculatePlannedWorkingHours(schedules, currentDate, userName),
-          actual: calculateActualWorkingHoursForClock(schedules, currentDate, userName)
+          planned: planned,
+          actual: actual
         };
+        
+        console.log(`${userName}の計算結果:`, { 
+          planned: planned.toFixed(1), 
+          actual: actual.toFixed(1) 
+        });
       });
       
       // 計算結果をログに出力して確認
@@ -679,7 +814,7 @@ export default function SchedulesPage() {
                               <div className="w-1/2 flex items-center justify-center">
                                 <div className="flex items-baseline">
                                   <span className={`${['業務', 'アルバイト'].includes(user.data[5]) ? 'text-2xl' : 'text-xl'} font-bold ${['業務', 'アルバイト'].includes(user.data[5]) ? 'text-purple-600' : 'text-blue-600'}`}>
-                                    {(['業務', 'アルバイト'].includes(user.data[5]) ? actualHours : plannedWorkingHours).toFixed(1)}
+                                    {roundToOneDecimalPlace(['業務', 'アルバイト'].includes(user.data[5]) ? actualHours : plannedWorkingHours).toFixed(1)}
                                   </span>
                                   <span className={`ml-1 ${['業務', 'アルバイト'].includes(user.data[5]) ? 'text-lg' : 'text-base'} ${['業務', 'アルバイト'].includes(user.data[5]) ? 'text-purple-500' : 'text-blue-500'}`}>
                                     h
@@ -689,7 +824,9 @@ export default function SchedulesPage() {
                               <div className={`w-px ${['業務', 'アルバイト'].includes(user.data[5]) ? 'bg-purple-200' : 'bg-blue-200'}`}></div>
                               <div className="w-1/2 flex items-center justify-center">
                                 {(() => {
-                                  const diff = Math.abs((['業務', 'アルバイト'].includes(user.data[5]) ? actualHours : plannedWorkingHours) - standardHours);
+                                  // 丸め誤差を修正
+                                  const displayValue = ['業務', 'アルバイト'].includes(user.data[5]) ? actualHours : plannedWorkingHours;
+                                  const diff = roundToOneDecimalPlace(Math.abs(displayValue - standardHours));
                                   return (
                                     <div className="flex items-baseline">
                                       <span className={`text-xl font-bold ${['業務', 'アルバイト'].includes(user.data[5])
@@ -704,7 +841,7 @@ export default function SchedulesPage() {
                                             ? 'text-yellow-600'
                                             : 'text-red-500'
                                       }`}>
-                                        {(['業務', 'アルバイト'].includes(user.data[5]) ? actualHours : plannedWorkingHours) >= standardHours ? '+' : '-'}{diff.toFixed(1)}
+                                        {displayValue >= standardHours ? '+' : '-'}{diff.toFixed(1)}
                                       </span>
                                       <span className="ml-1 text-lg">h</span>
                                     </div>
@@ -768,7 +905,7 @@ export default function SchedulesPage() {
                                 />
                               </svg>
                               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                <span className="text-2xl font-bold text-gray-900">{actualHours.toFixed(1)}</span>
+                                <span className="text-2xl font-bold text-gray-900">{roundToOneDecimalPlace(actualHours).toFixed(1)}</span>
                                 <span className="text-sm text-gray-500">/{standardHours}</span>
                               </div>
                             </div>

@@ -14,6 +14,7 @@ import Link from 'next/link';
 import IconSlider from '../components/icon-slider';
 import { useSwipeable } from 'react-swipeable';
 import MonthlyListSection from '../components/MonthlyListSection';
+import SummaryCard from '../components/SummaryCard';
 import WorkDetailModal from '../components/WorkDetailModal';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useMediaQuery } from 'react-responsive';
@@ -48,17 +49,30 @@ const getStandardWorkingHours = (date, settings) => {
 const parseJapaneseTimeString = (timeStr) => {
   if (!timeStr || typeof timeStr !== 'string') return 0;
   
-  // "7時間30分" のような形式から数値を抽出
-  const hoursMatch = timeStr.match(/(\d+)時間/);
-  const minutesMatch = timeStr.match(/(\d+)分/);
-  
-  const hours = hoursMatch ? parseInt(hoursMatch[1], 10) : 0;
-  const minutes = minutesMatch ? parseInt(minutesMatch[1], 10) : 0;
-  
-  // 分を時間に変換する際の丸め誤差を防ぐため、小数点以下10桁まで保持
-  const totalHours = Number((hours + (minutes / 60)).toFixed(10));
-  
-  return totalHours;
+  try {
+    // "8時間30分" のような形式から数値を抽出
+    const hoursMatch = timeStr.match(/(\d+)時間/);
+    const minutesMatch = timeStr.match(/(\d+)分/);
+    
+    const hours = hoursMatch ? parseInt(hoursMatch[1], 10) : 0;
+    const minutes = minutesMatch ? parseInt(minutesMatch[1], 10) : 0;
+    
+    // "N.M" のような小数点形式も処理
+    if (!hoursMatch && !minutesMatch) {
+      const floatMatch = timeStr.match(/(\d+(?:\.\d+)?)/);
+      if (floatMatch) {
+        const floatHours = parseFloat(floatMatch[1]);
+        return floatHours;
+      }
+    }
+    
+    // 時間と分を別々に保持して計算
+    const totalHours = hours + (minutes / 60);
+    return totalHours;
+  } catch (e) {
+    console.error('時間文字列の解析中にエラー:', e, timeStr);
+    return 0;
+  }
 };
 
 // timeToHoursAndMinutes 関数を追加
@@ -76,104 +90,7 @@ const timeToHoursAndMinutes = (totalHours) => {
   };
 };
 
-// 実働時間計算関数を修正
-const calculateActualWorkingHoursForClock = (schedules, currentDate, userName) => {
-  if (!schedules || !Array.isArray(schedules)) return 0;
-  
-  let totalMinutes = 0;
-  const selectedMonth = currentDate.getMonth();
-  const selectedYear = currentDate.getFullYear();
-  
-  // 正しい期間設定: 前月21日から当月20日まで
-  const startDate = new Date(selectedYear, selectedMonth - 1, 21, 0, 0, 0);
-  const endDate = new Date(selectedYear, selectedMonth, 20, 23, 59, 59);
-
-  // デバッグログを追加
-  console.log('member-schedule: 計算期間', 
-    startDate.toLocaleDateString(), '〜', 
-    endDate.toLocaleDateString(), 
-    'Month:', selectedMonth + 1
-  );
-  console.log('member-schedule: 対象ユーザー:', userName);
-
-  let matchCount = 0;
-
-  // すべてのスケジュールを検査
-  for (const schedule of schedules) {
-    // 無効なデータをスキップ
-    if (!Array.isArray(schedule)) continue;
-    
-    const scheduleDate = new Date(schedule[0]);
-    // 無効な日付をスキップ
-    if (isNaN(scheduleDate.getTime())) continue;
-
-    // 期間内、指定ユーザー、出勤簿タイプ、有効な勤務時間文字列を持つレコードのみ処理
-    if (
-      scheduleDate >= startDate &&
-      scheduleDate <= endDate &&
-      schedule[1] === userName &&
-      schedule[5] === '出勤簿' &&
-      schedule[6] && typeof schedule[6] === 'string'
-    ) {
-      matchCount++;
-      const workHours = parseJapaneseTimeString(schedule[6]);
-      totalMinutes += Math.round(workHours * 60);
-      
-      // デバッグ用：各レコードの詳細
-      console.log('該当レコード:', 
-        scheduleDate.toLocaleDateString(), 
-        schedule[1], 
-        '時間:', schedule[6], 
-        '→', workHours
-      );
-    }
-  }
-
-  console.log('合計該当レコード数:', matchCount, '合計時間(分):', totalMinutes);
-  
-  // 分を時間に変換して返す
-  return totalMinutes / 60;
-};
-
-// 予定勤務時間計算関数も同様に修正
-const calculatePlannedWorkingHours = (schedules, currentDate, userName) => {
-  if (!schedules || !Array.isArray(schedules)) return 0;
-  
-  let totalMinutes = 0;
-  const selectedMonth = currentDate.getMonth();
-  const selectedYear = currentDate.getFullYear();
-  
-  // 正しい期間設定: 前月21日から当月20日まで
-  const startDate = new Date(selectedYear, selectedMonth - 1, 21, 0, 0, 0);
-  const endDate = new Date(selectedYear, selectedMonth, 20, 23, 59, 59);
-
-  // すべてのスケジュールを検査
-  for (const schedule of schedules) {
-    // 無効なデータをスキップ
-    if (!Array.isArray(schedule)) continue;
-    
-    const scheduleDate = new Date(schedule[0]);
-    // 無効な日付をスキップ
-    if (isNaN(scheduleDate.getTime())) continue;
-
-    // 期間内、指定ユーザー、予定タイプ、有効な勤務時間文字列を持つレコードのみ処理
-    if (
-      scheduleDate >= startDate &&
-      scheduleDate <= endDate &&
-      schedule[1] === userName &&
-      schedule[5] === '予定' &&
-      schedule[6] && typeof schedule[6] === 'string'
-    ) {
-      const workHours = parseJapaneseTimeString(schedule[6]);
-      totalMinutes += Math.round(workHours * 60);
-    }
-  }
-  
-  // 分を時間に変換して返す
-  return totalMinutes / 60;
-};
-
-// ヘルパー関数：勤務種別件数の集計
+// 勤務種別件数の集計
 const calculateWorkTypeCounts = (schedules, type = '予定') => {
   const counts = {};
   const WORK_TYPES = {
@@ -403,15 +320,6 @@ export default function MemberSchedulePage() {
   const userSchedules = schedules.filter(s => s[1] === userData?.data[0]);
   
   const standardHours = settings ? getStandardWorkingHours(currentDate, settings) : 160;
-  const actualHoursValue = userData ? calculateActualWorkingHoursForClock(userSchedules, currentDate, userData.data[0]) : 0;
-  const plannedHoursValue = userData ? calculatePlannedWorkingHours(userSchedules, currentDate, userData.data[0]) : 0;
-
-  // 時間と分に変換
-  const actualTime = timeToHoursAndMinutes(actualHoursValue);
-  const plannedTime = timeToHoursAndMinutes(plannedHoursValue);
-
-  const plannedCounts = userData ? calculateWorkTypeCounts(userSchedules, '予定') : {};
-  const clockbookCounts = userData ? calculateWorkTypeCounts(userSchedules, '出勤簿') : {};
   
   // 対象ユーザーの業務詳細（当月のみ抽出）を日付ごとにグループ化
   const monthlyWorkDetails = {};
@@ -549,7 +457,17 @@ export default function MemberSchedulePage() {
                 }`} 
                 {...swipeHandlers}
               >
-                {/* その月のリストセクション */}
+                {/* サマリーカード */}
+                <SummaryCard
+                  currentDate={currentDate}
+                  userData={userData}
+                  userSchedules={userSchedules}
+                  standardHours={standardHours}
+                  parseJapaneseTimeString={parseJapaneseTimeString}
+                  timeToHoursAndMinutes={timeToHoursAndMinutes}
+                />
+                
+                {/* 日付リスト */}
                 <MonthlyListSection
                   currentDate={currentDate}
                   workDetails={workDetails}
@@ -558,7 +476,6 @@ export default function MemberSchedulePage() {
                   breakData={breakData}
                   getLocalDateString={getLocalDateString}
                   onWorkDetailClick={(detail) => setSelectedWorkDetail(detail)}
-                  showSummaryCard={true}
                   timeToHoursAndMinutes={timeToHoursAndMinutes}
                   parseJapaneseTimeString={parseJapaneseTimeString}
                   standardHours={standardHours}
@@ -600,7 +517,17 @@ export default function MemberSchedulePage() {
                   </div>
                 </div>
                 
-                {/* スケジュールサマリーとリスト */}
+                {/* サマリーカード */}
+                <SummaryCard
+                  currentDate={currentDate}
+                  userData={compareUser}
+                  userSchedules={schedules.filter(s => s[1] === compareUser.data[0])}
+                  standardHours={standardHours}
+                  parseJapaneseTimeString={parseJapaneseTimeString}
+                  timeToHoursAndMinutes={timeToHoursAndMinutes}
+                />
+                
+                {/* スケジュールリスト */}
                 <MonthlyListSection
                   currentDate={currentDate}
                   workDetails={workDetails.filter(w => w.employeeName === compareUser.data[0])}
@@ -609,7 +536,6 @@ export default function MemberSchedulePage() {
                   breakData={breakData.filter(b => b.employeeName === compareUser.data[0])}
                   getLocalDateString={getLocalDateString}
                   onWorkDetailClick={(detail) => setSelectedWorkDetail(detail)}
-                  showSummaryCard={true}
                   timeToHoursAndMinutes={timeToHoursAndMinutes}
                   parseJapaneseTimeString={parseJapaneseTimeString}
                   standardHours={standardHours}
@@ -660,6 +586,17 @@ export default function MemberSchedulePage() {
               }`} 
               {...swipeHandlers}
             >
+              {/* サマリーカード */}
+              <SummaryCard
+                currentDate={currentDate}
+                userData={userData}
+                userSchedules={userSchedules}
+                standardHours={standardHours}
+                parseJapaneseTimeString={parseJapaneseTimeString}
+                timeToHoursAndMinutes={timeToHoursAndMinutes}
+              />
+              
+              {/* 日付リスト */}
               <MonthlyListSection
                 currentDate={currentDate}
                 workDetails={workDetails}
@@ -668,7 +605,6 @@ export default function MemberSchedulePage() {
                 breakData={breakData}
                 getLocalDateString={getLocalDateString}
                 onWorkDetailClick={(detail) => setSelectedWorkDetail(detail)}
-                showSummaryCard={true}
                 timeToHoursAndMinutes={timeToHoursAndMinutes}
                 parseJapaneseTimeString={parseJapaneseTimeString}
                 standardHours={standardHours}

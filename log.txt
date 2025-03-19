@@ -1,0 +1,1415 @@
+[Fast Refresh] rebuilding
+SummaryCard.js:408 SummaryCard: 計算開始 - ユーザー: 安西 秀和
+SummaryCard.js:46 実勤務時間計算 - 入力データサンプル: (5) [{…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:55 計算対象ユーザー: 安西 秀和
+SummaryCard.js:75 実勤務時間計算期間 (安西 秀和): 2025/2/21 〜 2025/3/20 (2025-02-20 〜 2025-03-20)
+SummaryCard.js:91 フィルタリング前の総データ数: 195
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-23
+SummaryCard.js:140 条件判定: {date: '2024-12-23', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-23
+SummaryCard.js:140 条件判定: {date: '2024-12-23', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-24
+SummaryCard.js:140 条件判定: {date: '2024-12-24', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-24
+SummaryCard.js:140 条件判定: {date: '2024-12-24', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-25
+SummaryCard.js:140 条件判定: {date: '2024-12-25', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-25
+SummaryCard.js:140 条件判定: {date: '2024-12-25', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-26
+SummaryCard.js:140 条件判定: {date: '2024-12-26', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-26
+SummaryCard.js:140 条件判定: {date: '2024-12-26', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-27
+SummaryCard.js:140 条件判定: {date: '2024-12-27', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-27
+SummaryCard.js:140 条件判定: {date: '2024-12-27', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-06
+SummaryCard.js:140 条件判定: {date: '2025-01-06', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-06
+SummaryCard.js:140 条件判定: {date: '2025-01-06', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-07
+SummaryCard.js:140 条件判定: {date: '2025-01-07', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-07
+SummaryCard.js:140 条件判定: {date: '2025-01-07', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-08
+SummaryCard.js:140 条件判定: {date: '2025-01-08', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-08
+SummaryCard.js:140 条件判定: {date: '2025-01-08', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-09
+SummaryCard.js:140 条件判定: {date: '2025-01-09', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-09
+SummaryCard.js:140 条件判定: {date: '2025-01-09', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-10
+SummaryCard.js:140 条件判定: {date: '2025-01-10', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-10
+SummaryCard.js:140 条件判定: {date: '2025-01-10', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-14
+SummaryCard.js:140 条件判定: {date: '2025-01-14', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-14
+SummaryCard.js:140 条件判定: {date: '2025-01-14', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-15
+SummaryCard.js:140 条件判定: {date: '2025-01-15', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-15
+SummaryCard.js:140 条件判定: {date: '2025-01-15', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-16
+SummaryCard.js:140 条件判定: {date: '2025-01-16', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-16
+SummaryCard.js:140 条件判定: {date: '2025-01-16', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-17
+SummaryCard.js:140 条件判定: {date: '2025-01-17', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-17
+SummaryCard.js:140 条件判定: {date: '2025-01-17', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-20
+SummaryCard.js:140 条件判定: {date: '2025-01-20', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-20
+SummaryCard.js:140 条件判定: {date: '2025-01-20', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-21
+SummaryCard.js:140 条件判定: {date: '2025-01-21', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-21
+SummaryCard.js:140 条件判定: {date: '2025-01-21', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-22
+SummaryCard.js:140 条件判定: {date: '2025-01-22', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-22
+SummaryCard.js:140 条件判定: {date: '2025-01-22', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-23
+SummaryCard.js:140 条件判定: {date: '2025-01-23', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-23
+SummaryCard.js:140 条件判定: {date: '2025-01-23', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-24
+SummaryCard.js:140 条件判定: {date: '2025-01-24', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-24
+SummaryCard.js:140 条件判定: {date: '2025-01-24', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-27
+SummaryCard.js:140 条件判定: {date: '2025-01-27', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-27
+SummaryCard.js:140 条件判定: {date: '2025-01-27', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-28
+SummaryCard.js:140 条件判定: {date: '2025-01-28', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-28
+SummaryCard.js:140 条件判定: {date: '2025-01-28', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-29
+SummaryCard.js:140 条件判定: {date: '2025-01-29', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-29
+SummaryCard.js:140 条件判定: {date: '2025-01-29', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-30
+SummaryCard.js:140 条件判定: {date: '2025-01-30', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-30
+SummaryCard.js:140 条件判定: {date: '2025-01-30', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-31
+SummaryCard.js:140 条件判定: {date: '2025-01-31', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-31
+SummaryCard.js:140 条件判定: {date: '2025-01-31', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-03
+SummaryCard.js:140 条件判定: {date: '2025-02-03', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-03
+SummaryCard.js:140 条件判定: {date: '2025-02-03', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-04
+SummaryCard.js:140 条件判定: {date: '2025-02-04', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-04
+SummaryCard.js:140 条件判定: {date: '2025-02-04', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-05
+SummaryCard.js:140 条件判定: {date: '2025-02-05', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-05
+SummaryCard.js:140 条件判定: {date: '2025-02-05', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-06
+SummaryCard.js:140 条件判定: {date: '2025-02-06', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-06
+SummaryCard.js:140 条件判定: {date: '2025-02-06', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-07
+SummaryCard.js:140 条件判定: {date: '2025-02-07', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-07
+SummaryCard.js:140 条件判定: {date: '2025-02-07', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-11
+SummaryCard.js:140 条件判定: {date: '2025-02-11', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-11
+SummaryCard.js:140 条件判定: {date: '2025-02-11', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-11
+SummaryCard.js:140 条件判定: {date: '2025-02-11', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-11
+SummaryCard.js:140 条件判定: {date: '2025-02-11', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-12
+SummaryCard.js:140 条件判定: {date: '2025-02-12', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-12
+SummaryCard.js:140 条件判定: {date: '2025-02-12', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-12
+SummaryCard.js:140 条件判定: {date: '2025-02-12', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-12
+SummaryCard.js:140 条件判定: {date: '2025-02-12', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-13
+SummaryCard.js:140 条件判定: {date: '2025-02-13', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-13
+SummaryCard.js:140 条件判定: {date: '2025-02-13', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-14
+SummaryCard.js:140 条件判定: {date: '2025-02-14', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-14
+SummaryCard.js:140 条件判定: {date: '2025-02-14', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-17
+SummaryCard.js:140 条件判定: {date: '2025-02-17', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-17
+SummaryCard.js:140 条件判定: {date: '2025-02-17', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-17
+SummaryCard.js:140 条件判定: {date: '2025-02-17', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-17
+SummaryCard.js:140 条件判定: {date: '2025-02-17', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-18
+SummaryCard.js:140 条件判定: {date: '2025-02-18', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-18
+SummaryCard.js:140 条件判定: {date: '2025-02-18', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-18
+SummaryCard.js:140 条件判定: {date: '2025-02-18', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-18
+SummaryCard.js:140 条件判定: {date: '2025-02-18', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-19
+SummaryCard.js:140 条件判定: {date: '2025-02-19', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-19
+SummaryCard.js:140 条件判定: {date: '2025-02-19', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-19
+SummaryCard.js:140 条件判定: {date: '2025-02-19', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-19
+SummaryCard.js:140 条件判定: {date: '2025-02-19', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-20
+SummaryCard.js:140 条件判定: {date: '2025-02-20', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-20
+SummaryCard.js:140 条件判定: {date: '2025-02-20', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-20
+SummaryCard.js:140 条件判定: {date: '2025-02-20', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-20
+SummaryCard.js:140 条件判定: {date: '2025-02-20', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-21
+SummaryCard.js:140 条件判定: {date: '2025-02-21', inRange: true, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-21
+SummaryCard.js:140 条件判定: {date: '2025-02-21', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-22
+SummaryCard.js:140 条件判定: {date: '2025-02-22', inRange: true, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-22
+SummaryCard.js:140 条件判定: {date: '2025-02-22', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-23
+SummaryCard.js:140 条件判定: {date: '2025-02-23', inRange: true, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-23
+SummaryCard.js:140 条件判定: {date: '2025-02-23', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:166 フィルタリング統計: {スキップ件数: 71, 無効な日付: 0, 重複除去前の一致件数: 18, 最終対象件数: 18}
+SummaryCard.js:173 実勤務集計対象データ (安西 秀和): (18) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:199 処理した実勤務時間: (18) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:203 実勤務時間合計 (安西 秀和): 145.4 時間 ( 8725 分)
+SummaryCard.js:224 予定勤務時間計算 - 入力データサンプル: (5) [{…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:251 予定勤務時間計算期間 (安西 秀和): 2025/2/21 〜 2025/3/20 (2025-02-20 〜 2025-03-20)
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-23', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-23', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-24', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-24', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-25', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-25', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-26', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-26', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-27', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-27', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-06', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-06', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-07', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-07', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-08', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-08', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-09', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-09', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-10', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-10', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-14', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-14', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-15', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-15', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-16', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-16', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-17', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-17', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-20', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-20', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-21', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-21', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-22', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-22', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-23', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-23', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-24', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-24', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-27', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-27', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-28', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-28', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-29', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-29', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-30', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-30', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-31', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-31', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-03', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-03', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-04', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-04', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-05', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-05', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-06', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-06', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-07', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-07', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-11', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-11', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-11', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-11', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-12', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-12', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-12', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-12', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-13', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-13', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-14', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-14', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-17', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-17', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-17', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-17', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-18', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-18', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-18', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-18', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-19', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-19', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-19', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-19', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-20', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-20', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-20', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-20', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-21', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-21', inRange: true, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-22', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-22', inRange: true, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-23', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:334 予定フィルタリング統計: {スキップ件数: 71, 無効な日付: 0, 重複除去前の一致件数: 16, 最終対象件数: 16}
+SummaryCard.js:341 予定勤務集計対象データ (安西 秀和): (16) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:367 処理した予定勤務時間: (16) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:371 予定勤務時間合計 (安西 秀和): 130.5 時間 ( 7830 分)
+SummaryCard.js:224 予定勤務時間計算 - 入力データサンプル: (5) [{…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:251 予定勤務時間計算期間 (安西 秀和): 2025/2/21 〜 2025/3/20 (2025-02-20 〜 2025-03-20)
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-23', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-23', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-24', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-24', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-25', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-25', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-26', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-26', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-27', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-27', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-06', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-06', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-07', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-07', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-08', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-08', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-09', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-09', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-10', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-10', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-14', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-14', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-15', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-15', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-16', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-16', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-17', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-17', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-20', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-20', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-21', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-21', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-22', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-22', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-23', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-23', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-24', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-24', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-27', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-27', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-28', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-28', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-29', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-29', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-30', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-30', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-31', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-31', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-03', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-03', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-04', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-04', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-05', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-05', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-06', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-06', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-07', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-07', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-11', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-11', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-11', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-11', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-12', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-12', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-12', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-12', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-13', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-13', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-14', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-14', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-17', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-17', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-17', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-17', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-18', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-18', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-18', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-18', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-19', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-19', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-19', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-19', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-20', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-20', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-20', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-20', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-21', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-21', inRange: true, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-22', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-22', inRange: true, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-23', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:334 予定フィルタリング統計: {スキップ件数: 71, 無効な日付: 0, 重複除去前の一致件数: 16, 最終対象件数: 16}
+SummaryCard.js:341 予定勤務集計対象データ (安西 秀和): (16) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:367 処理した予定勤務時間: (16) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:371 予定勤務時間合計 (安西 秀和): 130.5 時間 ( 7830 分)
+SummaryCard.js:46 実勤務時間計算 - 入力データサンプル: (5) [{…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:55 計算対象ユーザー: 安西 秀和
+SummaryCard.js:75 実勤務時間計算期間 (安西 秀和): 2025/2/21 〜 2025/3/20 (2025-02-20 〜 2025-03-20)
+SummaryCard.js:91 フィルタリング前の総データ数: 195
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-23
+SummaryCard.js:140 条件判定: {date: '2024-12-23', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-23
+SummaryCard.js:140 条件判定: {date: '2024-12-23', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-24
+SummaryCard.js:140 条件判定: {date: '2024-12-24', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-24
+SummaryCard.js:140 条件判定: {date: '2024-12-24', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-25
+SummaryCard.js:140 条件判定: {date: '2024-12-25', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-25
+SummaryCard.js:140 条件判定: {date: '2024-12-25', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-26
+SummaryCard.js:140 条件判定: {date: '2024-12-26', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-26
+SummaryCard.js:140 条件判定: {date: '2024-12-26', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-27
+SummaryCard.js:140 条件判定: {date: '2024-12-27', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-27
+SummaryCard.js:140 条件判定: {date: '2024-12-27', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-06
+SummaryCard.js:140 条件判定: {date: '2025-01-06', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-06
+SummaryCard.js:140 条件判定: {date: '2025-01-06', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-07
+SummaryCard.js:140 条件判定: {date: '2025-01-07', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-07
+SummaryCard.js:140 条件判定: {date: '2025-01-07', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-08
+SummaryCard.js:140 条件判定: {date: '2025-01-08', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-08
+SummaryCard.js:140 条件判定: {date: '2025-01-08', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-09
+SummaryCard.js:140 条件判定: {date: '2025-01-09', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-09
+SummaryCard.js:140 条件判定: {date: '2025-01-09', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-10
+SummaryCard.js:140 条件判定: {date: '2025-01-10', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-10
+SummaryCard.js:140 条件判定: {date: '2025-01-10', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-14
+SummaryCard.js:140 条件判定: {date: '2025-01-14', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-14
+SummaryCard.js:140 条件判定: {date: '2025-01-14', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-15
+SummaryCard.js:140 条件判定: {date: '2025-01-15', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-15
+SummaryCard.js:140 条件判定: {date: '2025-01-15', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-16
+SummaryCard.js:140 条件判定: {date: '2025-01-16', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-16
+SummaryCard.js:140 条件判定: {date: '2025-01-16', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-17
+SummaryCard.js:140 条件判定: {date: '2025-01-17', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-17
+SummaryCard.js:140 条件判定: {date: '2025-01-17', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-20
+SummaryCard.js:140 条件判定: {date: '2025-01-20', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-20
+SummaryCard.js:140 条件判定: {date: '2025-01-20', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-21
+SummaryCard.js:140 条件判定: {date: '2025-01-21', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-21
+SummaryCard.js:140 条件判定: {date: '2025-01-21', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-22
+SummaryCard.js:140 条件判定: {date: '2025-01-22', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-22
+SummaryCard.js:140 条件判定: {date: '2025-01-22', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-23
+SummaryCard.js:140 条件判定: {date: '2025-01-23', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-23
+SummaryCard.js:140 条件判定: {date: '2025-01-23', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-24
+SummaryCard.js:140 条件判定: {date: '2025-01-24', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-24
+SummaryCard.js:140 条件判定: {date: '2025-01-24', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-27
+SummaryCard.js:140 条件判定: {date: '2025-01-27', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-27
+SummaryCard.js:140 条件判定: {date: '2025-01-27', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-28
+SummaryCard.js:140 条件判定: {date: '2025-01-28', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-28
+SummaryCard.js:140 条件判定: {date: '2025-01-28', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-29
+SummaryCard.js:140 条件判定: {date: '2025-01-29', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-29
+SummaryCard.js:140 条件判定: {date: '2025-01-29', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-30
+SummaryCard.js:140 条件判定: {date: '2025-01-30', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-30
+SummaryCard.js:140 条件判定: {date: '2025-01-30', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-31
+SummaryCard.js:140 条件判定: {date: '2025-01-31', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-31
+SummaryCard.js:140 条件判定: {date: '2025-01-31', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-03
+SummaryCard.js:140 条件判定: {date: '2025-02-03', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-03
+SummaryCard.js:140 条件判定: {date: '2025-02-03', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-04
+SummaryCard.js:140 条件判定: {date: '2025-02-04', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-04
+SummaryCard.js:140 条件判定: {date: '2025-02-04', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-05
+SummaryCard.js:140 条件判定: {date: '2025-02-05', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-05
+SummaryCard.js:140 条件判定: {date: '2025-02-05', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-06
+SummaryCard.js:140 条件判定: {date: '2025-02-06', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-06
+SummaryCard.js:140 条件判定: {date: '2025-02-06', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-07
+SummaryCard.js:140 条件判定: {date: '2025-02-07', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-07
+SummaryCard.js:140 条件判定: {date: '2025-02-07', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-11
+SummaryCard.js:140 条件判定: {date: '2025-02-11', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-11
+SummaryCard.js:140 条件判定: {date: '2025-02-11', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-11
+SummaryCard.js:140 条件判定: {date: '2025-02-11', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-11
+SummaryCard.js:140 条件判定: {date: '2025-02-11', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-12
+SummaryCard.js:140 条件判定: {date: '2025-02-12', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-12
+SummaryCard.js:140 条件判定: {date: '2025-02-12', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-12
+SummaryCard.js:140 条件判定: {date: '2025-02-12', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-12
+SummaryCard.js:140 条件判定: {date: '2025-02-12', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-13
+SummaryCard.js:140 条件判定: {date: '2025-02-13', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-13
+SummaryCard.js:140 条件判定: {date: '2025-02-13', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-14
+SummaryCard.js:140 条件判定: {date: '2025-02-14', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-14
+SummaryCard.js:140 条件判定: {date: '2025-02-14', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-17
+SummaryCard.js:140 条件判定: {date: '2025-02-17', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-17
+SummaryCard.js:140 条件判定: {date: '2025-02-17', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-17
+SummaryCard.js:140 条件判定: {date: '2025-02-17', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-17
+SummaryCard.js:140 条件判定: {date: '2025-02-17', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-18
+SummaryCard.js:140 条件判定: {date: '2025-02-18', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-18
+SummaryCard.js:140 条件判定: {date: '2025-02-18', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-18
+SummaryCard.js:140 条件判定: {date: '2025-02-18', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-18
+SummaryCard.js:140 条件判定: {date: '2025-02-18', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-19
+SummaryCard.js:140 条件判定: {date: '2025-02-19', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-19
+SummaryCard.js:140 条件判定: {date: '2025-02-19', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-19
+SummaryCard.js:140 条件判定: {date: '2025-02-19', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-19
+SummaryCard.js:140 条件判定: {date: '2025-02-19', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-20
+SummaryCard.js:140 条件判定: {date: '2025-02-20', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-20
+SummaryCard.js:140 条件判定: {date: '2025-02-20', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-20
+SummaryCard.js:140 条件判定: {date: '2025-02-20', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-20
+SummaryCard.js:140 条件判定: {date: '2025-02-20', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-21
+SummaryCard.js:140 条件判定: {date: '2025-02-21', inRange: true, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-21
+SummaryCard.js:140 条件判定: {date: '2025-02-21', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-22
+SummaryCard.js:140 条件判定: {date: '2025-02-22', inRange: true, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-22
+SummaryCard.js:140 条件判定: {date: '2025-02-22', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-23
+SummaryCard.js:140 条件判定: {date: '2025-02-23', inRange: true, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-23
+SummaryCard.js:140 条件判定: {date: '2025-02-23', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:166 フィルタリング統計: {スキップ件数: 71, 無効な日付: 0, 重複除去前の一致件数: 18, 最終対象件数: 18}
+SummaryCard.js:173 実勤務集計対象データ (安西 秀和): (18) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:199 処理した実勤務時間: (18) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:203 実勤務時間合計 (安西 秀和): 145.4 時間 ( 8725 分)
+SummaryCard.js:412 SummaryCard: 計算結果 {実勤務時間: '145.4', 予定勤務時間: '130.5', 標準時間: '160.0', 進捗率: '100%'}
+SummaryCard.js:408 SummaryCard: 計算開始 - ユーザー: 安西 秀和
+SummaryCard.js:46 実勤務時間計算 - 入力データサンプル: (5) [{…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:55 計算対象ユーザー: 安西 秀和
+SummaryCard.js:75 実勤務時間計算期間 (安西 秀和): 2025/2/21 〜 2025/3/20 (2025-02-20 〜 2025-03-20)
+SummaryCard.js:91 フィルタリング前の総データ数: 195
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-23
+SummaryCard.js:140 条件判定: {date: '2024-12-23', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-23
+SummaryCard.js:140 条件判定: {date: '2024-12-23', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-24
+SummaryCard.js:140 条件判定: {date: '2024-12-24', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-24
+SummaryCard.js:140 条件判定: {date: '2024-12-24', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-25
+SummaryCard.js:140 条件判定: {date: '2024-12-25', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-25
+SummaryCard.js:140 条件判定: {date: '2024-12-25', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-26
+SummaryCard.js:140 条件判定: {date: '2024-12-26', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-26
+SummaryCard.js:140 条件判定: {date: '2024-12-26', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-27
+SummaryCard.js:140 条件判定: {date: '2024-12-27', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-27
+SummaryCard.js:140 条件判定: {date: '2024-12-27', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-06
+SummaryCard.js:140 条件判定: {date: '2025-01-06', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-06
+SummaryCard.js:140 条件判定: {date: '2025-01-06', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-07
+SummaryCard.js:140 条件判定: {date: '2025-01-07', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-07
+SummaryCard.js:140 条件判定: {date: '2025-01-07', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-08
+SummaryCard.js:140 条件判定: {date: '2025-01-08', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-08
+SummaryCard.js:140 条件判定: {date: '2025-01-08', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-09
+SummaryCard.js:140 条件判定: {date: '2025-01-09', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-09
+SummaryCard.js:140 条件判定: {date: '2025-01-09', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-10
+SummaryCard.js:140 条件判定: {date: '2025-01-10', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-10
+SummaryCard.js:140 条件判定: {date: '2025-01-10', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-14
+SummaryCard.js:140 条件判定: {date: '2025-01-14', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-14
+SummaryCard.js:140 条件判定: {date: '2025-01-14', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-15
+SummaryCard.js:140 条件判定: {date: '2025-01-15', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-15
+SummaryCard.js:140 条件判定: {date: '2025-01-15', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-16
+SummaryCard.js:140 条件判定: {date: '2025-01-16', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-16
+SummaryCard.js:140 条件判定: {date: '2025-01-16', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-17
+SummaryCard.js:140 条件判定: {date: '2025-01-17', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-17
+SummaryCard.js:140 条件判定: {date: '2025-01-17', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-20
+SummaryCard.js:140 条件判定: {date: '2025-01-20', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-20
+SummaryCard.js:140 条件判定: {date: '2025-01-20', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-21
+SummaryCard.js:140 条件判定: {date: '2025-01-21', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-21
+SummaryCard.js:140 条件判定: {date: '2025-01-21', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-22
+SummaryCard.js:140 条件判定: {date: '2025-01-22', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-22
+SummaryCard.js:140 条件判定: {date: '2025-01-22', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-23
+SummaryCard.js:140 条件判定: {date: '2025-01-23', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-23
+SummaryCard.js:140 条件判定: {date: '2025-01-23', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-24
+SummaryCard.js:140 条件判定: {date: '2025-01-24', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-24
+SummaryCard.js:140 条件判定: {date: '2025-01-24', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-27
+SummaryCard.js:140 条件判定: {date: '2025-01-27', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-27
+SummaryCard.js:140 条件判定: {date: '2025-01-27', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-28
+SummaryCard.js:140 条件判定: {date: '2025-01-28', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-28
+SummaryCard.js:140 条件判定: {date: '2025-01-28', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-29
+SummaryCard.js:140 条件判定: {date: '2025-01-29', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-29
+SummaryCard.js:140 条件判定: {date: '2025-01-29', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-30
+SummaryCard.js:140 条件判定: {date: '2025-01-30', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-30
+SummaryCard.js:140 条件判定: {date: '2025-01-30', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-31
+SummaryCard.js:140 条件判定: {date: '2025-01-31', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-31
+SummaryCard.js:140 条件判定: {date: '2025-01-31', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-03
+SummaryCard.js:140 条件判定: {date: '2025-02-03', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-03
+SummaryCard.js:140 条件判定: {date: '2025-02-03', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-04
+SummaryCard.js:140 条件判定: {date: '2025-02-04', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-04
+SummaryCard.js:140 条件判定: {date: '2025-02-04', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-05
+SummaryCard.js:140 条件判定: {date: '2025-02-05', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-05
+SummaryCard.js:140 条件判定: {date: '2025-02-05', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-06
+SummaryCard.js:140 条件判定: {date: '2025-02-06', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-06
+SummaryCard.js:140 条件判定: {date: '2025-02-06', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-07
+SummaryCard.js:140 条件判定: {date: '2025-02-07', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-07
+SummaryCard.js:140 条件判定: {date: '2025-02-07', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-11
+SummaryCard.js:140 条件判定: {date: '2025-02-11', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-11
+SummaryCard.js:140 条件判定: {date: '2025-02-11', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-11
+SummaryCard.js:140 条件判定: {date: '2025-02-11', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-11
+SummaryCard.js:140 条件判定: {date: '2025-02-11', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-12
+SummaryCard.js:140 条件判定: {date: '2025-02-12', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-12
+SummaryCard.js:140 条件判定: {date: '2025-02-12', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-12
+SummaryCard.js:140 条件判定: {date: '2025-02-12', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-12
+SummaryCard.js:140 条件判定: {date: '2025-02-12', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-13
+SummaryCard.js:140 条件判定: {date: '2025-02-13', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-13
+SummaryCard.js:140 条件判定: {date: '2025-02-13', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-14
+SummaryCard.js:140 条件判定: {date: '2025-02-14', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-14
+SummaryCard.js:140 条件判定: {date: '2025-02-14', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-17
+SummaryCard.js:140 条件判定: {date: '2025-02-17', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-17
+SummaryCard.js:140 条件判定: {date: '2025-02-17', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-17
+SummaryCard.js:140 条件判定: {date: '2025-02-17', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-17
+SummaryCard.js:140 条件判定: {date: '2025-02-17', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-18
+SummaryCard.js:140 条件判定: {date: '2025-02-18', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-18
+SummaryCard.js:140 条件判定: {date: '2025-02-18', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-18
+SummaryCard.js:140 条件判定: {date: '2025-02-18', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-18
+SummaryCard.js:140 条件判定: {date: '2025-02-18', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-19
+SummaryCard.js:140 条件判定: {date: '2025-02-19', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-19
+SummaryCard.js:140 条件判定: {date: '2025-02-19', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-19
+SummaryCard.js:140 条件判定: {date: '2025-02-19', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-19
+SummaryCard.js:140 条件判定: {date: '2025-02-19', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-20
+SummaryCard.js:140 条件判定: {date: '2025-02-20', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-20
+SummaryCard.js:140 条件判定: {date: '2025-02-20', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-20
+SummaryCard.js:140 条件判定: {date: '2025-02-20', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-20
+SummaryCard.js:140 条件判定: {date: '2025-02-20', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-21
+SummaryCard.js:140 条件判定: {date: '2025-02-21', inRange: true, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-21
+SummaryCard.js:140 条件判定: {date: '2025-02-21', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-22
+SummaryCard.js:140 条件判定: {date: '2025-02-22', inRange: true, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-22
+SummaryCard.js:140 条件判定: {date: '2025-02-22', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-23
+SummaryCard.js:140 条件判定: {date: '2025-02-23', inRange: true, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-23
+SummaryCard.js:140 条件判定: {date: '2025-02-23', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:166 フィルタリング統計: {スキップ件数: 71, 無効な日付: 0, 重複除去前の一致件数: 18, 最終対象件数: 18}
+SummaryCard.js:173 実勤務集計対象データ (安西 秀和): (18) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:199 処理した実勤務時間: (18) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:203 実勤務時間合計 (安西 秀和): 145.4 時間 ( 8725 分)
+SummaryCard.js:224 予定勤務時間計算 - 入力データサンプル: (5) [{…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:251 予定勤務時間計算期間 (安西 秀和): 2025/2/21 〜 2025/3/20 (2025-02-20 〜 2025-03-20)
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-23', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-23', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-24', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-24', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-25', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-25', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-26', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-26', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-27', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-27', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-06', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-06', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-07', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-07', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-08', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-08', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-09', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-09', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-10', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-10', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-14', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-14', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-15', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-15', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-16', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-16', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-17', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-17', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-20', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-20', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-21', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-21', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-22', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-22', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-23', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-23', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-24', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-24', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-27', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-27', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-28', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-28', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-29', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-29', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-30', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-30', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-31', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-31', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-03', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-03', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-04', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-04', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-05', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-05', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-06', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-06', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-07', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-07', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-11', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-11', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-11', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-11', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-12', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-12', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-12', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-12', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-13', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-13', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-14', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-14', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-17', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-17', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-17', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-17', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-18', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-18', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-18', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-18', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-19', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-19', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-19', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-19', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-20', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-20', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-20', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-20', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-21', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-21', inRange: true, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-22', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-22', inRange: true, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-23', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:334 予定フィルタリング統計: {スキップ件数: 71, 無効な日付: 0, 重複除去前の一致件数: 16, 最終対象件数: 16}
+SummaryCard.js:341 予定勤務集計対象データ (安西 秀和): (16) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:367 処理した予定勤務時間: (16) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:371 予定勤務時間合計 (安西 秀和): 130.5 時間 ( 7830 分)
+SummaryCard.js:224 予定勤務時間計算 - 入力データサンプル: (5) [{…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:251 予定勤務時間計算期間 (安西 秀和): 2025/2/21 〜 2025/3/20 (2025-02-20 〜 2025-03-20)
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-23', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-23', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-24', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-24', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-25', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-25', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-26', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-26', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-27', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2024-12-27', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-06', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-06', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-07', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-07', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-08', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-08', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-09', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-09', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-10', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-10', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-14', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-14', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-15', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-15', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-16', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-16', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-17', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-17', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-20', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-20', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-21', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-21', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-22', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-22', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-23', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-23', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-24', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-24', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-27', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-27', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-28', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-28', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-29', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-29', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-30', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-30', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-31', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-01-31', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-03', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-03', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-04', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-04', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-05', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-05', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-06', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-06', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-07', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-07', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-11', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-11', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-11', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-11', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-12', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-12', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-12', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-12', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-13', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-13', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-14', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-14', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-17', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-17', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-17', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-17', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-18', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-18', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-18', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-18', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-19', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-19', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-19', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-19', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-20', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-20', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-20', inRange: false, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-20', inRange: false, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-21', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-21', inRange: true, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-22', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-22', inRange: true, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-02-23', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:334 予定フィルタリング統計: {スキップ件数: 71, 無効な日付: 0, 重複除去前の一致件数: 16, 最終対象件数: 16}
+SummaryCard.js:341 予定勤務集計対象データ (安西 秀和): (16) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:367 処理した予定勤務時間: (16) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:371 予定勤務時間合計 (安西 秀和): 130.5 時間 ( 7830 分)
+SummaryCard.js:46 実勤務時間計算 - 入力データサンプル: (5) [{…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:55 計算対象ユーザー: 安西 秀和
+SummaryCard.js:75 実勤務時間計算期間 (安西 秀和): 2025/2/21 〜 2025/3/20 (2025-02-20 〜 2025-03-20)
+SummaryCard.js:91 フィルタリング前の総データ数: 195
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-23
+SummaryCard.js:140 条件判定: {date: '2024-12-23', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-23
+SummaryCard.js:140 条件判定: {date: '2024-12-23', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-24
+SummaryCard.js:140 条件判定: {date: '2024-12-24', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-24
+SummaryCard.js:140 条件判定: {date: '2024-12-24', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-25
+SummaryCard.js:140 条件判定: {date: '2024-12-25', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-25
+SummaryCard.js:140 条件判定: {date: '2024-12-25', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-26
+SummaryCard.js:140 条件判定: {date: '2024-12-26', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-26
+SummaryCard.js:140 条件判定: {date: '2024-12-26', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-27
+SummaryCard.js:140 条件判定: {date: '2024-12-27', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2024-12-27
+SummaryCard.js:140 条件判定: {date: '2024-12-27', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-06
+SummaryCard.js:140 条件判定: {date: '2025-01-06', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-06
+SummaryCard.js:140 条件判定: {date: '2025-01-06', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-07
+SummaryCard.js:140 条件判定: {date: '2025-01-07', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-07
+SummaryCard.js:140 条件判定: {date: '2025-01-07', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-08
+SummaryCard.js:140 条件判定: {date: '2025-01-08', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-08
+SummaryCard.js:140 条件判定: {date: '2025-01-08', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-09
+SummaryCard.js:140 条件判定: {date: '2025-01-09', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-09
+SummaryCard.js:140 条件判定: {date: '2025-01-09', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-10
+SummaryCard.js:140 条件判定: {date: '2025-01-10', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-10
+SummaryCard.js:140 条件判定: {date: '2025-01-10', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-14
+SummaryCard.js:140 条件判定: {date: '2025-01-14', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-14
+SummaryCard.js:140 条件判定: {date: '2025-01-14', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-15
+SummaryCard.js:140 条件判定: {date: '2025-01-15', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-15
+SummaryCard.js:140 条件判定: {date: '2025-01-15', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-16
+SummaryCard.js:140 条件判定: {date: '2025-01-16', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-16
+SummaryCard.js:140 条件判定: {date: '2025-01-16', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-17
+SummaryCard.js:140 条件判定: {date: '2025-01-17', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-17
+SummaryCard.js:140 条件判定: {date: '2025-01-17', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-20
+SummaryCard.js:140 条件判定: {date: '2025-01-20', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-20
+SummaryCard.js:140 条件判定: {date: '2025-01-20', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-21
+SummaryCard.js:140 条件判定: {date: '2025-01-21', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-21
+SummaryCard.js:140 条件判定: {date: '2025-01-21', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-22
+SummaryCard.js:140 条件判定: {date: '2025-01-22', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-22
+SummaryCard.js:140 条件判定: {date: '2025-01-22', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-23
+SummaryCard.js:140 条件判定: {date: '2025-01-23', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-23
+SummaryCard.js:140 条件判定: {date: '2025-01-23', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-24
+SummaryCard.js:140 条件判定: {date: '2025-01-24', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-24
+SummaryCard.js:140 条件判定: {date: '2025-01-24', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-27
+SummaryCard.js:140 条件判定: {date: '2025-01-27', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-27
+SummaryCard.js:140 条件判定: {date: '2025-01-27', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-28
+SummaryCard.js:140 条件判定: {date: '2025-01-28', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-28
+SummaryCard.js:140 条件判定: {date: '2025-01-28', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-29
+SummaryCard.js:140 条件判定: {date: '2025-01-29', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-29
+SummaryCard.js:140 条件判定: {date: '2025-01-29', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-30
+SummaryCard.js:140 条件判定: {date: '2025-01-30', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-30
+SummaryCard.js:140 条件判定: {date: '2025-01-30', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-31
+SummaryCard.js:140 条件判定: {date: '2025-01-31', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-01-31
+SummaryCard.js:140 条件判定: {date: '2025-01-31', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-03
+SummaryCard.js:140 条件判定: {date: '2025-02-03', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-03
+SummaryCard.js:140 条件判定: {date: '2025-02-03', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-04
+SummaryCard.js:140 条件判定: {date: '2025-02-04', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-04
+SummaryCard.js:140 条件判定: {date: '2025-02-04', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-05
+SummaryCard.js:140 条件判定: {date: '2025-02-05', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-05
+SummaryCard.js:140 条件判定: {date: '2025-02-05', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-06
+SummaryCard.js:140 条件判定: {date: '2025-02-06', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-06
+SummaryCard.js:140 条件判定: {date: '2025-02-06', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-07
+SummaryCard.js:140 条件判定: {date: '2025-02-07', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-07
+SummaryCard.js:140 条件判定: {date: '2025-02-07', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-11
+SummaryCard.js:140 条件判定: {date: '2025-02-11', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-11
+SummaryCard.js:140 条件判定: {date: '2025-02-11', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-11
+SummaryCard.js:140 条件判定: {date: '2025-02-11', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-11
+SummaryCard.js:140 条件判定: {date: '2025-02-11', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-12
+SummaryCard.js:140 条件判定: {date: '2025-02-12', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-12
+SummaryCard.js:140 条件判定: {date: '2025-02-12', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-12
+SummaryCard.js:140 条件判定: {date: '2025-02-12', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-12
+SummaryCard.js:140 条件判定: {date: '2025-02-12', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-13
+SummaryCard.js:140 条件判定: {date: '2025-02-13', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-13
+SummaryCard.js:140 条件判定: {date: '2025-02-13', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-14
+SummaryCard.js:140 条件判定: {date: '2025-02-14', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-14
+SummaryCard.js:140 条件判定: {date: '2025-02-14', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-17
+SummaryCard.js:140 条件判定: {date: '2025-02-17', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-17
+SummaryCard.js:140 条件判定: {date: '2025-02-17', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-17
+SummaryCard.js:140 条件判定: {date: '2025-02-17', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-17
+SummaryCard.js:140 条件判定: {date: '2025-02-17', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-18
+SummaryCard.js:140 条件判定: {date: '2025-02-18', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-18
+SummaryCard.js:140 条件判定: {date: '2025-02-18', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-18
+SummaryCard.js:140 条件判定: {date: '2025-02-18', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-18
+SummaryCard.js:140 条件判定: {date: '2025-02-18', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-19
+SummaryCard.js:140 条件判定: {date: '2025-02-19', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-19
+SummaryCard.js:140 条件判定: {date: '2025-02-19', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-19
+SummaryCard.js:140 条件判定: {date: '2025-02-19', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-19
+SummaryCard.js:140 条件判定: {date: '2025-02-19', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-20
+SummaryCard.js:140 条件判定: {date: '2025-02-20', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-20
+SummaryCard.js:140 条件判定: {date: '2025-02-20', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-20
+SummaryCard.js:140 条件判定: {date: '2025-02-20', inRange: false, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-20
+SummaryCard.js:140 条件判定: {date: '2025-02-20', inRange: false, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-21
+SummaryCard.js:140 条件判定: {date: '2025-02-21', inRange: true, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-21
+SummaryCard.js:140 条件判定: {date: '2025-02-21', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-22
+SummaryCard.js:140 条件判定: {date: '2025-02-22', inRange: true, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-22
+SummaryCard.js:140 条件判定: {date: '2025-02-22', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-23
+SummaryCard.js:140 条件判定: {date: '2025-02-23', inRange: true, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-02-23
+SummaryCard.js:140 条件判定: {date: '2025-02-23', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:166 フィルタリング統計: {スキップ件数: 71, 無効な日付: 0, 重複除去前の一致件数: 18, 最終対象件数: 18}
+SummaryCard.js:173 実勤務集計対象データ (安西 秀和): (18) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:199 処理した実勤務時間: (18) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:203 実勤務時間合計 (安西 秀和): 145.4 時間 ( 8725 分)
+SummaryCard.js:412 SummaryCard: 計算結果 {実勤務時間: '145.4', 予定勤務時間: '130.5', 標準時間: '160.0', 進捗率: '100%'}
+icon-slider.js:102 Current session in IconSlider: {user: {…}, expires: '2025-04-18T06:05:20.262Z'}
+icon-slider.js:103 Filtered users in IconSlider: []
+icon-slider.js:102 Current session in IconSlider: {user: {…}, expires: '2025-04-18T06:05:20.262Z'}
+icon-slider.js:103 Filtered users in IconSlider: []
+hot-reloader-client.ts:277 [Fast Refresh] rebuilding
+SummaryCard.js:408 SummaryCard: 計算開始 - ユーザー: 安西 秀和
+SummaryCard.js:46 実勤務時間計算 - 入力データサンプル: (5) [{…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:55 計算対象ユーザー: 安西 秀和
+SummaryCard.js:75 実勤務時間計算期間 (安西 秀和): 2025/2/21 〜 2025/3/20 (2025-02-20 〜 2025-03-20)
+SummaryCard.js:91 フィルタリング前の総データ数: 44
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-03
+SummaryCard.js:140 条件判定: {date: '2025-03-03', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-04
+SummaryCard.js:140 条件判定: {date: '2025-03-04', inRange: true, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-04
+SummaryCard.js:140 条件判定: {date: '2025-03-04', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-05
+SummaryCard.js:140 条件判定: {date: '2025-03-05', inRange: true, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-05
+SummaryCard.js:140 条件判定: {date: '2025-03-05', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:166 フィルタリング統計: {スキップ件数: 19, 無効な日付: 0, 重複除去前の一致件数: 11, 最終対象件数: 11}
+SummaryCard.js:173 実勤務集計対象データ (安西 秀和): (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:199 処理した実勤務時間: (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:203 実勤務時間合計 (安西 秀和): 83.0 時間 ( 4980 分)
+SummaryCard.js:224 予定勤務時間計算 - 入力データサンプル: (5) [{…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:251 予定勤務時間計算期間 (安西 秀和): 2025/2/21 〜 2025/3/20 (2025-02-20 〜 2025-03-20)
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-03', inRange: true, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-04', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-04', inRange: true, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-05', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-05', inRange: true, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-06', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:334 予定フィルタリング統計: {スキップ件数: 19, 無効な日付: 0, 重複除去前の一致件数: 10, 最終対象件数: 10}
+SummaryCard.js:341 予定勤務集計対象データ (安西 秀和): (10) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:367 処理した予定勤務時間: (10) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:371 予定勤務時間合計 (安西 秀和): 75.5 時間 ( 4530 分)
+SummaryCard.js:224 予定勤務時間計算 - 入力データサンプル: (5) [{…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:251 予定勤務時間計算期間 (安西 秀和): 2025/2/21 〜 2025/3/20 (2025-02-20 〜 2025-03-20)
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-03', inRange: true, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-04', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-04', inRange: true, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-05', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-05', inRange: true, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-06', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:334 予定フィルタリング統計: {スキップ件数: 19, 無効な日付: 0, 重複除去前の一致件数: 10, 最終対象件数: 10}
+SummaryCard.js:341 予定勤務集計対象データ (安西 秀和): (10) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:367 処理した予定勤務時間: (10) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:371 予定勤務時間合計 (安西 秀和): 75.5 時間 ( 4530 分)
+SummaryCard.js:46 実勤務時間計算 - 入力データサンプル: (5) [{…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:55 計算対象ユーザー: 安西 秀和
+SummaryCard.js:75 実勤務時間計算期間 (安西 秀和): 2025/2/21 〜 2025/3/20 (2025-02-20 〜 2025-03-20)
+SummaryCard.js:91 フィルタリング前の総データ数: 44
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-03
+SummaryCard.js:140 条件判定: {date: '2025-03-03', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-04
+SummaryCard.js:140 条件判定: {date: '2025-03-04', inRange: true, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-04
+SummaryCard.js:140 条件判定: {date: '2025-03-04', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-05
+SummaryCard.js:140 条件判定: {date: '2025-03-05', inRange: true, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-05
+SummaryCard.js:140 条件判定: {date: '2025-03-05', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:166 フィルタリング統計: {スキップ件数: 19, 無効な日付: 0, 重複除去前の一致件数: 11, 最終対象件数: 11}
+SummaryCard.js:173 実勤務集計対象データ (安西 秀和): (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:199 処理した実勤務時間: (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:203 実勤務時間合計 (安西 秀和): 83.0 時間 ( 4980 分)
+SummaryCard.js:412 SummaryCard: 計算結果 {実勤務時間: '83.0', 予定勤務時間: '75.5', 標準時間: '160.0', 進捗率: '100%'}
+SummaryCard.js:408 SummaryCard: 計算開始 - ユーザー: 安西 秀和
+SummaryCard.js:46 実勤務時間計算 - 入力データサンプル: (5) [{…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:55 計算対象ユーザー: 安西 秀和
+SummaryCard.js:75 実勤務時間計算期間 (安西 秀和): 2025/2/21 〜 2025/3/20 (2025-02-20 〜 2025-03-20)
+SummaryCard.js:91 フィルタリング前の総データ数: 44
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-03
+SummaryCard.js:140 条件判定: {date: '2025-03-03', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-04
+SummaryCard.js:140 条件判定: {date: '2025-03-04', inRange: true, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-04
+SummaryCard.js:140 条件判定: {date: '2025-03-04', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-05
+SummaryCard.js:140 条件判定: {date: '2025-03-05', inRange: true, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-05
+SummaryCard.js:140 条件判定: {date: '2025-03-05', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:166 フィルタリング統計: {スキップ件数: 19, 無効な日付: 0, 重複除去前の一致件数: 11, 最終対象件数: 11}
+SummaryCard.js:173 実勤務集計対象データ (安西 秀和): (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:199 処理した実勤務時間: (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:203 実勤務時間合計 (安西 秀和): 83.0 時間 ( 4980 分)
+SummaryCard.js:224 予定勤務時間計算 - 入力データサンプル: (5) [{…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:251 予定勤務時間計算期間 (安西 秀和): 2025/2/21 〜 2025/3/20 (2025-02-20 〜 2025-03-20)
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-03', inRange: true, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-04', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-04', inRange: true, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-05', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-05', inRange: true, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-06', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:334 予定フィルタリング統計: {スキップ件数: 19, 無効な日付: 0, 重複除去前の一致件数: 10, 最終対象件数: 10}
+SummaryCard.js:341 予定勤務集計対象データ (安西 秀和): (10) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:367 処理した予定勤務時間: (10) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:371 予定勤務時間合計 (安西 秀和): 75.5 時間 ( 4530 分)
+SummaryCard.js:224 予定勤務時間計算 - 入力データサンプル: (5) [{…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:251 予定勤務時間計算期間 (安西 秀和): 2025/2/21 〜 2025/3/20 (2025-02-20 〜 2025-03-20)
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-03', inRange: true, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-04', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-04', inRange: true, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-05', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-05', inRange: true, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-06', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:334 予定フィルタリング統計: {スキップ件数: 19, 無効な日付: 0, 重複除去前の一致件数: 10, 最終対象件数: 10}
+SummaryCard.js:341 予定勤務集計対象データ (安西 秀和): (10) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:367 処理した予定勤務時間: (10) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:371 予定勤務時間合計 (安西 秀和): 75.5 時間 ( 4530 分)
+SummaryCard.js:46 実勤務時間計算 - 入力データサンプル: (5) [{…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:55 計算対象ユーザー: 安西 秀和
+SummaryCard.js:75 実勤務時間計算期間 (安西 秀和): 2025/2/21 〜 2025/3/20 (2025-02-20 〜 2025-03-20)
+SummaryCard.js:91 フィルタリング前の総データ数: 44
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-03
+SummaryCard.js:140 条件判定: {date: '2025-03-03', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-04
+SummaryCard.js:140 条件判定: {date: '2025-03-04', inRange: true, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-04
+SummaryCard.js:140 条件判定: {date: '2025-03-04', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-05
+SummaryCard.js:140 条件判定: {date: '2025-03-05', inRange: true, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-05
+SummaryCard.js:140 条件判定: {date: '2025-03-05', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:166 フィルタリング統計: {スキップ件数: 19, 無効な日付: 0, 重複除去前の一致件数: 11, 最終対象件数: 11}
+SummaryCard.js:173 実勤務集計対象データ (安西 秀和): (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:199 処理した実勤務時間: (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:203 実勤務時間合計 (安西 秀和): 83.0 時間 ( 4980 分)
+SummaryCard.js:412 SummaryCard: 計算結果 {実勤務時間: '83.0', 予定勤務時間: '75.5', 標準時間: '160.0', 進捗率: '100%'}
+2hot-reloader-client.ts:277 [Fast Refresh] rebuilding
+SummaryCard.js:408 SummaryCard: 計算開始 - ユーザー: 安西 秀和
+SummaryCard.js:46 実勤務時間計算 - 入力データサンプル: (5) [{…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:55 計算対象ユーザー: 安西 秀和
+SummaryCard.js:75 実勤務時間計算期間 (安西 秀和): 2025/2/21 〜 2025/3/20 (2025-02-20 〜 2025-03-20)
+SummaryCard.js:91 フィルタリング前の総データ数: 44
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-03
+SummaryCard.js:140 条件判定: {date: '2025-03-03', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-04
+SummaryCard.js:140 条件判定: {date: '2025-03-04', inRange: true, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-04
+SummaryCard.js:140 条件判定: {date: '2025-03-04', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-05
+SummaryCard.js:140 条件判定: {date: '2025-03-05', inRange: true, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-05
+SummaryCard.js:140 条件判定: {date: '2025-03-05', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:166 フィルタリング統計: {スキップ件数: 19, 無効な日付: 0, 重複除去前の一致件数: 11, 最終対象件数: 11}
+SummaryCard.js:173 実勤務集計対象データ (安西 秀和): (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:199 処理した実勤務時間: (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:203 実勤務時間合計 (安西 秀和): 83.0 時間 ( 4980 分)
+SummaryCard.js:224 予定勤務時間計算 - 入力データサンプル: (5) [{…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:251 予定勤務時間計算期間 (安西 秀和): 2025/2/21 〜 2025/3/20 (2025-02-20 〜 2025-03-20)
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-03', inRange: true, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-04', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-04', inRange: true, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-05', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-05', inRange: true, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-06', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:334 予定フィルタリング統計: {スキップ件数: 19, 無効な日付: 0, 重複除去前の一致件数: 10, 最終対象件数: 10}
+SummaryCard.js:341 予定勤務集計対象データ (安西 秀和): (10) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:367 処理した予定勤務時間: (10) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:371 予定勤務時間合計 (安西 秀和): 75.5 時間 ( 4530 分)
+SummaryCard.js:224 予定勤務時間計算 - 入力データサンプル: (5) [{…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:251 予定勤務時間計算期間 (安西 秀和): 2025/2/21 〜 2025/3/20 (2025-02-20 〜 2025-03-20)
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-03', inRange: true, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-04', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-04', inRange: true, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-05', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-05', inRange: true, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-06', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:334 予定フィルタリング統計: {スキップ件数: 19, 無効な日付: 0, 重複除去前の一致件数: 10, 最終対象件数: 10}
+SummaryCard.js:341 予定勤務集計対象データ (安西 秀和): (10) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:367 処理した予定勤務時間: (10) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:371 予定勤務時間合計 (安西 秀和): 75.5 時間 ( 4530 分)
+SummaryCard.js:46 実勤務時間計算 - 入力データサンプル: (5) [{…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:55 計算対象ユーザー: 安西 秀和
+SummaryCard.js:75 実勤務時間計算期間 (安西 秀和): 2025/2/21 〜 2025/3/20 (2025-02-20 〜 2025-03-20)
+SummaryCard.js:91 フィルタリング前の総データ数: 44
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-03
+SummaryCard.js:140 条件判定: {date: '2025-03-03', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-04
+SummaryCard.js:140 条件判定: {date: '2025-03-04', inRange: true, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-04
+SummaryCard.js:140 条件判定: {date: '2025-03-04', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-05
+SummaryCard.js:140 条件判定: {date: '2025-03-05', inRange: true, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-05
+SummaryCard.js:140 条件判定: {date: '2025-03-05', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:166 フィルタリング統計: {スキップ件数: 19, 無効な日付: 0, 重複除去前の一致件数: 11, 最終対象件数: 11}
+SummaryCard.js:173 実勤務集計対象データ (安西 秀和): (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:199 処理した実勤務時間: (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:203 実勤務時間合計 (安西 秀和): 83.0 時間 ( 4980 分)
+SummaryCard.js:412 SummaryCard: 計算結果 {実勤務時間: '83.0', 予定勤務時間: '75.5', 標準時間: '160.0', 進捗率: '100%'}
+SummaryCard.js:408 SummaryCard: 計算開始 - ユーザー: 安西 秀和
+SummaryCard.js:46 実勤務時間計算 - 入力データサンプル: (5) [{…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:55 計算対象ユーザー: 安西 秀和
+SummaryCard.js:75 実勤務時間計算期間 (安西 秀和): 2025/2/21 〜 2025/3/20 (2025-02-20 〜 2025-03-20)
+SummaryCard.js:91 フィルタリング前の総データ数: 44
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-03
+SummaryCard.js:140 条件判定: {date: '2025-03-03', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-04
+SummaryCard.js:140 条件判定: {date: '2025-03-04', inRange: true, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-04
+SummaryCard.js:140 条件判定: {date: '2025-03-04', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-05
+SummaryCard.js:140 条件判定: {date: '2025-03-05', inRange: true, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-05
+SummaryCard.js:140 条件判定: {date: '2025-03-05', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:166 フィルタリング統計: {スキップ件数: 19, 無効な日付: 0, 重複除去前の一致件数: 11, 最終対象件数: 11}
+SummaryCard.js:173 実勤務集計対象データ (安西 秀和): (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:199 処理した実勤務時間: (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:203 実勤務時間合計 (安西 秀和): 83.0 時間 ( 4980 分)
+SummaryCard.js:224 予定勤務時間計算 - 入力データサンプル: (5) [{…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:251 予定勤務時間計算期間 (安西 秀和): 2025/2/21 〜 2025/3/20 (2025-02-20 〜 2025-03-20)
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-03', inRange: true, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-04', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-04', inRange: true, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-05', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-05', inRange: true, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-06', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:334 予定フィルタリング統計: {スキップ件数: 19, 無効な日付: 0, 重複除去前の一致件数: 10, 最終対象件数: 10}
+SummaryCard.js:341 予定勤務集計対象データ (安西 秀和): (10) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:367 処理した予定勤務時間: (10) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:371 予定勤務時間合計 (安西 秀和): 75.5 時間 ( 4530 分)
+SummaryCard.js:224 予定勤務時間計算 - 入力データサンプル: (5) [{…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:251 予定勤務時間計算期間 (安西 秀和): 2025/2/21 〜 2025/3/20 (2025-02-20 〜 2025-03-20)
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-03', inRange: true, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-04', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-04', inRange: true, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-05', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-05', inRange: true, matchUser: true, isPlanned: false, hasHours: true, …}
+SummaryCard.js:308 予定・条件判定: {date: '2025-03-06', inRange: true, matchUser: true, isPlanned: true, hasHours: true, …}
+SummaryCard.js:334 予定フィルタリング統計: {スキップ件数: 19, 無効な日付: 0, 重複除去前の一致件数: 10, 最終対象件数: 10}
+SummaryCard.js:341 予定勤務集計対象データ (安西 秀和): (10) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:367 処理した予定勤務時間: (10) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:371 予定勤務時間合計 (安西 秀和): 75.5 時間 ( 4530 分)
+SummaryCard.js:46 実勤務時間計算 - 入力データサンプル: (5) [{…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:55 計算対象ユーザー: 安西 秀和
+SummaryCard.js:75 実勤務時間計算期間 (安西 秀和): 2025/2/21 〜 2025/3/20 (2025-02-20 〜 2025-03-20)
+SummaryCard.js:91 フィルタリング前の総データ数: 44
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-03
+SummaryCard.js:140 条件判定: {date: '2025-03-03', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-04
+SummaryCard.js:140 条件判定: {date: '2025-03-04', inRange: true, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-04
+SummaryCard.js:140 条件判定: {date: '2025-03-04', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-05
+SummaryCard.js:140 条件判定: {date: '2025-03-05', inRange: true, matchUser: true, isClock: false, hasHours: true, …}
+SummaryCard.js:110 日付文字列フォーマット: 2025-03-05
+SummaryCard.js:140 条件判定: {date: '2025-03-05', inRange: true, matchUser: true, isClock: true, hasHours: true, …}
+SummaryCard.js:166 フィルタリング統計: {スキップ件数: 19, 無効な日付: 0, 重複除去前の一致件数: 11, 最終対象件数: 11}
+SummaryCard.js:173 実勤務集計対象データ (安西 秀和): (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:199 処理した実勤務時間: (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+SummaryCard.js:203 実勤務時間合計 (安西 秀和): 83.0 時間 ( 4980 分)
+SummaryCard.js:412 SummaryCard: 計算結果 {実勤務時間: '83.0', 予定勤務時間: '75.5', 標準時間: '160.0', 進捗率: '100%'}

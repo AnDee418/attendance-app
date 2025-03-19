@@ -58,21 +58,53 @@ const calculatePlannedWorkingHours = (schedules, currentDate, userName) => {
   return totalHours;
 };
 
-// 時間文字列を数値に変換する関数を追加
+// 時間文字列を数値に変換する関数を修正
 const parseJapaneseTimeString = (timeStr) => {
-  if (!timeStr || typeof timeStr !== 'string') return 0;
+  if (!timeStr || typeof timeStr !== 'string') {
+    console.log('無効な時間文字列:', timeStr);
+    return 0;
+  }
   
-  // "7時間30分" のような形式から数値を抽出
-  const hoursMatch = timeStr.match(/(\d+)時間/);
-  const minutesMatch = timeStr.match(/(\d+)分/);
-  
-  const hours = hoursMatch ? parseInt(hoursMatch[1], 10) : 0;
-  const minutes = minutesMatch ? parseInt(minutesMatch[1], 10) : 0;
-  
-  // 分を時間に変換する際の丸め誤差を防ぐため、小数点以下10桁まで保持
-  const totalHours = Number((hours + (minutes / 60)).toFixed(10));
-  
-  return totalHours;
+  try {
+    // "8時間30分" のような形式から数値を抽出
+    const hoursMatch = timeStr.match(/(\d+)時間/);
+    const minutesMatch = timeStr.match(/(\d+)分/);
+    
+    const hours = hoursMatch ? parseInt(hoursMatch[1], 10) : 0;
+    const minutes = minutesMatch ? parseInt(minutesMatch[1], 10) : 0;
+    
+    // "N.M" のような小数点形式も処理
+    if (!hoursMatch && !minutesMatch) {
+      const floatMatch = timeStr.match(/(\d+(?:\.\d+)?)/);
+      if (floatMatch) {
+        const floatHours = parseFloat(floatMatch[1]);
+        
+        // デバッグ用：変換過程の表示
+        console.log('小数点形式の時間変換:', {
+          original: timeStr,
+          parsedValue: floatHours
+        });
+        
+        return floatHours;
+      }
+    }
+    
+    // 時間と分を別々に保持して計算
+    const totalHours = hours + (minutes / 60);
+    
+    // デバッグ用：変換過程の表示
+    console.log('時間文字列の変換:', {
+      original: timeStr,
+      hours: hours,
+      minutes: minutes,
+      totalHours: totalHours
+    });
+    
+    return totalHours;
+  } catch (e) {
+    console.error('時間文字列の解析中にエラー:', e, timeStr);
+    return 0;
+  }
 };
 
 // calculateActualWorkingHoursForClock 関数内の該当部分を修正
@@ -85,29 +117,86 @@ const calculateActualWorkingHoursForClock = (schedules, currentDate, userName) =
   const startDate = new Date(selectedYear, selectedMonth - 1, 21, 0, 0, 0);
   const endDate = new Date(selectedYear, selectedMonth, 20, 23, 59, 59);
 
+  // デバッグ用：計算期間の表示
+  console.log('計算期間:', {
+    startDate: startDate.toLocaleDateString(),
+    endDate: endDate.toLocaleDateString(),
+    userName: userName
+  });
+
+  // デバッグ用：全スケジュールデータの表示
+  console.log('全スケジュールデータ:', schedules);
+
   // 対象データのフィルタリング
   const targetSchedules = schedules.filter(schedule => {
-    if (!Array.isArray(schedule)) return false;
+    // データ構造のチェック
+    if (!schedule || !Array.isArray(schedule)) {
+      console.log('無効なスケジュールデータ:', schedule);
+      return false;
+    }
     
-    const scheduleDate = new Date(schedule[0]);
-    if (isNaN(scheduleDate.getTime())) return false;
+    if (!schedule[0] || !schedule[1] || !schedule[5] || !schedule[6]) {
+      console.log('不完全なスケジュールデータ:', schedule);
+      return false;
+    }
+    
+    try {
+      const scheduleDate = new Date(schedule[0]);
+      if (isNaN(scheduleDate.getTime())) {
+        console.log('無効な日付データ:', schedule[0]);
+        return false;
+      }
 
-    const isInDateRange = scheduleDate >= startDate && scheduleDate <= endDate;
-    const isMatchingUser = schedule[1] === userName;
-    const isClockbookRecord = schedule[5] === '出勤簿';
-    const hasWorkingHours = schedule[6] && typeof schedule[6] === 'string';
+      const isInDateRange = scheduleDate >= startDate && scheduleDate <= endDate;
+      const isMatchingUser = schedule[1] === userName;
+      const isClockbookRecord = schedule[5] === '出勤簿';
+      const hasWorkingHours = schedule[6] && typeof schedule[6] === 'string';
 
-    return isInDateRange && isMatchingUser && isClockbookRecord && hasWorkingHours;
+      if (isMatchingUser && isClockbookRecord) {
+        console.log('対象データ候補:', {
+          date: scheduleDate.toLocaleDateString(),
+          inRange: isInDateRange,
+          hours: schedule[6]
+        });
+      }
+
+      return isInDateRange && isMatchingUser && isClockbookRecord && hasWorkingHours;
+    } catch (e) {
+      console.error('フィルタリング中にエラー:', e, schedule);
+      return false;
+    }
   });
+
+  // デバッグ用：フィルタリング後のデータ表示
+  console.log('フィルタリング後のデータ:', targetSchedules.map(schedule => ({
+    date: schedule[0],
+    userName: schedule[1],
+    recordType: schedule[5],
+    workingHours: schedule[6]
+  })));
 
   // フィルタリングされたデータの合計時間を計算
   targetSchedules.forEach(schedule => {
-    const workHours = parseJapaneseTimeString(schedule[6]);
-    totalMinutes += Math.round(workHours * 60);  // 時間を分に変換して加算
+    try {
+      const workHours = parseJapaneseTimeString(schedule[6]);
+      console.log(`時間加算: ${schedule[0]} - ${schedule[6]} -> ${workHours}時間 (${Math.round(workHours * 60)}分)`);
+      totalMinutes += Math.round(workHours * 60);  // 時間を分に変換して加算
+    } catch (e) {
+      console.error('時間計算中にエラー:', e, schedule);
+    }
   });
 
   // 最後に合計分を時間に戻す
   const totalHours = totalMinutes / 60;
+  
+  // デバッグ用：計算結果の表示
+  console.log('計算結果:', {
+    totalMinutes: totalMinutes,
+    totalHours: totalHours,
+    displayHours: Math.floor(totalHours),
+    displayMinutes: Math.round(totalHours * 60) % 60
+  });
+
   return totalHours;  // 丸めは表示時に行うので、ここでは行わない
 };
 
@@ -195,6 +284,27 @@ export default function HomePage() {
 
   // ユーザー情報のステートを追加
   const [userAccountType, setUserAccountType] = useState('');
+
+  // 勤務実績報告用のステートを追加
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportAttendance, setReportAttendance] = useState({
+    date: new Date().toLocaleDateString('en-CA'),
+    employeeName: '',
+    startTime: '',
+    endTime: '',
+    workType: '出勤',
+    recordType: '出勤簿',
+  });
+  const [reportBreakRecords, setReportBreakRecords] = useState([{ breakStart: '', breakEnd: '', recordType: '出勤簿' }]);
+  const [reportWorkDetails, setReportWorkDetails] = useState([{ 
+    workTitle: '', 
+    workStart: '', 
+    workEnd: '', 
+    detail: '', 
+    workCategory: '業務',
+    recordType: '出勤簿' 
+  }]);
+  const [reportMessage, setReportMessage] = useState('');
 
   // APIからユーザー情報を取得して、アカウントタイプを設定
   useEffect(() => {
@@ -480,13 +590,133 @@ export default function HomePage() {
   const userSchedules = userName ? schedules.filter(s => Array.isArray(s) && s[1] === userName) : [];
   
   // 実働時間と予定時間を計算（デフォルト値を0に設定）
-  const actualHours = calculateActualWorkingHoursForClock(userSchedules, currentDate, userName) || 0;
-  const plannedHours = calculatePlannedWorkingHours(userSchedules, currentDate, userName) || 0;
+  const [actualHours, setActualHours] = useState(0);
+  const [plannedHours, setPlannedHours] = useState(0);
   
   // 基準時間を取得（デフォルト値を160に設定）
   const computedStandardHours = settings ? getStandardWorkingHours(currentDate, settings) : 160;
   const plannedCounts = calculateWorkTypeCounts(userSchedules, '予定');
   const clockbookCounts = calculateWorkTypeCounts(userSchedules, '出勤簿');
+
+  // 勤務時間の計算を単一の useEffect で行う（重複計算防止）
+  useEffect(() => {
+    if (!userName || !schedules || schedules.length === 0) return;
+
+    console.log('勤務時間計算開始 - データ数:', schedules.length);
+    
+    // 日付範囲の計算
+    const today = new Date();
+    const selectedMonth = today.getMonth();
+    const selectedYear = today.getFullYear();
+    const startDate = new Date(selectedYear, selectedMonth - 1, 21, 0, 0, 0);
+    const endDate = new Date(selectedYear, selectedMonth, 20, 23, 59, 59);
+    
+    console.log('計算期間:', {
+      startDate: startDate.toLocaleDateString(),
+      endDate: endDate.toLocaleDateString()
+    });
+
+    // 初期化
+    let actualMinutes = 0;
+    let plannedMinutes = 0;
+    
+    // 重複排除のための日付管理オブジェクト
+    const processedClockDates = {};
+    const processedPlanDates = {};
+    
+    // フィルタリング結果を格納する配列
+    const filteredClockData = [];
+    const filteredPlanData = [];
+    
+    // データのフィルタリング（重複を排除）
+    schedules.forEach(schedule => {
+      if (!Array.isArray(schedule) || schedule.length < 7) return;
+      if (!schedule[0] || !schedule[1] || !schedule[5] || !schedule[6]) return;
+      
+      try {
+        const scheduleDate = new Date(schedule[0]);
+        if (isNaN(scheduleDate.getTime())) return;
+        
+        const dateKey = getLocalDateString(scheduleDate);
+        const isInDateRange = scheduleDate >= startDate && scheduleDate <= endDate;
+        const isMatchingUser = schedule[1] === userName;
+        const recordType = schedule[5];
+        const hasWorkingHours = schedule[6] && typeof schedule[6] === 'string';
+        
+        if (!isInDateRange || !isMatchingUser || !hasWorkingHours) return;
+        
+        // 出勤簿データの場合、日付ベースで重複を排除
+        if (recordType === '出勤簿') {
+          if (!processedClockDates[dateKey]) {
+            processedClockDates[dateKey] = true;
+            filteredClockData.push(schedule);
+          } else {
+            console.log(`重複データをスキップ - 出勤簿: ${dateKey}`);
+          }
+        } 
+        // 予定データの場合、日付ベースで重複を排除
+        else if (recordType === '予定') {
+          if (!processedPlanDates[dateKey]) {
+            processedPlanDates[dateKey] = true;
+            filteredPlanData.push(schedule);
+          } else {
+            console.log(`重複データをスキップ - 予定: ${dateKey}`);
+          }
+        }
+      } catch (error) {
+        console.error('データフィルタリングエラー:', error);
+      }
+    });
+    
+    console.log('フィルタリング結果（重複排除後）:', {
+      '出勤簿データ数': filteredClockData.length,
+      '予定データ数': filteredPlanData.length
+    });
+    
+    // 詳細情報を出力（確認用）
+    console.log('処理対象の出勤簿データ:', filteredClockData.map(s => ({
+      date: s[0],
+      hours: s[6]
+    })));
+    
+    // 出勤簿データの計算
+    filteredClockData.forEach(schedule => {
+      try {
+        const workHours = parseJapaneseTimeString(schedule[6]);
+        console.log(`出勤簿: ${schedule[0]} - ${schedule[6]} -> ${workHours}時間`);
+        actualMinutes += Math.round(workHours * 60);
+      } catch (error) {
+        console.error('出勤簿データ計算エラー:', error);
+      }
+    });
+    
+    // 予定データの計算
+    filteredPlanData.forEach(schedule => {
+      try {
+        const workHours = parseJapaneseTimeString(schedule[6]);
+        console.log(`予定: ${schedule[0]} - ${schedule[6]} -> ${workHours}時間`);
+        plannedMinutes += Math.round(workHours * 60);
+      } catch (error) {
+        console.error('予定データ計算エラー:', error);
+      }
+    });
+    
+    // 分から時間に変換
+    const calculatedActualHours = actualMinutes / 60;
+    const calculatedPlannedHours = plannedMinutes / 60;
+    
+    console.log('最終計算結果:', {
+      actualMinutes,
+      plannedMinutes,
+      calculatedActualHours,
+      calculatedPlannedHours
+    });
+    
+    // 状態を更新
+    setActualHours(calculatedActualHours);
+    setPlannedHours(calculatedPlannedHours);
+    
+  }, [userName, schedules]);
 
   // 編集用の関数を追加
   const handleEditAttendanceChange = (e) => {
@@ -660,6 +890,180 @@ export default function HomePage() {
     );
     
     setShowEditModal(true);
+  };
+
+  // 勤務実績用の関数を追加
+  const handleReportAttendanceChange = (e) => {
+    setReportAttendance({ ...reportAttendance, [e.target.name]: e.target.value });
+  };
+
+  const handleReportBreakChange = (index, e) => {
+    const newBreakRecords = [...reportBreakRecords];
+    newBreakRecords[index][e.target.name] = e.target.value;
+    setReportBreakRecords(newBreakRecords);
+  };
+
+  const handleReportWorkDetailChange = (index, e) => {
+    const newWorkDetails = [...reportWorkDetails];
+    newWorkDetails[index][e.target.name] = e.target.value;
+    setReportWorkDetails(newWorkDetails);
+  };
+
+  const addReportBreakRecord = () => {
+    setReportBreakRecords([...reportBreakRecords, { breakStart: '', breakEnd: '', recordType: '出勤簿' }]);
+  };
+
+  const addReportWorkDetail = () => {
+    setReportWorkDetails([...reportWorkDetails, { 
+      workTitle: '', 
+      workStart: '', 
+      workEnd: '', 
+      detail: '', 
+      workCategory: '業務',
+      recordType: '出勤簿' 
+    }]);
+  };
+
+  const removeReportBreakRecord = (index) => {
+    if (reportBreakRecords.length > 1) {
+      setReportBreakRecords(reportBreakRecords.filter((_, i) => i !== index));
+    }
+  };
+
+  const removeReportWorkDetail = (index) => {
+    if (reportWorkDetails.length > 1) {
+      setReportWorkDetails(reportWorkDetails.filter((_, i) => i !== index));
+    }
+  };
+
+  const handleReportSubmit = async (e) => {
+    e.preventDefault();
+    setReportMessage('');
+
+    try {
+      // まず既存のデータを削除
+      const today = getLocalDateString(new Date());
+      const deleteParams = new URLSearchParams({
+        date: today,
+        employeeName: userName,
+        recordType: '出勤簿'
+      });
+
+      // 勤務記録の削除
+      await fetch(`/api/attendance?${deleteParams}`, { method: 'DELETE' });
+      
+      // 休憩記録の削除
+      await fetch(`/api/break?${deleteParams}`, { method: 'DELETE' });
+      
+      // 業務詳細の削除
+      await fetch(`/api/workdetail?${deleteParams}`, { method: 'DELETE' });
+
+      // 新しいデータを登録
+      // 勤務記録送信
+      const resAttendance = await fetch('/api/attendance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(reportAttendance),
+      });
+      if (!resAttendance.ok) throw new Error('勤務記録送信エラー');
+
+      // 休憩記録送信
+      for (let record of reportBreakRecords) {
+        if (record.breakStart || record.breakEnd) {
+          const resBreak = await fetch('/api/break', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              date: reportAttendance.date,
+              employeeName: reportAttendance.employeeName,
+              breakStart: record.breakStart,
+              breakEnd: record.breakEnd,
+              recordType: record.recordType,
+            }),
+          });
+          if (!resBreak.ok) throw new Error('休憩記録送信エラー');
+        }
+      }
+
+      // 業務詳細送信
+      for (let detail of reportWorkDetails) {
+        if (detail.workTitle || detail.workStart || detail.workEnd || detail.detail) {
+          const resWork = await fetch('/api/workdetail', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              date: reportAttendance.date,
+              employeeName: reportAttendance.employeeName,
+              workTitle: detail.workTitle,
+              workStart: detail.workStart,
+              workEnd: detail.workEnd,
+              detail: detail.detail,
+              workCategory: detail.workCategory,
+              recordType: detail.recordType,
+            }),
+          });
+          if (!resWork.ok) throw new Error('業務詳細送信エラー');
+        }
+      }
+
+      setReportMessage('勤務実績が正常に送信されました！');
+      // 3秒後にモーダルを閉じた後、Next.js のルーターを利用してページをリロード
+      setTimeout(() => {
+        setShowReportModal(false);
+        router.reload();
+      }, 3000);
+
+    } catch (error) {
+      console.error('Error submitting work report:', error);
+      setReportMessage(error.message || '勤務実績の送信に失敗しました');
+    }
+  };
+
+  // 勤務実績モーダルを開く際のデータ設定
+  const openReportModal = () => {
+    const today = getLocalDateString(new Date());
+    setReportAttendance({
+      date: today,
+      employeeName: userName,
+      startTime: todayScheduledTime.start || '',
+      endTime: todayScheduledTime.end || '',
+      workType: '出勤',
+      recordType: '出勤簿',
+    });
+    
+    // 休憩時間の設定
+    setReportBreakRecords(
+      todayBreak.length > 0 
+        ? todayBreak.map(br => ({
+            breakStart: br.breakStart,
+            breakEnd: br.breakEnd,
+            recordType: '出勤簿'
+          }))
+        : [{ breakStart: '', breakEnd: '', recordType: '出勤簿' }]
+    );
+    
+    // 業務詳細の設定 - 予定データをもとに勤務実績用のデータを生成
+    setReportWorkDetails(
+      todayWorkDetail.length > 0
+        ? todayWorkDetail.map(detail => ({
+            workTitle: detail.workTitle,
+            workStart: detail.workStart,
+            workEnd: detail.workEnd,
+            detail: detail.detail,
+            workCategory: detail.workCategory || '業務',
+            recordType: '出勤簿'
+          }))
+        : [{ 
+            workTitle: '', 
+            workStart: '', 
+            workEnd: '', 
+            detail: '', 
+            workCategory: '業務',
+            recordType: '出勤簿' 
+          }]
+    );
+    
+    setShowReportModal(true);
   };
 
   return (
@@ -854,35 +1258,59 @@ export default function HomePage() {
 
           {/* 今日の業務詳細セクション */}
           <section className="bg-white rounded-2xl shadow-lg p-3 mb-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-2">
+              <div className="flex items-center gap-2">
                 <h2 className="text-base font-semibold text-gray-600">今日の業務</h2>
                 <div className="text-xs bg-blue-50 text-blue-600 px-2.5 py-0.5 rounded-full">
                   {getLocalDateString(new Date())}
                 </div>
               </div>
-              <button
-                onClick={openEditModal}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium 
-                  text-blue-700 bg-blue-50 hover:bg-blue-100 
-                  active:bg-blue-100 active:scale-95 rounded-lg transition-all duration-200 
-                  -mr-1 group"
-              >
-                <svg 
-                  className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
-                >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth="2" 
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" 
-                  />
-                </svg>
-                予定を修正
-              </button>
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <button
+                  onClick={openReportModal}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium 
+                    text-green-700 bg-green-50 hover:bg-green-100 
+                    active:bg-green-100 active:scale-95 rounded-lg transition-all duration-200 
+                    w-full sm:w-auto group"
+                  >
+                  <svg 
+                    className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      strokeWidth="2" 
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" 
+                    />
+                  </svg>
+                  勤務実績を報告
+                </button>
+                <button
+                  onClick={openEditModal}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium 
+                    text-blue-700 bg-blue-50 hover:bg-blue-100 
+                    active:bg-blue-100 active:scale-95 rounded-lg transition-all duration-200 
+                    w-full sm:w-auto group"
+                  >
+                  <svg 
+                    className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      strokeWidth="2" 
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" 
+                    />
+                  </svg>
+                  予定を修正
+                </button>
+              </div>
             </div>
             
             {/* 勤務時間カード */}
@@ -1109,122 +1537,260 @@ export default function HomePage() {
         </>
       )}
       {showEditModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-3xl overflow-y-auto max-h-full">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-3xl font-semibold">{editAttendance.date} の予定修正</h2>
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50 p-0 sm:p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full h-full sm:h-auto sm:max-w-3xl overflow-y-auto sm:max-h-[90vh]">
+            <div className="sticky top-0 bg-white z-10 flex justify-between items-center p-4 border-b">
+              <h2 className="text-xl sm:text-2xl font-semibold">{editAttendance.date} の予定修正</h2>
               <button 
                 onClick={() => setShowEditModal(false)} 
-                className="text-gray-600 hover:text-gray-800 text-3xl"
+                className="text-gray-600 hover:text-gray-800 text-3xl p-2"
               >
                 &times;
               </button>
             </div>
-            <form onSubmit={handleEditSubmit} className="space-y-6">
-              <AttendanceForm 
-                attendance={editAttendance}
-                breakRecords={editBreakRecords}
-                onAttendanceChange={handleEditAttendanceChange}
-                onBreakChange={handleEditBreakChange}
-                onAddBreak={addEditBreakRecord}
-                onRemoveBreak={removeEditBreakRecord}
-              />
+            <div className="p-4">
+              <form onSubmit={handleEditSubmit} className="space-y-6">
+                <AttendanceForm 
+                  attendance={editAttendance}
+                  breakRecords={editBreakRecords}
+                  onAttendanceChange={handleEditAttendanceChange}
+                  onBreakChange={handleEditBreakChange}
+                  onAddBreak={addEditBreakRecord}
+                  onRemoveBreak={removeEditBreakRecord}
+                />
 
-              {/* 業務詳細フォーム */}
-              <section className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="text-2xl font-semibold mb-2">業務詳細</h3>
-                {editWorkDetails.map((detail, index) => (
-                  <div key={index} className="mb-4 border-b border-gray-200 pb-2">
-                    <div className="flex flex-col sm:flex-row sm:space-x-4 mb-2">
-                      <div className="flex-1">
-                        <label className="block mb-1">種別:</label>
-                        <select
-                          name="workCategory"
-                          value={detail.workCategory}
+                {/* 業務詳細フォーム */}
+                <section className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="text-xl font-semibold mb-3">業務詳細</h3>
+                  {editWorkDetails.map((detail, index) => (
+                    <div key={index} className="mb-5 border-b border-gray-200 pb-4">
+                      <div className="flex flex-col sm:flex-row sm:space-x-4 mb-3">
+                        <div className="flex-1 mb-3 sm:mb-0">
+                          <label className="block mb-2 font-medium">種別:</label>
+                          <select
+                            name="workCategory"
+                            value={detail.workCategory}
+                            onChange={(e) => handleEditWorkDetailChange(index, e)}
+                            className="w-full p-3 border rounded-lg text-base"
+                          >
+                            <option value="業務">業務</option>
+                            <option value="販売会">販売会</option>
+                            <option value="外出">外出</option>
+                            <option value="測定会">測定会</option>
+                            <option value="ミーティング">ミーティング</option>
+                          </select>
+                        </div>
+                        <div className="flex-1">
+                          <label className="block mb-2 font-medium">業務タイトル:</label>
+                          <input 
+                            type="text" 
+                            name="workTitle" 
+                            placeholder="業務タイトル" 
+                            value={detail.workTitle} 
+                            onChange={(e) => handleEditWorkDetailChange(index, e)} 
+                            className="w-full p-3 border rounded-lg text-base" 
+                          />
+                        </div>
+                      </div>
+                      <div className="flex flex-col sm:flex-row sm:space-x-4 mb-3">
+                        <div className="flex-1 mb-3 sm:mb-0">
+                          <label className="block mb-2 font-medium">業務開始:</label>
+                          <input 
+                            type="time" 
+                            name="workStart" 
+                            value={detail.workStart} 
+                            onChange={(e) => handleEditWorkDetailChange(index, e)} 
+                            className="w-full p-3 border rounded-lg text-base" 
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label className="block mb-2 font-medium">業務終了:</label>
+                          <input 
+                            type="time" 
+                            name="workEnd" 
+                            value={detail.workEnd} 
+                            onChange={(e) => handleEditWorkDetailChange(index, e)} 
+                            className="w-full p-3 border rounded-lg text-base" 
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block mb-2 font-medium">詳細:</label>
+                        <textarea
+                          name="detail"
+                          placeholder="詳細を記入してください"
+                          value={detail.detail}
                           onChange={(e) => handleEditWorkDetailChange(index, e)}
-                          className="w-full p-2 border rounded"
+                          className="w-full p-3 border rounded-lg text-base h-28"
+                        />
+                      </div>
+                      {editWorkDetails.length > 1 && (
+                        <button 
+                          type="button" 
+                          onClick={() => removeEditWorkDetail(index)}
+                          className="mt-3 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition flex items-center justify-center gap-1"
                         >
-                          <option value="業務">業務</option>
-                          <option value="販売会">販売会</option>
-                          <option value="外出">外出</option>
-                          <option value="測定会">測定会</option>
-                          <option value="ミーティング">ミーティング</option>
-                        </select>
-                      </div>
-                      <div className="flex-1">
-                        <label className="block mb-1">業務タイトル:</label>
-                        <input 
-                          type="text" 
-                          name="workTitle" 
-                          placeholder="業務タイトル" 
-                          value={detail.workTitle} 
-                          onChange={(e) => handleEditWorkDetailChange(index, e)} 
-                          className="w-full p-2 border rounded" 
-                        />
-                      </div>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                          削除
+                        </button>
+                      )}
                     </div>
-                    <div className="flex flex-col sm:flex-row sm:space-x-4 mb-1">
-                      <div className="flex-1">
-                        <label className="block mb-1">業務開始:</label>
-                        <input 
-                          type="time" 
-                          name="workStart" 
-                          value={detail.workStart} 
-                          onChange={(e) => handleEditWorkDetailChange(index, e)} 
-                          className="w-full p-2 border rounded" 
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <label className="block mb-1">業務終了:</label>
-                        <input 
-                          type="time" 
-                          name="workEnd" 
-                          value={detail.workEnd} 
-                          onChange={(e) => handleEditWorkDetailChange(index, e)} 
-                          className="w-full p-2 border rounded" 
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block mb-1">詳細:</label>
-                      <textarea
-                        name="detail"
-                        placeholder="詳細を記入してください"
-                        value={detail.detail}
-                        onChange={(e) => handleEditWorkDetailChange(index, e)}
-                        className="w-full p-2 border rounded h-24"
-                      />
-                    </div>
-                    {editWorkDetails.length > 1 && (
-                      <button 
-                        type="button" 
-                        onClick={() => removeEditWorkDetail(index)}
-                        className="mt-2 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition"
-                      >
-                        削除
-                      </button>
-                    )}
-                  </div>
-                ))}
-                <button 
-                  type="button" 
-                  onClick={addEditWorkDetail} 
-                  className="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600 transition"
-                >
-                  業務詳細を追加
-                </button>
-              </section>
+                  ))}
+                  <button 
+                    type="button" 
+                    onClick={addEditWorkDetail} 
+                    className="w-full bg-green-500 text-white p-3 rounded-lg hover:bg-green-600 transition flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    業務詳細を追加
+                  </button>
+                </section>
 
+                <button 
+                  type="submit" 
+                  className="w-full bg-blue-600 text-white p-4 rounded-lg hover:bg-blue-700 transition text-base font-medium"
+                >
+                  更新
+                </button>
+              </form>
+              {editMessage && (
+                <p className="mt-4 text-center text-green-600 font-medium text-base">{editMessage}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* 勤務実績報告モーダル */}
+      {showReportModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50 p-0 sm:p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full h-full sm:h-auto sm:max-w-3xl overflow-y-auto sm:max-h-[90vh]">
+            <div className="sticky top-0 bg-white z-10 flex justify-between items-center p-4 border-b">
+              <h2 className="text-xl sm:text-2xl font-semibold">{reportAttendance.date} の勤務実績</h2>
               <button 
-                type="submit" 
-                className="w-full bg-blue-600 text-white p-3 rounded hover:bg-blue-700 transition"
+                onClick={() => setShowReportModal(false)} 
+                className="text-gray-600 hover:text-gray-800 text-3xl p-2"
               >
-                更新
+                &times;
               </button>
-            </form>
-            {editMessage && (
-              <p className="mt-4 text-center text-green-600">{editMessage}</p>
-            )}
+            </div>
+            <div className="p-4">
+              <form onSubmit={handleReportSubmit} className="space-y-6">
+                <AttendanceForm 
+                  attendance={reportAttendance}
+                  breakRecords={reportBreakRecords}
+                  onAttendanceChange={handleReportAttendanceChange}
+                  onBreakChange={handleReportBreakChange}
+                  onAddBreak={addReportBreakRecord}
+                  onRemoveBreak={removeReportBreakRecord}
+                />
+
+                {/* 業務詳細フォーム */}
+                <section className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="text-xl font-semibold mb-3">業務詳細</h3>
+                  {reportWorkDetails.map((detail, index) => (
+                    <div key={index} className="mb-5 border-b border-gray-200 pb-4">
+                      <div className="flex flex-col sm:flex-row sm:space-x-4 mb-3">
+                        <div className="flex-1 mb-3 sm:mb-0">
+                          <label className="block mb-2 font-medium">種別:</label>
+                          <select
+                            name="workCategory"
+                            value={detail.workCategory}
+                            onChange={(e) => handleReportWorkDetailChange(index, e)}
+                            className="w-full p-3 border rounded-lg text-base"
+                          >
+                            <option value="業務">業務</option>
+                            <option value="販売会">販売会</option>
+                            <option value="外出">外出</option>
+                            <option value="測定会">測定会</option>
+                            <option value="ミーティング">ミーティング</option>
+                          </select>
+                        </div>
+                        <div className="flex-1">
+                          <label className="block mb-2 font-medium">業務タイトル:</label>
+                          <input 
+                            type="text" 
+                            name="workTitle" 
+                            placeholder="業務タイトル" 
+                            value={detail.workTitle} 
+                            onChange={(e) => handleReportWorkDetailChange(index, e)} 
+                            className="w-full p-3 border rounded-lg text-base" 
+                          />
+                        </div>
+                      </div>
+                      <div className="flex flex-col sm:flex-row sm:space-x-4 mb-3">
+                        <div className="flex-1 mb-3 sm:mb-0">
+                          <label className="block mb-2 font-medium">業務開始:</label>
+                          <input 
+                            type="time" 
+                            name="workStart" 
+                            value={detail.workStart} 
+                            onChange={(e) => handleReportWorkDetailChange(index, e)} 
+                            className="w-full p-3 border rounded-lg text-base" 
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label className="block mb-2 font-medium">業務終了:</label>
+                          <input 
+                            type="time" 
+                            name="workEnd" 
+                            value={detail.workEnd} 
+                            onChange={(e) => handleReportWorkDetailChange(index, e)} 
+                            className="w-full p-3 border rounded-lg text-base" 
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block mb-2 font-medium">詳細:</label>
+                        <textarea
+                          name="detail"
+                          placeholder="詳細を記入してください"
+                          value={detail.detail}
+                          onChange={(e) => handleReportWorkDetailChange(index, e)}
+                          className="w-full p-3 border rounded-lg text-base h-28"
+                        />
+                      </div>
+                      {reportWorkDetails.length > 1 && (
+                        <button 
+                          type="button" 
+                          onClick={() => removeReportWorkDetail(index)}
+                          className="mt-3 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition flex items-center justify-center gap-1"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                          削除
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button 
+                    type="button" 
+                    onClick={addReportWorkDetail} 
+                    className="w-full bg-green-500 text-white p-3 rounded-lg hover:bg-green-600 transition flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    業務詳細を追加
+                  </button>
+                </section>
+
+                <button 
+                  type="submit" 
+                  className="w-full bg-green-600 text-white p-4 rounded-lg hover:bg-green-700 transition text-base font-medium"
+                >
+                  勤務実績を送信
+                </button>
+              </form>
+              {reportMessage && (
+                <p className="mt-4 text-center text-green-600 font-medium text-base">{reportMessage}</p>
+              )}
+            </div>
           </div>
         </div>
       )}

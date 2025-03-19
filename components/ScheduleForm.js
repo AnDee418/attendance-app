@@ -116,13 +116,13 @@ export default function ScheduleForm({
       '出勤',
       '在宅',
       '半休',
-      '有給休暇'
+      '有給休暇',
+      '公休'
     ];
     
     if (userAccountType !== '営業') {
       return [
         ...baseOptions,
-        '公休',
         '移動'
       ];
     } else {
@@ -145,6 +145,34 @@ export default function ScheduleForm({
 
   const handleAttendanceChange = (e) => {
     setAttendance({ ...attendance, [e.target.name]: e.target.value });
+  };
+
+  const handleWorkTypeChange = (e) => {
+    const newWorkType = e.target.value;
+    let newStartTime = attendance.startTime;
+    let newEndTime = attendance.endTime;
+    
+    // 休暇系の場合は時間をリセット
+    if (['公休', '有給休暇', '休暇'].includes(newWorkType)) {
+      newStartTime = '';
+      newEndTime = '';
+    }
+    
+    setAttendance(prev => ({
+      ...prev,
+      workType: newWorkType,
+      startTime: newStartTime,
+      endTime: newEndTime
+    }));
+    
+    // 勤務種別が「移動」の場合、すべての業務詳細の種別も「移動」に更新
+    if (newWorkType === '移動') {
+      const updatedWorkDetails = workDetails.map(detail => ({
+        ...detail,
+        workCategory: '移動' // カテゴリを移動に変更
+      }));
+      setWorkDetails(updatedWorkDetails);
+    }
   };
 
   const handleBreakChange = (index, e) => {
@@ -186,33 +214,6 @@ export default function ScheduleForm({
   const removeWorkDetail = (index) => {
     if (workDetails.length > 1) {
       setWorkDetails(workDetails.filter((_, i) => i !== index));
-    }
-  };
-
-  const handleWorkTypeChange = (e) => {
-    const newWorkType = e.target.value;
-    let newStartTime = attendance.startTime;
-    let newEndTime = attendance.endTime;
-    
-    if (['公休', '有給休暇', '休暇'].includes(newWorkType)) {
-      newStartTime = '00:00';
-      newEndTime = '00:00';
-    }
-    
-    setAttendance(prev => ({
-      ...prev,
-      workType: newWorkType,
-      startTime: newStartTime,
-      endTime: newEndTime
-    }));
-    
-    // 勤務種別が「移動」の場合、すべての業務詳細の種別も「移動」に更新
-    if (newWorkType === '移動') {
-      const updatedWorkDetails = workDetails.map(detail => ({
-        ...detail,
-        workCategory: '移動' // カテゴリを移動に変更
-      }));
-      setWorkDetails(updatedWorkDetails);
     }
   };
 
@@ -321,34 +322,16 @@ export default function ScheduleForm({
         ) : (
           <div className="overflow-y-auto p-4 flex-grow">
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* 業務アカウントの場合は勤務種別のみ表示 */}
-              {isGyomuAccount ? (
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="mb-4">
-                    <label className="block mb-1">勤務種別:</label>
-                    <select
-                      name="workType"
-                      value={attendance.workType}
-                      onChange={handleWorkTypeChange}
-                      className="w-full p-2 border rounded"
-                    >
-                      {getWorkTypeOptions().map(type => (
-                        <option key={type} value={type}>{type}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              ) : (
-                // 通常のアカウントの場合は全ての項目を表示
-                <AttendanceForm 
-                  attendance={attendance}
-                  breakRecords={breakRecords}
-                  onAttendanceChange={handleAttendanceChange}
-                  onBreakChange={handleBreakChange}
-                  onAddBreak={addBreakRecord}
-                  onRemoveBreak={removeBreakRecord}
-                />
-              )}
+              {/* すべてのアカウントでAttendanceFormを使用 */}
+              <AttendanceForm 
+                attendance={attendance}
+                breakRecords={breakRecords}
+                onAttendanceChange={handleAttendanceChange}
+                onBreakChange={handleBreakChange}
+                onAddBreak={addBreakRecord}
+                onRemoveBreak={removeBreakRecord}
+                onWorkTypeChange={handleWorkTypeChange}
+              />
 
               {/* 業務詳細フォーム - 全アカウントで表示 */}
               <section className="bg-gray-50 p-4 rounded-lg">
