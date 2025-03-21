@@ -529,21 +529,30 @@ export default function MySchedulePage() {
         throw new Error(attendanceJson.error || '勤怠記録の送信に失敗しました');
       }
 
-      // 休憩記録の送信
-      for (const breakRecord of breakRecords) {
-        if (breakRecord.breakStart && breakRecord.breakEnd) {
+      // 休憩記録の送信を一括処理に変更
+      if (breakRecords && breakRecords.length > 0) {
+        // 有効な休憩記録（開始・終了時間が入力されているもの）のみ送信
+        const validBreakRecords = breakRecords.filter(record => 
+          record.breakStart && record.breakEnd
+        );
+
+        if (validBreakRecords.length > 0) {
+          // 各休憩レコードに日付、社員名、タイプを追加
+          const preparedBreakRecords = validBreakRecords.map(record => ({
+            date: attendanceData.date,
+            employeeName: attendanceData.employeeName,
+            breakStart: record.breakStart,
+            breakEnd: record.breakEnd,
+            recordType: '予定'
+          }));
+
+          // 一括で送信
           const breakRes = await fetch('/api/break', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-              date: attendanceData.date,
-              employeeName: attendanceData.employeeName,
-              breakStart: breakRecord.breakStart,
-              breakEnd: breakRecord.breakEnd,
-              recordType: '予定'
-            }),
+            body: JSON.stringify(preparedBreakRecords),
           });
 
           const breakJson = await breakRes.json();
@@ -636,21 +645,30 @@ export default function MySchedulePage() {
         throw new Error(attendanceJson.error || '勤怠記録の送信に失敗しました');
       }
 
-      // 休憩記録の送信
-      for (const breakRecord of breakRecords) {
-        if (breakRecord.breakStart && breakRecord.breakEnd) {
+      // 休憩記録の送信を一括処理に変更
+      if (breakRecords && breakRecords.length > 0) {
+        // 有効な休憩記録（開始・終了時間が入力されているもの）のみ送信
+        const validBreakRecords = breakRecords.filter(record => 
+          record.breakStart && record.breakEnd
+        );
+
+        if (validBreakRecords.length > 0) {
+          // 各休憩レコードに日付、社員名、タイプを追加
+          const preparedBreakRecords = validBreakRecords.map(record => ({
+            date: attendanceData.date,
+            employeeName: attendanceData.employeeName,
+            breakStart: record.breakStart,
+            breakEnd: record.breakEnd,
+            recordType: '出勤簿'
+          }));
+
+          // 一括で送信
           const breakRes = await fetch('/api/break', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-              date: attendanceData.date,
-              employeeName: attendanceData.employeeName,
-              breakStart: breakRecord.breakStart,
-              breakEnd: breakRecord.breakEnd,
-              recordType: '出勤簿'
-            }),
+            body: JSON.stringify(preparedBreakRecords),
           });
 
           const breakJson = await breakRes.json();

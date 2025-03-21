@@ -193,6 +193,19 @@ export default function ScheduleForm({
     setBreakRecords([...breakRecords, { breakStart: '', breakEnd: '', recordType: '予定' }]);
   };
 
+  // 新しい休憩レコードを追加する関数（休憩データが渡されたケースにも対応）
+  const handleAddBreak = (breakData = null) => {
+    // breakDataがある場合はそれを使用、なければデフォルトの空レコード
+    const newBreakRecord = breakData || { breakStart: '', breakEnd: '', recordType: '予定' };
+    setBreakRecords([...breakRecords, newBreakRecord]);
+  };
+
+  const removeBreakRecord = (index) => {
+    if (breakRecords.length > 1) {
+      setBreakRecords(breakRecords.filter((_, i) => i !== index));
+    }
+  };
+
   const addWorkDetail = () => {
     setWorkDetails([
       ...workDetails,
@@ -205,12 +218,6 @@ export default function ScheduleForm({
         recordType: '予定' 
       }
     ]);
-  };
-
-  const removeBreakRecord = (index) => {
-    if (breakRecords.length > 1) {
-      setBreakRecords(breakRecords.filter((_, i) => i !== index));
-    }
   };
 
   const removeWorkDetail = (index) => {
@@ -337,7 +344,7 @@ export default function ScheduleForm({
                 breakRecords={breakRecords}
                 onAttendanceChange={handleAttendanceChange}
                 onBreakChange={handleBreakChange}
-                onAddBreak={addBreakRecord}
+                onAddBreak={handleAddBreak}
                 onRemoveBreak={removeBreakRecord}
                 onWorkTypeChange={handleWorkTypeChange}
                 isPartTimer={isPartTimer}

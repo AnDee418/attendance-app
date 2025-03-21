@@ -6,69 +6,79 @@ const SHEET_NAME = '休憩記録';
 
 export default async function handler(req, res) {
   if (req.method === 'POST') {
-    const { date, employeeName, breakStart, breakEnd, recordType } = req.body;
-    if (!date || !employeeName) {
-      return res.status(400).json({ error: '日付と社員名は必須です。' });
-    }
+    // データの取得方法を変更し、単一オブジェクトまたは配列のどちらにも対応
+    const data = req.body;
     
-    if (breakStart && breakEnd) {
-      try {
-        // 既存データの確認
-        const result = await sheets.spreadsheets.values.get({
-          spreadsheetId: SPREADSHEET_ID,
-          range: `'${SHEET_NAME}'!A:E`,
-        });
-        
-        const rows = result.data.values || [];
-        const existingRowIndex = rows.findIndex(row => 
-          row[0] === date && 
-          row[1] === employeeName && 
-          row[4] === recordType
-        );
-        
-        if (existingRowIndex !== -1) {
-          // 既存データを削除
-          const rowsToKeep = rows.filter((row, index) => 
-            !(row[0] === date && 
-              row[1] === employeeName && 
-              row[4] === recordType)
-          );
-          
-          // シートをクリアして新しいデータを書き込み
-          await sheets.spreadsheets.values.clear({
+    // 単一のレコードの場合
+    if (data.date && data.employeeName) {
+      const { date, employeeName, breakStart, breakEnd, recordType } = data;
+      
+      if (!date || !employeeName) {
+        return res.status(400).json({ error: '日付と社員名は必須です。' });
+      }
+      
+      if (breakStart && breakEnd) {
+        try {
+          // 新しいデータを追加
+          await sheets.spreadsheets.values.append({
             spreadsheetId: SPREADSHEET_ID,
             range: `'${SHEET_NAME}'!A:E`,
+            valueInputOption: 'RAW',
+            requestBody: {
+              values: [[date, employeeName, breakStart, breakEnd, recordType]],
+            },
           });
-          
-          // フィルタリングした行を書き戻し
-          if (rowsToKeep.length > 0) {
-            await sheets.spreadsheets.values.append({
-              spreadsheetId: SPREADSHEET_ID,
-              range: `'${SHEET_NAME}'!A:E`,
-              valueInputOption: 'RAW',
-              requestBody: {
-                values: rowsToKeep,
-              },
-            });
-          }
+          res.status(200).json({ message: '休憩記録を追加しました。' });
+        } catch (error) {
+          console.error(error);
+          res.status(500).json({ error: '休憩記録の更新に失敗しました。' });
         }
-
-        // 新しいデータを追加
+      } else {
+        res.status(200).json({ message: '休憩記録なし' });
+      }
+    } 
+    // 配列の場合（複数レコード）
+    else if (Array.isArray(data) && data.length > 0) {
+      try {
+        // 有効なレコードのみフィルタリング
+        const validRecords = data.filter(record => 
+          record.date && 
+          record.employeeName && 
+          record.breakStart && 
+          record.breakEnd && 
+          record.recordType
+        );
+        
+        if (validRecords.length === 0) {
+          return res.status(200).json({ message: '有効な休憩記録はありませんでした。' });
+        }
+        
+        // 有効なレコードをシートに追加する形式に変換
+        const values = validRecords.map(record => [
+          record.date,
+          record.employeeName,
+          record.breakStart,
+          record.breakEnd,
+          record.recordType
+        ]);
+        
+        // シートに一括追加
         await sheets.spreadsheets.values.append({
           spreadsheetId: SPREADSHEET_ID,
           range: `'${SHEET_NAME}'!A:E`,
           valueInputOption: 'RAW',
           requestBody: {
-            values: [[date, employeeName, breakStart, breakEnd, recordType]],
+            values: values,
           },
         });
-        res.status(200).json({ message: '休憩記録を更新しました。' });
+        
+        res.status(200).json({ message: `${values.length}件の休憩記録を追加しました。` });
       } catch (error) {
         console.error(error);
-        res.status(500).json({ error: '休憩記録の更新に失敗しました。' });
+        res.status(500).json({ error: '休憩記録の一括更新に失敗しました。' });
       }
     } else {
-      res.status(200).json({ message: '休憩記録なし' });
+      res.status(400).json({ error: 'データ形式が不正です。' });
     }
   } else if (req.method === 'GET') {
     try {

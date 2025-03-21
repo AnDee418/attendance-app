@@ -17,6 +17,31 @@ export default function AttendanceForm({
     recordType: attendance.recordType || '出勤簿'
   });
 
+  // 休憩時間入力後の自動追加処理を追加
+  useEffect(() => {
+    // 両方の時間が入力されている場合のみ自動追加
+    if (newBreak.breakStart && newBreak.breakEnd) {
+      const startDate = new Date(`2000/01/01 ${newBreak.breakStart}`);
+      const endDate = new Date(`2000/01/01 ${newBreak.breakEnd}`);
+      
+      // 有効な時間範囲（開始時間が終了時間より前）の場合のみ追加
+      if (startDate < endDate) {
+        onAddBreak({
+          breakStart: newBreak.breakStart, 
+          breakEnd: newBreak.breakEnd, 
+          recordType: attendance.recordType || '出勤簿'
+        });
+        
+        // 入力欄をリセット
+        setNewBreak({
+          breakStart: '',
+          breakEnd: '',
+          recordType: attendance.recordType || '出勤簿'
+        });
+      }
+    }
+  }, [newBreak.breakStart, newBreak.breakEnd]);
+
   // 削除確認用の機能
   const handleBreakDelete = (index) => {
     // モバイルフレンドリーな確認
@@ -189,6 +214,37 @@ export default function AttendanceForm({
     return isPartTimer 
       ? ['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'] // アルバイトは5分刻み
       : ['00', '15', '30', '45']; // 通常ユーザーは15分刻み
+  };
+
+  // 休憩時間の自動追加処理（useEffectではなく、時間選択後に直接実行）
+  const handleBreakTimeChange = (field, value) => {
+    const updatedBreak = { ...newBreak, [field]: value };
+    setNewBreak(updatedBreak);
+    
+    // 両方の時間が入力されているか確認
+    if (updatedBreak.breakStart && updatedBreak.breakEnd) {
+      const startDate = new Date(`2000/01/01 ${updatedBreak.breakStart}`);
+      const endDate = new Date(`2000/01/01 ${updatedBreak.breakEnd}`);
+      
+      // 有効な時間範囲（開始時間が終了時間より前）の場合のみ追加
+      if (startDate < endDate) {
+        // 少し遅延させて追加（UIの更新を確実にするため）
+        setTimeout(() => {
+          onAddBreak({
+            breakStart: updatedBreak.breakStart, 
+            breakEnd: updatedBreak.breakEnd, 
+            recordType: attendance.recordType || '出勤簿'
+          });
+          
+          // 入力欄をリセット
+          setNewBreak({
+            breakStart: '',
+            breakEnd: '',
+            recordType: attendance.recordType || '出勤簿'
+          });
+        }, 100);
+      }
+    }
   };
 
   return (
@@ -420,10 +476,8 @@ export default function AttendanceForm({
                     value={newBreak.breakStart.split(':')[0] || ''}
                     onChange={(e) => {
                       const hour = e.target.value;
-                      setNewBreak({
-                        ...newBreak,
-                        breakStart: formatTime(hour, newBreak.breakStart.split(':')[1] || '00')
-                      });
+                      const minute = newBreak.breakStart.split(':')[1] || '00';
+                      handleBreakTimeChange('breakStart', formatTime(hour, minute));
                     }}
                     className="w-full py-3 px-4 appearance-none bg-blue-50 border border-blue-200 rounded-lg text-center text-blue-700 font-medium text-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                   >
@@ -444,10 +498,8 @@ export default function AttendanceForm({
                     value={newBreak.breakStart.split(':')[1] || ''}
                     onChange={(e) => {
                       const minute = e.target.value;
-                      setNewBreak({
-                        ...newBreak,
-                        breakStart: formatTime(newBreak.breakStart.split(':')[0] || '12', minute)
-                      });
+                      const hour = newBreak.breakStart.split(':')[0] || '12';
+                      handleBreakTimeChange('breakStart', formatTime(hour, minute));
                     }}
                     className="w-full py-3 px-4 appearance-none bg-blue-50 border border-blue-200 rounded-lg text-center text-blue-700 font-medium text-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                   >
@@ -475,10 +527,8 @@ export default function AttendanceForm({
                     value={newBreak.breakEnd.split(':')[0] || ''}
                     onChange={(e) => {
                       const hour = e.target.value;
-                      setNewBreak({
-                        ...newBreak,
-                        breakEnd: formatTime(hour, newBreak.breakEnd.split(':')[1] || '00')
-                      });
+                      const minute = newBreak.breakEnd.split(':')[1] || '00';
+                      handleBreakTimeChange('breakEnd', formatTime(hour, minute));
                     }}
                     className="w-full py-3 px-4 appearance-none bg-blue-50 border border-blue-200 rounded-lg text-center text-blue-700 font-medium text-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                   >
@@ -499,10 +549,8 @@ export default function AttendanceForm({
                     value={newBreak.breakEnd.split(':')[1] || ''}
                     onChange={(e) => {
                       const minute = e.target.value;
-                      setNewBreak({
-                        ...newBreak,
-                        breakEnd: formatTime(newBreak.breakEnd.split(':')[0] || '13', minute)
-                      });
+                      const hour = newBreak.breakEnd.split(':')[0] || '13';
+                      handleBreakTimeChange('breakEnd', formatTime(hour, minute));
                     }}
                     className="w-full py-3 px-4 appearance-none bg-blue-50 border border-blue-200 rounded-lg text-center text-blue-700 font-medium text-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                   >
@@ -535,42 +583,13 @@ export default function AttendanceForm({
               </div>
             )}
 
-            <button 
-              type="button" 
-              onClick={() => {
-                // 有効な休憩時間のみ追加
-                if (newBreak.breakStart && newBreak.breakEnd) {
-                  onAddBreak({
-                    breakStart: newBreak.breakStart, 
-                    breakEnd: newBreak.breakEnd, 
-                    recordType: attendance.recordType || '出勤簿'
-                  });
-                  setNewBreak({
-                    breakStart: '',
-                    breakEnd: '',
-                    recordType: attendance.recordType || '出勤簿'
-                  });
-                }
-              }} 
-              disabled={!newBreak.breakStart || !newBreak.breakEnd}
-              className={`mt-2 w-full py-4 px-4 rounded-lg flex items-center justify-center space-x-2 transition text-base font-medium
-                ${newBreak.breakStart && newBreak.breakEnd 
-                  ? 'bg-blue-500 text-white hover:bg-blue-600 active:bg-blue-700 active:scale-[0.98] shadow-sm' 
-                  : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-              </svg>
-              <span>休憩を追加</span>
-            </button>
-
             {/* 入力方法ガイド - スマホユーザー向け */}
             <div className="mt-3 text-xs text-gray-500 bg-gray-50 rounded-lg p-2 border border-gray-200">
               <p className="flex items-start">
                 <svg className="w-4 h-4 mr-1 text-gray-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span>休憩時間の削除は各休憩時間の右側にある×ボタンをタップしてください。</span>
+                <span>休憩開始と終了時間を両方入力すると自動的に追加されます。削除は各休憩時間の右側にある×ボタンをタップしてください。</span>
               </p>
             </div>
           </div>
