@@ -6,7 +6,34 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   ClockIcon,
+  CalendarIcon,
 } from '@heroicons/react/24/outline';
+
+// 日付に曜日を追加するヘルパー関数
+const formatDateWithDayOfWeek = (dateString) => {
+  if (!dateString) return '';
+  
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return dateString;
+  
+  const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][date.getDay()];
+  return `${dateString} (${dayOfWeek})`;
+};
+
+// 日付を詳細なフォーマットに変換する関数
+const formatDateFull = (dateString) => {
+  if (!dateString) return '';
+  
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return dateString;
+  
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][date.getDay()];
+  
+  return `${year}年${month}月${day}日 (${dayOfWeek})`;
+};
 
 export default function VacationManagementPage() {
   const { data: session, status } = useSession();
@@ -199,8 +226,23 @@ export default function VacationManagementPage() {
                         </div>
                         <div>
                           <div className="text-sm font-medium text-gray-900">{request.employeeName}</div>
-                          <div className="text-sm text-gray-500">申請日: {request.requestDate}</div>
-                          <div className="text-sm text-gray-500">休暇予定日: {request.date}</div>
+                          <div className="text-sm text-gray-500">申請日: {formatDateWithDayOfWeek(request.requestDate)}</div>
+                          
+                          {/* 休暇予定日を強調表示 */}
+                          <div className="mt-2 mb-2">
+                            <div className="text-xs text-gray-500 font-medium">休暇予定日:</div>
+                            <div className={`mt-1 flex items-center px-3 py-2 rounded-md border ${
+                              request.type === '有休' ? 'bg-blue-50 border-blue-200' : 'bg-green-50 border-green-200'
+                            }`}>
+                              <CalendarIcon className={`h-4 w-4 mr-2 ${
+                                request.type === '有休' ? 'text-blue-500' : 'text-green-500'
+                              }`} />
+                              <span className="font-bold text-sm">
+                                {formatDateFull(request.date)}
+                              </span>
+                            </div>
+                          </div>
+                          
                           <span className={`mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                             ${request.type === '有休' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
                             {request.type}
@@ -271,8 +313,23 @@ export default function VacationManagementPage() {
                         </div>
                         <div>
                           <div className="text-sm font-medium text-gray-900">{request.employeeName}</div>
-                          <div className="text-sm text-gray-500">申請日: {request.requestDate}</div>
-                          <div className="text-sm text-gray-500">休暇予定日: {request.date}</div>
+                          <div className="text-sm text-gray-500">申請日: {formatDateWithDayOfWeek(request.requestDate)}</div>
+                          
+                          {/* 休暇予定日を強調表示 */}
+                          <div className="mt-2 mb-2">
+                            <div className="text-xs text-gray-500 font-medium">休暇予定日:</div>
+                            <div className={`mt-1 flex items-center px-3 py-2 rounded-md border ${
+                              request.type === '有休' ? 'bg-blue-50 border-blue-200' : 'bg-green-50 border-green-200'
+                            }`}>
+                              <CalendarIcon className={`h-4 w-4 mr-2 ${
+                                request.type === '有休' ? 'text-blue-500' : 'text-green-500'
+                              }`} />
+                              <span className="font-bold text-sm">
+                                {formatDateFull(request.date)}
+                              </span>
+                            </div>
+                          </div>
+                          
                           <div className="mt-1 flex flex-wrap gap-2">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                               ${request.type === '有休' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
@@ -287,7 +344,7 @@ export default function VacationManagementPage() {
                       </div>
                       <div className="sm:ml-auto text-sm text-gray-500">
                         <div>承認者: {request.approvedBy}</div>
-                        <div>承認日: {request.approvedDate}</div>
+                        <div>承認日: {formatDateWithDayOfWeek(request.approvedDate)}</div>
                       </div>
                     </div>
                   </div>
