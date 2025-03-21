@@ -6,6 +6,7 @@ import { UserCircleIcon } from '@heroicons/react/24/outline';
 import AttendanceForm from '../components/AttendanceForm';
 import WorkDetailModal from '../components/WorkDetailModal';
 import LoadingSpinner from '../components/LoadingSpinner';
+import ClockbookForm from '../components/ClockbookForm';
 
 // ヘルパー関数: "HH:MM" を分に変換
 const timeToMinutes = (timeStr) => {
@@ -24,12 +25,29 @@ const calculatePlannedWorkingHours = (schedules, currentDate, userName) => {
   if (!schedules || !Array.isArray(schedules)) return 0;
 
   let totalMinutes = 0;  // 分単位で合計を管理
-  const selectedMonth = currentDate.getMonth();
-  const selectedYear = currentDate.getFullYear();
+  const currentDay = currentDate.getDate();
+  const currentMonth = currentDate.getMonth();
+  const currentYear = currentDate.getFullYear();
+  
+  let startMonth, startYear, endMonth, endYear;
+  
+  if (currentDay >= 21) {
+    // 今日が21日以降の場合: 当月21日から翌月20日
+    startMonth = currentMonth;
+    startYear = currentYear;
+    endMonth = (currentMonth + 1) % 12;
+    endYear = currentMonth === 11 ? currentYear + 1 : currentYear;
+  } else {
+    // 今日が20日以前の場合: 前月21日から当月20日
+    startMonth = (currentMonth + 11) % 12; // 前月 (12で割った余りで1月を考慮)
+    startYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+    endMonth = currentMonth;
+    endYear = currentYear;
+  }
   
   // 日付の範囲を修正（時刻を設定して確実に含める）
-  const startDate = new Date(selectedYear, selectedMonth - 1, 21, 0, 0, 0);
-  const endDate = new Date(selectedYear, selectedMonth, 20, 23, 59, 59);
+  const startDate = new Date(startYear, startMonth, 21, 0, 0, 0);
+  const endDate = new Date(endYear, endMonth, 20, 23, 59, 59);
 
   // 対象データのフィルタリング
   const targetSchedules = schedules.filter(schedule => {
@@ -112,16 +130,35 @@ const calculateActualWorkingHoursForClock = (schedules, currentDate, userName) =
   if (!schedules || !Array.isArray(schedules)) return 0;
   
   let totalMinutes = 0;  // 分単位で合計を管理
-  const selectedMonth = currentDate.getMonth();
-  const selectedYear = currentDate.getFullYear();
-  const startDate = new Date(selectedYear, selectedMonth - 1, 21, 0, 0, 0);
-  const endDate = new Date(selectedYear, selectedMonth, 20, 23, 59, 59);
+  const currentDay = currentDate.getDate();
+  const currentMonth = currentDate.getMonth();
+  const currentYear = currentDate.getFullYear();
+  
+  let startMonth, startYear, endMonth, endYear;
+  
+  if (currentDay >= 21) {
+    // 今日が21日以降の場合: 当月21日から翌月20日
+    startMonth = currentMonth;
+    startYear = currentYear;
+    endMonth = (currentMonth + 1) % 12;
+    endYear = currentMonth === 11 ? currentYear + 1 : currentYear;
+  } else {
+    // 今日が20日以前の場合: 前月21日から当月20日
+    startMonth = (currentMonth + 11) % 12; // 前月 (12で割った余りで1月を考慮)
+    startYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+    endMonth = currentMonth;
+    endYear = currentYear;
+  }
+  
+  const startDate = new Date(startYear, startMonth, 21, 0, 0, 0);
+  const endDate = new Date(endYear, endMonth, 20, 23, 59, 59);
 
   // デバッグ用：計算期間の表示
   console.log('計算期間:', {
     startDate: startDate.toLocaleDateString(),
     endDate: endDate.toLocaleDateString(),
-    userName: userName
+    userName: userName,
+    currentDay: currentDay
   });
 
   // デバッグ用：全スケジュールデータの表示
@@ -506,29 +543,68 @@ export default function HomePage() {
   // 給与期間（21日始まり20日締め）のラベル生成
   function payrollPeriodLabel() {
     const today = new Date();
+    const currentDay = today.getDate();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    
     let payrollStart, payrollEnd;
-    if (today.getDate() >= 21) {
-      payrollStart = new Date(today.getFullYear(), today.getMonth(), 21);
-      payrollEnd = new Date(today.getFullYear(), today.getMonth() + 1, 20);
+    
+    if (currentDay >= 21) {
+      // 今日が21日以降の場合: 当月21日から翌月20日
+      payrollStart = new Date(currentYear, currentMonth, 21);
+      
+      // 12月の場合は翌年の1月にする
+      if (currentMonth === 11) {
+        payrollEnd = new Date(currentYear + 1, 0, 20);
+      } else {
+        payrollEnd = new Date(currentYear, currentMonth + 1, 20);
+      }
     } else {
-      payrollStart = new Date(today.getFullYear(), today.getMonth() - 1, 21);
-      payrollEnd = new Date(today.getFullYear(), today.getMonth(), 20);
+      // 今日が20日以前の場合: 前月21日から当月20日
+      if (currentMonth === 0) {
+        // 1月の場合は前年の12月にする
+        payrollStart = new Date(currentYear - 1, 11, 21);
+      } else {
+        payrollStart = new Date(currentYear, currentMonth - 1, 21);
+      }
+      payrollEnd = new Date(currentYear, currentMonth, 20);
     }
+    
     return `${getLocalDateString(payrollStart)} ～ ${getLocalDateString(payrollEnd)}`;
   }
 
   // 勤務時間と勤務種別内訳の計算（給与期間内のみ）
   useEffect(() => {
     if (attendanceData.length === 0) return;
+    
     const today = new Date();
+    const currentDay = today.getDate();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    
     let payrollStart, payrollEnd;
-    if (today.getDate() >= 21) {
-      payrollStart = new Date(today.getFullYear(), today.getMonth(), 21);
-      payrollEnd = new Date(today.getFullYear(), today.getMonth() + 1, 20);
+    
+    if (currentDay >= 21) {
+      // 今日が21日以降の場合: 当月21日から翌月20日
+      payrollStart = new Date(currentYear, currentMonth, 21);
+      
+      // 12月の場合は翌年の1月にする
+      if (currentMonth === 11) {
+        payrollEnd = new Date(currentYear + 1, 0, 20);
+      } else {
+        payrollEnd = new Date(currentYear, currentMonth + 1, 20);
+      }
     } else {
-      payrollStart = new Date(today.getFullYear(), today.getMonth() - 1, 21);
-      payrollEnd = new Date(today.getFullYear(), today.getMonth(), 20);
+      // 今日が20日以前の場合: 前月21日から当月20日
+      if (currentMonth === 0) {
+        // 1月の場合は前年の12月にする
+        payrollStart = new Date(currentYear - 1, 11, 21);
+      } else {
+        payrollStart = new Date(currentYear, currentMonth - 1, 21);
+      }
+      payrollEnd = new Date(currentYear, currentMonth, 20);
     }
+    
     let totalMinutes = 0;
     let counts = {};
     attendanceData.forEach(rec => {
@@ -554,15 +630,35 @@ export default function HomePage() {
   // 給与期間内の「予定」勤務時間を計算（休憩時間は考慮せず、開始・終了時刻の差分で計算）
   useEffect(() => {
     if (attendanceData.length === 0) return;
+    
     const today = new Date();
+    const currentDay = today.getDate();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    
     let payrollStart, payrollEnd;
-    if (today.getDate() >= 21) {
-      payrollStart = new Date(today.getFullYear(), today.getMonth(), 21);
-      payrollEnd = new Date(today.getFullYear(), today.getMonth() + 1, 20);
+    
+    if (currentDay >= 21) {
+      // 今日が21日以降の場合: 当月21日から翌月20日
+      payrollStart = new Date(currentYear, currentMonth, 21);
+      
+      // 12月の場合は翌年の1月にする
+      if (currentMonth === 11) {
+        payrollEnd = new Date(currentYear + 1, 0, 20);
+      } else {
+        payrollEnd = new Date(currentYear, currentMonth + 1, 20);
+      }
     } else {
-      payrollStart = new Date(today.getFullYear(), today.getMonth() - 1, 21);
-      payrollEnd = new Date(today.getFullYear(), today.getMonth(), 20);
+      // 今日が20日以前の場合: 前月21日から当月20日
+      if (currentMonth === 0) {
+        // 1月の場合は前年の12月にする
+        payrollStart = new Date(currentYear - 1, 11, 21);
+      } else {
+        payrollStart = new Date(currentYear, currentMonth - 1, 21);
+      }
+      payrollEnd = new Date(currentYear, currentMonth, 20);
     }
+    
     let plannedMinutes = 0;
     attendanceData.forEach(rec => {
       const recDate = new Date(rec.date);
@@ -606,14 +702,34 @@ export default function HomePage() {
     
     // 日付範囲の計算
     const today = new Date();
-    const selectedMonth = today.getMonth();
-    const selectedYear = today.getFullYear();
-    const startDate = new Date(selectedYear, selectedMonth - 1, 21, 0, 0, 0);
-    const endDate = new Date(selectedYear, selectedMonth, 20, 23, 59, 59);
+    const currentDay = today.getDate();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    
+    // 21日以降は当月から翌月の期間、20日以前は前月から当月の期間
+    let startMonth, startYear, endMonth, endYear;
+    
+    if (currentDay >= 21) {
+      // 今日が21日以降の場合: 当月21日から翌月20日
+      startMonth = currentMonth;
+      startYear = currentYear;
+      endMonth = (currentMonth + 1) % 12;
+      endYear = currentMonth === 11 ? currentYear + 1 : currentYear;
+    } else {
+      // 今日が20日以前の場合: 前月21日から当月20日
+      startMonth = (currentMonth + 11) % 12; // 前月 (12で割った余りで1月を考慮)
+      startYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+      endMonth = currentMonth;
+      endYear = currentYear;
+    }
+    
+    const startDate = new Date(startYear, startMonth, 21, 0, 0, 0);
+    const endDate = new Date(endYear, endMonth, 20, 23, 59, 59);
     
     console.log('計算期間:', {
       startDate: startDate.toLocaleDateString(),
-      endDate: endDate.toLocaleDateString()
+      endDate: endDate.toLocaleDateString(),
+      currentDay: currentDay
     });
 
     // 初期化
@@ -936,10 +1052,23 @@ export default function HomePage() {
     }
   };
 
-  const handleReportSubmit = async (e) => {
-    e.preventDefault();
-    setReportMessage('');
+  // 勤務実績モーダルを開く際のデータ設定
+  const openReportModal = () => {
+    const today = getLocalDateString(new Date());
+    setReportAttendance({
+      date: today,
+      employeeName: userName,
+      startTime: todayScheduledTime.start || '',
+      endTime: todayScheduledTime.end || '',
+      workType: '出勤',
+      recordType: '出勤簿',
+    });
+    
+    setShowReportModal(true);
+  };
 
+  // 勤務実績報告の送信処理
+  const handleReportSubmit = async (attendance, breakRecords) => {
     try {
       // まず既存のデータを削除
       const today = getLocalDateString(new Date());
@@ -955,27 +1084,23 @@ export default function HomePage() {
       // 休憩記録の削除
       await fetch(`/api/break?${deleteParams}`, { method: 'DELETE' });
       
-      // 業務詳細の削除
-      await fetch(`/api/workdetail?${deleteParams}`, { method: 'DELETE' });
-
-      // 新しいデータを登録
       // 勤務記録送信
       const resAttendance = await fetch('/api/attendance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(reportAttendance),
+        body: JSON.stringify(attendance),
       });
       if (!resAttendance.ok) throw new Error('勤務記録送信エラー');
 
       // 休憩記録送信
-      for (let record of reportBreakRecords) {
+      for (let record of breakRecords) {
         if (record.breakStart || record.breakEnd) {
           const resBreak = await fetch('/api/break', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              date: reportAttendance.date,
-              employeeName: reportAttendance.employeeName,
+              date: attendance.date,
+              employeeName: attendance.employeeName,
               breakStart: record.breakStart,
               breakEnd: record.breakEnd,
               recordType: record.recordType,
@@ -985,85 +1110,17 @@ export default function HomePage() {
         }
       }
 
-      // 業務詳細送信
-      for (let detail of reportWorkDetails) {
-        if (detail.workTitle || detail.workStart || detail.workEnd || detail.detail) {
-          const resWork = await fetch('/api/workdetail', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              date: reportAttendance.date,
-              employeeName: reportAttendance.employeeName,
-              workTitle: detail.workTitle,
-              workStart: detail.workStart,
-              workEnd: detail.workEnd,
-              detail: detail.detail,
-              workCategory: detail.workCategory,
-              recordType: detail.recordType,
-            }),
-          });
-          if (!resWork.ok) throw new Error('業務詳細送信エラー');
-        }
-      }
-
-      setReportMessage('勤務実績が正常に送信されました！');
-      // 3秒後にモーダルを閉じた後、Next.js のルーターを利用してページをリロード
+      // 送信成功後、モーダルを閉じてページをリロード
       setTimeout(() => {
         setShowReportModal(false);
         router.reload();
-      }, 3000);
+      }, 500);
 
+      return true;
     } catch (error) {
       console.error('Error submitting work report:', error);
-      setReportMessage(error.message || '勤務実績の送信に失敗しました');
+      throw error;
     }
-  };
-
-  // 勤務実績モーダルを開く際のデータ設定
-  const openReportModal = () => {
-    const today = getLocalDateString(new Date());
-    setReportAttendance({
-      date: today,
-      employeeName: userName,
-      startTime: todayScheduledTime.start || '',
-      endTime: todayScheduledTime.end || '',
-      workType: '出勤',
-      recordType: '出勤簿',
-    });
-    
-    // 休憩時間の設定
-    setReportBreakRecords(
-      todayBreak.length > 0 
-        ? todayBreak.map(br => ({
-            breakStart: br.breakStart,
-            breakEnd: br.breakEnd,
-            recordType: '出勤簿'
-          }))
-        : [{ breakStart: '', breakEnd: '', recordType: '出勤簿' }]
-    );
-    
-    // 業務詳細の設定 - 予定データをもとに勤務実績用のデータを生成
-    setReportWorkDetails(
-      todayWorkDetail.length > 0
-        ? todayWorkDetail.map(detail => ({
-            workTitle: detail.workTitle,
-            workStart: detail.workStart,
-            workEnd: detail.workEnd,
-            detail: detail.detail,
-            workCategory: detail.workCategory || '業務',
-            recordType: '出勤簿'
-          }))
-        : [{ 
-            workTitle: '', 
-            workStart: '', 
-            workEnd: '', 
-            detail: '', 
-            workCategory: '業務',
-            recordType: '出勤簿' 
-          }]
-    );
-    
-    setShowReportModal(true);
   };
 
   return (
@@ -1667,132 +1724,11 @@ export default function HomePage() {
       
       {/* 勤務実績報告モーダル */}
       {showReportModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50 p-0 sm:p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full h-full sm:h-auto sm:max-w-3xl overflow-y-auto sm:max-h-[90vh]">
-            <div className="sticky top-0 bg-white z-10 flex justify-between items-center p-4 border-b">
-              <h2 className="text-xl sm:text-2xl font-semibold">{reportAttendance.date} の勤務実績</h2>
-              <button 
-                onClick={() => setShowReportModal(false)} 
-                className="text-gray-600 hover:text-gray-800 text-3xl p-2"
-              >
-                &times;
-              </button>
-            </div>
-            <div className="p-4">
-              <form onSubmit={handleReportSubmit} className="space-y-6">
-                <AttendanceForm 
-                  attendance={reportAttendance}
-                  breakRecords={reportBreakRecords}
-                  onAttendanceChange={handleReportAttendanceChange}
-                  onBreakChange={handleReportBreakChange}
-                  onAddBreak={addReportBreakRecord}
-                  onRemoveBreak={removeReportBreakRecord}
-                />
-
-                {/* 業務詳細フォーム */}
-                <section className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="text-xl font-semibold mb-3">業務詳細</h3>
-                  {reportWorkDetails.map((detail, index) => (
-                    <div key={index} className="mb-5 border-b border-gray-200 pb-4">
-                      <div className="flex flex-col sm:flex-row sm:space-x-4 mb-3">
-                        <div className="flex-1 mb-3 sm:mb-0">
-                          <label className="block mb-2 font-medium">種別:</label>
-                          <select
-                            name="workCategory"
-                            value={detail.workCategory}
-                            onChange={(e) => handleReportWorkDetailChange(index, e)}
-                            className="w-full p-3 border rounded-lg text-base"
-                          >
-                            <option value="業務">業務</option>
-                            <option value="販売会">販売会</option>
-                            <option value="外出">外出</option>
-                            <option value="測定会">測定会</option>
-                            <option value="ミーティング">ミーティング</option>
-                          </select>
-                        </div>
-                        <div className="flex-1">
-                          <label className="block mb-2 font-medium">業務タイトル:</label>
-                          <input 
-                            type="text" 
-                            name="workTitle" 
-                            placeholder="業務タイトル" 
-                            value={detail.workTitle} 
-                            onChange={(e) => handleReportWorkDetailChange(index, e)} 
-                            className="w-full p-3 border rounded-lg text-base" 
-                          />
-                        </div>
-                      </div>
-                      <div className="flex flex-col sm:flex-row sm:space-x-4 mb-3">
-                        <div className="flex-1 mb-3 sm:mb-0">
-                          <label className="block mb-2 font-medium">業務開始:</label>
-                          <input 
-                            type="time" 
-                            name="workStart" 
-                            value={detail.workStart} 
-                            onChange={(e) => handleReportWorkDetailChange(index, e)} 
-                            className="w-full p-3 border rounded-lg text-base" 
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <label className="block mb-2 font-medium">業務終了:</label>
-                          <input 
-                            type="time" 
-                            name="workEnd" 
-                            value={detail.workEnd} 
-                            onChange={(e) => handleReportWorkDetailChange(index, e)} 
-                            className="w-full p-3 border rounded-lg text-base" 
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block mb-2 font-medium">詳細:</label>
-                        <textarea
-                          name="detail"
-                          placeholder="詳細を記入してください"
-                          value={detail.detail}
-                          onChange={(e) => handleReportWorkDetailChange(index, e)}
-                          className="w-full p-3 border rounded-lg text-base h-28"
-                        />
-                      </div>
-                      {reportWorkDetails.length > 1 && (
-                        <button 
-                          type="button" 
-                          onClick={() => removeReportWorkDetail(index)}
-                          className="mt-3 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition flex items-center justify-center gap-1"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                          削除
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                  <button 
-                    type="button" 
-                    onClick={addReportWorkDetail} 
-                    className="w-full bg-green-500 text-white p-3 rounded-lg hover:bg-green-600 transition flex items-center justify-center gap-2"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                    業務詳細を追加
-                  </button>
-                </section>
-
-                <button 
-                  type="submit" 
-                  className="w-full bg-green-600 text-white p-4 rounded-lg hover:bg-green-700 transition text-base font-medium"
-                >
-                  勤務実績を送信
-                </button>
-              </form>
-              {reportMessage && (
-                <p className="mt-4 text-center text-green-600 font-medium text-base">{reportMessage}</p>
-              )}
-            </div>
-          </div>
-        </div>
+        <ClockbookForm
+          initialAttendance={reportAttendance}
+          onSubmit={handleReportSubmit}
+          onClose={() => setShowReportModal(false)}
+        />
       )}
     </div>
   );

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 export default function AttendanceForm({
   attendance,
@@ -8,7 +8,31 @@ export default function AttendanceForm({
   onAddBreak,
   onRemoveBreak,
   onWorkTypeChange,
+  isPartTimer = false
 }) {
+  // 新しい休憩入力用のローカルステート
+  const [newBreak, setNewBreak] = useState({
+    breakStart: '',
+    breakEnd: '',
+    recordType: attendance.recordType || '出勤簿'
+  });
+
+  // 削除確認用の機能
+  const handleBreakDelete = (index) => {
+    // モバイルフレンドリーな確認
+    if (window.confirm('この休憩時間を削除しますか？')) {
+      onRemoveBreak(index);
+    }
+  };
+
+  // recordTypeが変わったら更新
+  useEffect(() => {
+    setNewBreak(prev => ({
+      ...prev,
+      recordType: attendance.recordType || '出勤簿'
+    }));
+  }, [attendance.recordType]);
+
   // 休暇系の勤務種別かどうかを判定
   const isLeaveType = ['公休', '有給休暇'].includes(attendance.workType);
 
@@ -160,6 +184,13 @@ export default function AttendanceForm({
     });
   };
 
+  // 時間の刻みを生成する関数を追加
+  const getMinuteOptions = () => {
+    return isPartTimer 
+      ? ['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'] // アルバイトは5分刻み
+      : ['00', '15', '30', '45']; // 通常ユーザーは15分刻み
+  };
+
   return (
     <>
       {/* 勤務記録フォーム */}
@@ -193,73 +224,101 @@ export default function AttendanceForm({
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <label className="block mb-2 font-medium text-gray-700">出社時間:</label>
-                <div className="flex">
-                  <select 
-                    name="startTimeHour" 
-                    value={parseTime(attendance.startTime).hour || ''}
-                    onChange={(e) => {
-                      const hour = e.target.value;
-                      const { minute } = parseTime(attendance.startTime);
-                      handleCustomTimeChange('startTime', formatTime(hour, minute || '00'));
-                    }}
-                    className="flex-1 p-3 border border-gray-300 rounded-l-lg bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                  >
-                    <option value="">時間</option>
-                    {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0')).map(hour => (
-                      <option key={hour} value={hour}>{hour}時</option>
-                    ))}
-                  </select>
-                  <select 
-                    name="startTimeMinute" 
-                    value={parseTime(attendance.startTime).minute || ''}
-                    onChange={(e) => {
-                      const minute = e.target.value;
-                      const { hour } = parseTime(attendance.startTime);
-                      handleCustomTimeChange('startTime', formatTime(hour || '09', minute));
-                    }}
-                    className="flex-1 p-3 border border-l-0 border-gray-300 rounded-r-lg bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                  >
-                    <option value="">分</option>
-                    {['00', '15', '30', '45'].map(minute => (
-                      <option key={minute} value={minute}>{minute}分</option>
-                    ))}
-                  </select>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="relative">
+                    <select 
+                      name="startTimeHour" 
+                      value={parseTime(attendance.startTime).hour || ''}
+                      onChange={(e) => {
+                        const hour = e.target.value;
+                        const { minute } = parseTime(attendance.startTime);
+                        handleCustomTimeChange('startTime', formatTime(hour, minute || '00'));
+                      }}
+                      className="w-full py-3 px-4 appearance-none bg-blue-50 border border-blue-200 rounded-lg text-center text-blue-700 font-medium text-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                    >
+                      <option value="">時</option>
+                      {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0')).map(hour => (
+                        <option key={hour} value={hour}>{hour}</option>
+                      ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                      <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <select 
+                      name="startTimeMinute" 
+                      value={parseTime(attendance.startTime).minute || ''}
+                      onChange={(e) => {
+                        const minute = e.target.value;
+                        const { hour } = parseTime(attendance.startTime);
+                        handleCustomTimeChange('startTime', formatTime(hour || '09', minute));
+                      }}
+                      className="w-full py-3 px-4 appearance-none bg-blue-50 border border-blue-200 rounded-lg text-center text-blue-700 font-medium text-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                    >
+                      <option value="">分</option>
+                      {getMinuteOptions().map(minute => (
+                        <option key={minute} value={minute}>{minute}</option>
+                      ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                      <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
                 </div>
               </div>
               
               <div>
                 <label className="block mb-2 font-medium text-gray-700">退社時間:</label>
-                <div className="flex">
-                  <select 
-                    name="endTimeHour" 
-                    value={parseTime(attendance.endTime).hour || ''}
-                    onChange={(e) => {
-                      const hour = e.target.value;
-                      const { minute } = parseTime(attendance.endTime);
-                      handleCustomTimeChange('endTime', formatTime(hour, minute || '00'));
-                    }}
-                    className="flex-1 p-3 border border-gray-300 rounded-l-lg bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                  >
-                    <option value="">時間</option>
-                    {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0')).map(hour => (
-                      <option key={hour} value={hour}>{hour}時</option>
-                    ))}
-                  </select>
-                  <select 
-                    name="endTimeMinute" 
-                    value={parseTime(attendance.endTime).minute || ''}
-                    onChange={(e) => {
-                      const minute = e.target.value;
-                      const { hour } = parseTime(attendance.endTime);
-                      handleCustomTimeChange('endTime', formatTime(hour || '18', minute));
-                    }}
-                    className="flex-1 p-3 border border-l-0 border-gray-300 rounded-r-lg bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                  >
-                    <option value="">分</option>
-                    {['00', '15', '30', '45'].map(minute => (
-                      <option key={minute} value={minute}>{minute}分</option>
-                    ))}
-                  </select>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="relative">
+                    <select 
+                      name="endTimeHour" 
+                      value={parseTime(attendance.endTime).hour || ''}
+                      onChange={(e) => {
+                        const hour = e.target.value;
+                        const { minute } = parseTime(attendance.endTime);
+                        handleCustomTimeChange('endTime', formatTime(hour, minute || '00'));
+                      }}
+                      className="w-full py-3 px-4 appearance-none bg-blue-50 border border-blue-200 rounded-lg text-center text-blue-700 font-medium text-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                    >
+                      <option value="">時</option>
+                      {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0')).map(hour => (
+                        <option key={hour} value={hour}>{hour}</option>
+                      ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                      <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <select 
+                      name="endTimeMinute" 
+                      value={parseTime(attendance.endTime).minute || ''}
+                      onChange={(e) => {
+                        const minute = e.target.value;
+                        const { hour } = parseTime(attendance.endTime);
+                        handleCustomTimeChange('endTime', formatTime(hour || '18', minute));
+                      }}
+                      className="w-full py-3 px-4 appearance-none bg-blue-50 border border-blue-200 rounded-lg text-center text-blue-700 font-medium text-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                    >
+                      <option value="">分</option>
+                      {getMinuteOptions().map(minute => (
+                        <option key={minute} value={minute}>{minute}</option>
+                      ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                      <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -276,104 +335,269 @@ export default function AttendanceForm({
             </svg>
             休憩記録
           </h3>
-          {breakRecords.map((record, index) => (
-            <div key={index} className="mb-4 bg-white p-4 rounded-lg shadow-sm">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block mb-2 font-medium text-gray-700">休憩開始:</label>
-                  <div className="flex">
-                    <select 
-                      name="breakStartHour" 
-                      value={parseTime(record.breakStart).hour || ''}
-                      onChange={(e) => {
-                        const hour = e.target.value;
-                        const { minute } = parseTime(record.breakStart);
-                        handleBreakCustomTimeChange(index, 'breakStart', formatTime(hour, minute || '00'));
-                      }}
-                      className="flex-1 p-3 border border-gray-300 rounded-l-lg bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                    >
-                      <option value="">時間</option>
-                      {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0')).map(hour => (
-                        <option key={hour} value={hour}>{hour}時</option>
-                      ))}
-                    </select>
-                    <select 
-                      name="breakStartMinute" 
-                      value={parseTime(record.breakStart).minute || ''}
-                      onChange={(e) => {
-                        const minute = e.target.value;
-                        const { hour } = parseTime(record.breakStart);
-                        handleBreakCustomTimeChange(index, 'breakStart', formatTime(hour || '12', minute));
-                      }}
-                      className="flex-1 p-3 border border-l-0 border-gray-300 rounded-r-lg bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                    >
-                      <option value="">分</option>
-                      {['00', '15', '30', '45'].map(minute => (
-                        <option key={minute} value={minute}>{minute}分</option>
-                      ))}
-                    </select>
+          
+          {/* 休憩記録のサマリー表示 */}
+          {breakRecords.length > 0 && (
+            <div className="mb-4 bg-blue-50 p-3 rounded-lg border border-blue-100">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-blue-700 flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  休憩時間サマリー
+                </span>
+                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                  {breakRecords.filter(record => 
+                    record.breakStart && 
+                    record.breakEnd && 
+                    record.recordType === (attendance.recordType || '出勤簿')
+                  ).length}件の休憩
+                </span>
+              </div>
+              {/* 有効な実績休憩レコードの件数を確認 */}
+              {breakRecords.filter(record => 
+                record.breakStart && 
+                record.breakEnd && 
+                record.recordType === (attendance.recordType || '出勤簿')
+              ).length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {breakRecords
+                    .filter(record => 
+                      record.breakStart && 
+                      record.breakEnd && 
+                      record.recordType === (attendance.recordType || '出勤簿')
+                    )
+                    .map((record, displayIdx) => {
+                      // 元の配列内でのインデックスを取得
+                      const actualIndex = breakRecords.findIndex(r => 
+                        r.breakStart === record.breakStart && 
+                        r.breakEnd === record.breakEnd &&
+                        r.recordType === record.recordType
+                      );
+                      
+                      return (
+                        <div key={displayIdx} className="px-3 py-2 bg-white rounded-md shadow-sm border border-blue-200 flex items-center gap-2">
+                          <span className="text-sm text-blue-700 whitespace-nowrap font-medium">
+                            {record.breakStart}-{record.breakEnd}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleBreakDelete(actualIndex)}
+                            className="text-red-500 w-7 h-7 flex items-center justify-center rounded-full bg-red-50 active:bg-red-100 transition-colors border border-red-100"
+                            aria-label="休憩を削除"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      );
+                    })
+                  }
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 text-center">登録されている休憩はありません</p>
+              )}
+            </div>
+          )}
+          
+          {/* 新しい休憩記録フォーム - スマホ最適化版 */}
+          <div className="mb-4 bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+            <div className="mb-2 text-sm font-medium text-gray-700 flex items-center">
+              <svg className="w-4 h-4 mr-1 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              新しい休憩を追加
+            </div>
+            
+            {/* スマホ向け時間選択UI - 休憩開始時間 */}
+            <div className="mb-3">
+              <label className="block mb-1 text-sm font-medium text-gray-700">休憩開始:</label>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="relative">
+                  <select 
+                    name="newBreakStartHour" 
+                    value={newBreak.breakStart.split(':')[0] || ''}
+                    onChange={(e) => {
+                      const hour = e.target.value;
+                      setNewBreak({
+                        ...newBreak,
+                        breakStart: formatTime(hour, newBreak.breakStart.split(':')[1] || '00')
+                      });
+                    }}
+                    className="w-full py-3 px-4 appearance-none bg-blue-50 border border-blue-200 rounded-lg text-center text-blue-700 font-medium text-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                  >
+                    <option value="">時</option>
+                    {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0')).map(hour => (
+                      <option key={hour} value={hour}>{hour}</option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    </svg>
                   </div>
                 </div>
-                <div>
-                  <label className="block mb-2 font-medium text-gray-700">休憩終了:</label>
-                  <div className="flex">
-                    <select 
-                      name="breakEndHour" 
-                      value={parseTime(record.breakEnd).hour || ''}
-                      onChange={(e) => {
-                        const hour = e.target.value;
-                        const { minute } = parseTime(record.breakEnd);
-                        handleBreakCustomTimeChange(index, 'breakEnd', formatTime(hour, minute || '00'));
-                      }}
-                      className="flex-1 p-3 border border-gray-300 rounded-l-lg bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                    >
-                      <option value="">時間</option>
-                      {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0')).map(hour => (
-                        <option key={hour} value={hour}>{hour}時</option>
-                      ))}
-                    </select>
-                    <select 
-                      name="breakEndMinute" 
-                      value={parseTime(record.breakEnd).minute || ''}
-                      onChange={(e) => {
-                        const minute = e.target.value;
-                        const { hour } = parseTime(record.breakEnd);
-                        handleBreakCustomTimeChange(index, 'breakEnd', formatTime(hour || '13', minute));
-                      }}
-                      className="flex-1 p-3 border border-l-0 border-gray-300 rounded-r-lg bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                    >
-                      <option value="">分</option>
-                      {['00', '15', '30', '45'].map(minute => (
-                        <option key={minute} value={minute}>{minute}分</option>
-                      ))}
-                    </select>
+                <div className="relative">
+                  <select 
+                    name="newBreakStartMinute" 
+                    value={newBreak.breakStart.split(':')[1] || ''}
+                    onChange={(e) => {
+                      const minute = e.target.value;
+                      setNewBreak({
+                        ...newBreak,
+                        breakStart: formatTime(newBreak.breakStart.split(':')[0] || '12', minute)
+                      });
+                    }}
+                    className="w-full py-3 px-4 appearance-none bg-blue-50 border border-blue-200 rounded-lg text-center text-blue-700 font-medium text-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                  >
+                    <option value="">分</option>
+                    {getMinuteOptions().map(minute => (
+                      <option key={minute} value={minute}>{minute}</option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    </svg>
                   </div>
                 </div>
               </div>
-              {breakRecords.length > 1 && (
-                <button 
-                  type="button" 
-                  onClick={() => onRemoveBreak(index)}
-                  className="w-full mt-3 bg-red-50 text-red-600 p-2 rounded-lg hover:bg-red-100 transition flex items-center justify-center space-x-1"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                  </svg>
-                  <span>この休憩を削除</span>
-                </button>
-              )}
             </div>
-          ))}
-          <button 
-            type="button" 
-            onClick={onAddBreak} 
-            className="w-full bg-green-50 text-green-600 p-3 rounded-lg hover:bg-green-100 transition flex items-center justify-center space-x-1"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-            </svg>
-            <span>休憩を追加</span>
-          </button>
+            
+            {/* スマホ向け時間選択UI - 休憩終了時間 */}
+            <div className="mb-3">
+              <label className="block mb-1 text-sm font-medium text-gray-700">休憩終了:</label>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="relative">
+                  <select 
+                    name="newBreakEndHour" 
+                    value={newBreak.breakEnd.split(':')[0] || ''}
+                    onChange={(e) => {
+                      const hour = e.target.value;
+                      setNewBreak({
+                        ...newBreak,
+                        breakEnd: formatTime(hour, newBreak.breakEnd.split(':')[1] || '00')
+                      });
+                    }}
+                    className="w-full py-3 px-4 appearance-none bg-blue-50 border border-blue-200 rounded-lg text-center text-blue-700 font-medium text-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                  >
+                    <option value="">時</option>
+                    {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0')).map(hour => (
+                      <option key={hour} value={hour}>{hour}</option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="relative">
+                  <select 
+                    name="newBreakEndMinute" 
+                    value={newBreak.breakEnd.split(':')[1] || ''}
+                    onChange={(e) => {
+                      const minute = e.target.value;
+                      setNewBreak({
+                        ...newBreak,
+                        breakEnd: formatTime(newBreak.breakEnd.split(':')[0] || '13', minute)
+                      });
+                    }}
+                    className="w-full py-3 px-4 appearance-none bg-blue-50 border border-blue-200 rounded-lg text-center text-blue-700 font-medium text-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                  >
+                    <option value="">分</option>
+                    {getMinuteOptions().map(minute => (
+                      <option key={minute} value={minute}>{minute}</option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* 選択した休憩時間のプレビュー表示 */}
+            {(newBreak.breakStart || newBreak.breakEnd) && (
+              <div className="mt-2 mb-3 bg-blue-50 rounded-lg p-2 border border-blue-200">
+                <p className="text-sm text-blue-700 flex items-center justify-center">
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  新しい休憩: 
+                  <span className="ml-1 font-medium">
+                    {newBreak.breakStart || '--:--'} - {newBreak.breakEnd || '--:--'}
+                  </span>
+                </p>
+              </div>
+            )}
+
+            <button 
+              type="button" 
+              onClick={() => {
+                // 有効な休憩時間のみ追加
+                if (newBreak.breakStart && newBreak.breakEnd) {
+                  onAddBreak({
+                    breakStart: newBreak.breakStart, 
+                    breakEnd: newBreak.breakEnd, 
+                    recordType: attendance.recordType || '出勤簿'
+                  });
+                  setNewBreak({
+                    breakStart: '',
+                    breakEnd: '',
+                    recordType: attendance.recordType || '出勤簿'
+                  });
+                }
+              }} 
+              disabled={!newBreak.breakStart || !newBreak.breakEnd}
+              className={`mt-2 w-full py-4 px-4 rounded-lg flex items-center justify-center space-x-2 transition text-base font-medium
+                ${newBreak.breakStart && newBreak.breakEnd 
+                  ? 'bg-blue-500 text-white hover:bg-blue-600 active:bg-blue-700 active:scale-[0.98] shadow-sm' 
+                  : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+              </svg>
+              <span>休憩を追加</span>
+            </button>
+
+            {/* 入力方法ガイド - スマホユーザー向け */}
+            <div className="mt-3 text-xs text-gray-500 bg-gray-50 rounded-lg p-2 border border-gray-200">
+              <p className="flex items-start">
+                <svg className="w-4 h-4 mr-1 text-gray-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>休憩時間の削除は各休憩時間の右側にある×ボタンをタップしてください。</span>
+              </p>
+            </div>
+          </div>
+          
+          {/* 休憩時間の合計表示 */}
+          {breakRecords.some(record => record.breakStart && record.breakEnd) && (
+            <div className="text-center mt-2 mb-2">
+              <div className="inline-block bg-green-50 text-green-700 px-3 py-1.5 rounded-full text-sm font-medium border border-green-100">
+                <span className="mr-1">合計休憩時間:</span>
+                {(() => {
+                  let totalBreakMinutes = 0;
+                  breakRecords.forEach(record => {
+                    if (record.breakStart && record.breakEnd) {
+                      const start = new Date(`2000/01/01 ${record.breakStart}`);
+                      const end = new Date(`2000/01/01 ${record.breakEnd}`);
+                      totalBreakMinutes += (end - start) / (1000 * 60);
+                    }
+                  });
+                  const hours = Math.floor(totalBreakMinutes / 60);
+                  const minutes = Math.floor(totalBreakMinutes % 60);
+                  return hours > 0 
+                    ? `${hours}時間${minutes > 0 ? `${minutes}分` : ''}`
+                    : `${minutes}分`;
+                })()}
+              </div>
+            </div>
+          )}
         </section>
       )}
 

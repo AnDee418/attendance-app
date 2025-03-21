@@ -17,10 +17,12 @@ export default function ScheduleForm({
   const [message, setMessage] = useState('');
   const [userAccountType, setUserAccountType] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [isPartTimer, setIsPartTimer] = useState(false);
 
   useEffect(() => {
     const accountType = window.localStorage.getItem('userAccountType') || '';
     setUserAccountType(accountType);
+    setIsPartTimer(accountType === 'アルバイト');
   }, []);
 
   // 既存データの取得
@@ -301,6 +303,13 @@ export default function ScheduleForm({
     setWorkDetails(newWorkDetails);
   };
 
+  // 分の選択肢を取得する（アルバイトは5分刻み、それ以外は15分刻み）
+  const getMinuteOptions = () => {
+    return isPartTimer 
+      ? ['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55']
+      : ['00', '15', '30', '45'];
+  };
+
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-[110] p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl 
@@ -322,7 +331,7 @@ export default function ScheduleForm({
         ) : (
           <div className="overflow-y-auto p-4 flex-grow">
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* すべてのアカウントでAttendanceFormを使用 */}
+              {/* アルバイトかどうかを渡す */}
               <AttendanceForm 
                 attendance={attendance}
                 breakRecords={breakRecords}
@@ -331,6 +340,7 @@ export default function ScheduleForm({
                 onAddBreak={addBreakRecord}
                 onRemoveBreak={removeBreakRecord}
                 onWorkTypeChange={handleWorkTypeChange}
+                isPartTimer={isPartTimer}
               />
 
               {/* 業務詳細フォーム - 全アカウントで表示 */}
@@ -407,7 +417,7 @@ export default function ScheduleForm({
                             className="flex-1 p-3 border border-l-0 border-gray-300 rounded-r-lg bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                           >
                             <option value="">分</option>
-                            {['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'].map(minute => (
+                            {getMinuteOptions().map(minute => (
                               <option key={minute} value={minute}>{minute}分</option>
                             ))}
                           </select>
@@ -452,7 +462,7 @@ export default function ScheduleForm({
                             className="flex-1 p-3 border border-l-0 border-gray-300 rounded-r-lg bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                           >
                             <option value="">分</option>
-                            {['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'].map(minute => (
+                            {getMinuteOptions().map(minute => (
                               <option key={minute} value={minute}>{minute}分</option>
                             ))}
                           </select>

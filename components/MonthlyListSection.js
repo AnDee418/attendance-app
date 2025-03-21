@@ -193,19 +193,37 @@ function MonthlyListSection({
             // この日付の休暇申請を確認
             const vacationStatus = getVacationStatus(day, userData?.data[0]);
             
-            // この日付の業務詳細を抽出
-            const dayDetails = workDetails?.filter(detail => 
-              detail && detail.date === dateString && detail.employeeName === userData?.data[0]
+            // この日付の業務詳細を抽出し、予定と実績に分ける
+            const plannedDetails = workDetails?.filter(detail => 
+              detail && detail.date === dateString && 
+              detail.employeeName === userData?.data[0] && 
+              detail.recordType === '予定'
             ) || [];
             
-            // この日付の休憩情報を抽出
-            const dayBreaks = breakData?.filter(br => 
-              br.date === dateString && br.employeeName === userData?.data[0]
-            );
+            const clockbookDetails = workDetails?.filter(detail => 
+              detail && detail.date === dateString && 
+              detail.employeeName === userData?.data[0] && 
+              detail.recordType === '出勤簿'
+            ) || [];
+            
+            // この日付の休憩情報を抽出 - 予定/実績に応じて取得
+            const plannedBreaks = breakData?.filter(br => 
+              br.date === dateString && 
+              br.employeeName === userData?.data[0] && 
+              br.recordType === '予定'
+            ) || [];
+            
+            const clockbookBreaks = breakData?.filter(br => 
+              br.date === dateString && 
+              br.employeeName === userData?.data[0] && 
+              br.recordType === '出勤簿'
+            ) || [];
             
             // この日に何かしらのデータがあるか？
             const hasDayData = plannedSchedule || clockbookSchedule || 
-                              (dayDetails && dayDetails.length > 0) || vacationStatus;
+                              plannedDetails.length > 0 || clockbookDetails.length > 0 || 
+                              plannedBreaks.length > 0 || clockbookBreaks.length > 0 || 
+                              vacationStatus;
             
             // 勤務種別が休暇系かどうか
             const isPlannedLeave = plannedSchedule && isLeaveType(plannedSchedule[4]);
@@ -323,8 +341,35 @@ function MonthlyListSection({
                                 <div className="text-gray-400">時間未設定</div>
                               )}
                             </div>
-                                </div>
+                            
+                            {/* 予定の休憩時間を表示 - 青系デザイン */}
+                            {plannedBreaks && plannedBreaks.length > 0 && (
+                              <div className="mt-2 flex items-center text-xs text-blue-600 bg-blue-50 rounded-md px-2 py-1 border border-blue-200">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5 text-blue-500 mr-1 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                                </svg>
+                                <span className="font-medium mr-1 flex-shrink-0">予定休憩:</span>
+                                
+                                {plannedBreaks.length <= 2 ? (
+                                  // 休憩が2つ以下の場合はインラインで表示
+                                  <span className="truncate">
+                                    {plannedBreaks.map((br, i) => (
+                                      <span key={i} className="whitespace-nowrap text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded mx-0.5">
+                                        {br.breakStart}-{br.breakEnd}
+                                        {i < plannedBreaks.length - 1 ? '' : ''}
+                                      </span>
+                                    ))}
+                                  </span>
+                                ) : (
+                                  // 休憩が3つ以上の場合は件数と合計時間を表示
+                                  <span className="bg-blue-100 px-1.5 py-0.5 rounded text-blue-700">
+                                    {plannedBreaks.length}件 (合計: {calculateTotalBreakTime(plannedBreaks)})
+                                  </span>
+                                )}
                               </div>
+                            )}
+                          </div>
+                        </div>
                       )}
                       
                       {/* 実績の表示（休暇でない場合） */}
@@ -353,28 +398,28 @@ function MonthlyListSection({
                               )}
                             </div>
                             
-                            {/* 休憩時間の表示 - よりコンパクトで控えめなデザイン */}
-                            {dayBreaks && dayBreaks.length > 0 && (
-                              <div className="mt-2 flex items-center text-xs text-gray-500 bg-gray-50 rounded-md px-2 py-1 border border-gray-200">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5 text-gray-400 mr-1 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                            {/* 実績の休憩時間を表示 - 緑系デザイン */}
+                            {clockbookBreaks && clockbookBreaks.length > 0 && (
+                              <div className="mt-2 flex items-center text-xs text-green-600 bg-green-50 rounded-md px-2 py-1 border border-green-200">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5 text-green-500 mr-1 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
                                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                                 </svg>
-                                <span className="font-medium mr-1 flex-shrink-0">休憩:</span>
+                                <span className="font-medium mr-1 flex-shrink-0">実績休憩:</span>
                                 
-                                {dayBreaks.length <= 2 ? (
+                                {clockbookBreaks.length <= 2 ? (
                                   // 休憩が2つ以下の場合はインラインで表示
                                   <span className="truncate">
-                                    {dayBreaks.map((brk, i) => (
-                                      <span key={i} className="whitespace-nowrap">
-                                        {brk.breakStart}-{brk.breakEnd}
-                                        {i < dayBreaks.length - 1 ? ', ' : ''}
+                                    {clockbookBreaks.map((br, i) => (
+                                      <span key={i} className="whitespace-nowrap text-green-700 bg-green-100 px-1.5 py-0.5 rounded mx-0.5">
+                                        {br.breakStart}-{br.breakEnd}
+                                        {i < clockbookBreaks.length - 1 ? '' : ''}
                                       </span>
                                     ))}
                                   </span>
                                 ) : (
                                   // 休憩が3つ以上の場合は件数と合計時間を表示
-                                  <span>
-                                    {dayBreaks.length}件 (合計: {calculateTotalBreakTime(dayBreaks)})
+                                  <span className="bg-green-100 px-1.5 py-0.5 rounded text-green-700">
+                                    {clockbookBreaks.length}件 (合計: {calculateTotalBreakTime(clockbookBreaks)})
                                   </span>
                                 )}
                               </div>
@@ -383,19 +428,19 @@ function MonthlyListSection({
                         </div>
                       )}
               
-                      {/* 業務詳細の表示（予定/実績に関わらず表示） - 落ち着いたおしゃれなデザイン */}
-                      {dayDetails && dayDetails.length > 0 && (
+                      {/* 業務詳細の表示（予定のみ） */}
+                      {plannedDetails && plannedDetails.length > 0 && (
                         <div className="mt-4">
                           <div className="mb-3 flex items-center justify-between">
                             <div className="flex items-center">
-                              <span className={`${IOS_TEXT_CLASS} px-3 py-1 rounded-full bg-gray-200 text-gray-700 text-xs font-medium`}>
-                                業務詳細
+                              <span className={`${IOS_TEXT_CLASS} px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-medium`}>
+                                予定業務詳細
                               </span>
                             </div>
-                            <span className="text-xs text-gray-400">{dayDetails.length}件</span>
+                            <span className="text-xs text-gray-400">{plannedDetails.length}件</span>
                           </div>
                           <div className="space-y-2.5">
-                            {dayDetails.map((detail, idx) => {
+                            {plannedDetails.map((detail, idx) => {
                               // nullチェックを追加
                               if (!detail || !detail.workTitle) {
                                 return null; // 無効なデータは描画しない
@@ -410,6 +455,69 @@ function MonthlyListSection({
                                 { bg: 'from-emerald-200 to-emerald-100', shadow: 'shadow-sm', hover: 'from-emerald-300 to-emerald-200', text: 'text-emerald-600' },
                                 { bg: 'from-indigo-200 to-indigo-100', shadow: 'shadow-sm', hover: 'from-indigo-300 to-indigo-200', text: 'text-indigo-600' },
                               ][colorIndex] || { bg: 'from-gray-200 to-gray-100', shadow: 'shadow-sm', hover: 'from-gray-300 to-gray-200', text: 'text-gray-600' };  // デフォルト値を追加
+                              
+                              return (
+                              <div 
+                                key={idx} 
+                                  className={`${IOS_OPTIMIZE_CLASS} group rounded-lg p-0.5 bg-gradient-to-r ${colorClasses.bg} hover:${colorClasses.hover} transition-all duration-200 transform hover:scale-[1.005] active:scale-[0.995] cursor-pointer ${colorClasses.shadow}`}
+                                  onClick={() => onWorkDetailClick(detail)}
+                                >
+                                  <div className="bg-white rounded-lg p-3 h-full">
+                                    <div className="flex flex-col">
+                                      <div className="flex items-center justify-between mb-1.5">
+                                        <h4 className={`${IOS_TEXT_CLASS} text-sm font-medium truncate group-hover:${colorClasses.text} transition-colors duration-200 flex-1`}>
+                                          {detail.workTitle}
+                                        </h4>
+                                        <div className="flex-shrink-0 ml-2">
+                                          <span className={`${IOS_TEXT_CLASS} px-2 py-0.5 text-xs font-medium bg-white rounded-md whitespace-nowrap transition-colors duration-200 border border-gray-100 text-gray-500`}>
+                                            {detail.workStart}-{detail.workEnd}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      
+                                      {detail.detail && (
+                                        <div className="relative overflow-hidden">
+                                          <p className={`${IOS_TEXT_CLASS} text-xs text-gray-500 line-clamp-1 group-hover:line-clamp-2 transition-all duration-300`}>
+                                          {detail.detail}
+                                        </p>
+                                          <div className="absolute bottom-0 left-0 right-0 h-3 bg-gradient-to-t from-white to-transparent group-hover:opacity-0 transition-opacity duration-200"></div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* 実績業務詳細の表示 */}
+                      {clockbookDetails && clockbookDetails.length > 0 && (
+                        <div className="mt-4">
+                          <div className="mb-3 flex items-center justify-between">
+                            <div className="flex items-center">
+                              <span className={`${IOS_TEXT_CLASS} px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-medium`}>
+                                実績業務詳細
+                              </span>
+                            </div>
+                            <span className="text-xs text-gray-400">{clockbookDetails.length}件</span>
+                          </div>
+                          <div className="space-y-2.5">
+                            {clockbookDetails.map((detail, idx) => {
+                              // nullチェックを追加
+                              if (!detail || !detail.workTitle) {
+                                return null; // 無効なデータは描画しない
+                              }
+                              
+                              // 業務内容に基づいて色を決定 - 実績用の緑系統の色
+                              const colorIndex = Math.abs((detail.workTitle.charCodeAt(0) || 0) % 4);
+                              const colorClasses = [
+                                { bg: 'from-green-200 to-green-100', shadow: 'shadow-sm', hover: 'from-green-300 to-green-200', text: 'text-green-600' },
+                                { bg: 'from-emerald-200 to-emerald-100', shadow: 'shadow-sm', hover: 'from-emerald-300 to-emerald-200', text: 'text-emerald-600' },
+                                { bg: 'from-teal-200 to-teal-100', shadow: 'shadow-sm', hover: 'from-teal-300 to-teal-200', text: 'text-teal-600' },
+                                { bg: 'from-lime-200 to-lime-100', shadow: 'shadow-sm', hover: 'from-lime-300 to-lime-200', text: 'text-lime-600' },
+                              ][colorIndex] || { bg: 'from-green-200 to-green-100', shadow: 'shadow-sm', hover: 'from-green-300 to-green-200', text: 'text-green-600' };
                               
                               return (
                               <div 

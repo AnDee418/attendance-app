@@ -17,6 +17,8 @@ export default function ClockbookForm({
   const [isLoading, setIsLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [portalContainer, setPortalContainer] = useState(null);
+  const [isPartTimer, setIsPartTimer] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleAttendanceChange = (e) => {
     setAttendance({ ...attendance, [e.target.name]: e.target.value });
@@ -28,8 +30,10 @@ export default function ClockbookForm({
     setBreakRecords(newBreakRecords);
   };
 
-  const addBreakRecord = () => {
-    setBreakRecords([...breakRecords, { breakStart: '', breakEnd: '', recordType: '出勤簿' }]);
+  const addBreakRecord = (breakData) => {
+    // breakDataパラメータが提供された場合はそれを使用、そうでなければデフォルト値
+    const newBreak = breakData || { breakStart: '', breakEnd: '', recordType: '出勤簿' };
+    setBreakRecords([...breakRecords, newBreak]);
   };
 
   const removeBreakRecord = (index) => {
@@ -41,6 +45,7 @@ export default function ClockbookForm({
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage('');
+    setIsSaving(true);
 
     try {
       // デバッグ用にログを追加
@@ -103,6 +108,7 @@ export default function ClockbookForm({
     } catch (error) {
       console.error("送信エラー:", error);
       setMessage(error.message || 'エラーが発生しました');
+      setIsSaving(false);
     }
   };
 
@@ -110,6 +116,8 @@ export default function ClockbookForm({
   useEffect(() => {
     const accountType = window.localStorage.getItem('userAccountType') || '';
     setUserAccountType(accountType);
+    // アルバイトかどうかをチェック
+    setIsPartTimer(accountType === 'アルバイト');
   }, []);
   
   // アカウントタイプに基づく勤務種別リストを取得
@@ -186,7 +194,8 @@ export default function ClockbookForm({
               startTime: existingAttendance[2] || '',
               endTime: existingAttendance[3] || '',
               workType: existingAttendance[4] || '出勤',
-              totalWorkTime: existingAttendance[6] || ''
+              totalWorkTime: existingAttendance[6] || '',
+              recordType: '出勤簿'
             }));
           }
         }
@@ -199,16 +208,35 @@ export default function ClockbookForm({
             row[4] === '出勤簿'
           );
           
+          console.log("既存の休憩データ:", existingBreaks);
+          
+          // 休憩データがあるかどうかで処理を分岐
           if (existingBreaks.length > 0) {
-            console.log("既存の休憩データ:", existingBreaks);
-            setBreakRecords(
-              existingBreaks.map(row => ({
+            // 有効な休憩データを抽出（開始・終了時間が両方入っているもの）
+            const validBreaks = existingBreaks
+              .filter(row => row[2] && row[3])
+              .map(row => ({
                 breakStart: row[2] || '',
                 breakEnd: row[3] || '',
                 recordType: '出勤簿'
-              }))
-            );
+              }));
+              
+            // 既存データを設定
+            if (validBreaks.length > 0) {
+              // 最後に編集用の空のレコードを追加（新規入力用）
+              validBreaks.push({ breakStart: '', breakEnd: '', recordType: '出勤簿' });
+              setBreakRecords(validBreaks);
+            } else {
+              // 有効な休憩がない場合は空のレコードだけを設定
+              setBreakRecords([{ breakStart: '', breakEnd: '', recordType: '出勤簿' }]);
+            }
+          } else {
+            // 休憩データがない場合は空のレコードを1つ設定
+            setBreakRecords([{ breakStart: '', breakEnd: '', recordType: '出勤簿' }]);
           }
+        } else {
+          // 休憩データがない場合は空のレコードを1つ設定
+          setBreakRecords([{ breakStart: '', breakEnd: '', recordType: '出勤簿' }]);
         }
         
         setIsLoading(false);
@@ -223,6 +251,8 @@ export default function ClockbookForm({
       fetchExistingData();
     } else {
       setIsLoading(false);
+      // 初期データが不足している場合もデフォルトの休憩レコードを設定
+      setBreakRecords([{ breakStart: '', breakEnd: '', recordType: '出勤簿' }]);
     }
   }, [initialAttendance.date, initialAttendance.employeeName]);
 
@@ -289,21 +319,21 @@ export default function ClockbookForm({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '1rem',
+        padding: '0.5rem',
         zIndex: 9999999,
       }}
     >
       <div 
         style={{
           backgroundColor: '#fff',
-          borderRadius: '0.5rem',
+          borderRadius: '0.75rem',
           boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
           width: '100%',
           maxWidth: '48rem',
           display: 'flex',
           flexDirection: 'column',
-          margin: '1rem',
-          maxHeight: '90vh',
+          margin: '0',
+          maxHeight: '95vh',
           position: 'relative',
         }}
       >
@@ -318,14 +348,34 @@ export default function ClockbookForm({
             padding: '1rem', 
             borderBottom: '1px solid #e5e7eb',
             zIndex: 1,
+            borderTopLeftRadius: '0.75rem',
+            borderTopRightRadius: '0.75rem',
           }}
         >
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <h2 style={{ 
+            fontSize: '1.25rem', 
+            fontWeight: 600, 
+            overflow: 'hidden', 
+            textOverflow: 'ellipsis', 
+            whiteSpace: 'nowrap' 
+          }}>
             {attendance.date} の勤務記録 {isLoading ? '(読み込み中...)' : ''}
           </h2>
           <button 
             onClick={onClose} 
-            style={{ color: '#4b5563', fontSize: '1.5rem', marginLeft: '0.5rem', flexShrink: 0 }}
+            style={{ 
+              color: '#4b5563', 
+              fontSize: '1.5rem', 
+              marginLeft: '0.5rem', 
+              flexShrink: 0,
+              width: '44px',
+              height: '44px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '50%',
+              touchAction: 'manipulation',
+            }}
           >
             &times;
           </button>
@@ -342,9 +392,10 @@ export default function ClockbookForm({
               overflowY: 'auto', 
               padding: '1rem', 
               flexGrow: 1,
+              WebkitOverflowScrolling: 'touch', // iOSのスクロールを滑らかに
             }}
           >
-            <form onSubmit={handleSubmit} style={{ marginTop: '1.5rem', marginBottom: '1.5rem' }}>
+            <form onSubmit={handleSubmit} style={{ marginTop: '0.5rem', marginBottom: '0.5rem' }}>
               <AttendanceForm 
                 attendance={attendance}
                 breakRecords={breakRecords}
@@ -353,6 +404,7 @@ export default function ClockbookForm({
                 onAddBreak={addBreakRecord}
                 onRemoveBreak={removeBreakRecord}
                 onWorkTypeChange={handleWorkTypeChange}
+                isPartTimer={isPartTimer}
               />
             </form>
           </div>
@@ -365,36 +417,71 @@ export default function ClockbookForm({
             padding: '1rem', 
             borderTop: '1px solid #e5e7eb', 
             display: 'flex', 
-            gap: '1rem',
+            gap: '0.75rem',
             zIndex: 1,
+            borderBottomLeftRadius: '0.75rem',
+            borderBottomRightRadius: '0.75rem',
           }}
         >
           <button 
             type="submit" 
             onClick={handleSubmit}
+            disabled={isSaving}
             style={{ 
               flex: 1, 
-              backgroundColor: '#2563eb', 
+              backgroundColor: isSaving ? '#3b82f6' : '#2563eb', 
               color: '#fff', 
-              padding: '0.75rem', 
+              padding: '0.875rem', 
               borderRadius: '0.5rem', 
               fontWeight: 500, 
               transition: 'all 0.2s',
+              fontSize: '1rem',
+              touchAction: 'manipulation',
+              userSelect: 'none',
+              WebkitTapHighlightColor: 'transparent',
+              minHeight: '56px',
+              position: 'relative',
+              overflow: 'hidden',
+              cursor: isSaving ? 'not-allowed' : 'pointer',
+              opacity: isSaving ? 0.8 : 1,
             }}
           >
-            保存
+            {isSaving ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                <div style={{ 
+                  width: '1.25rem', 
+                  height: '1.25rem', 
+                  borderRadius: '50%', 
+                  border: '2px solid rgba(255, 255, 255, 0.3)',
+                  borderTopColor: '#ffffff',
+                  animation: 'spin 1s linear infinite',
+                  display: 'inline-block'
+                }}></div>
+                <span>保存中...</span>
+              </div>
+            ) : (
+              '保存'
+            )}
           </button>
           <button 
             type="button"
             onClick={onClose}
+            disabled={isSaving}
             style={{ 
               flex: 1, 
               backgroundColor: '#f3f4f6', 
               color: '#374151', 
-              padding: '0.75rem', 
+              padding: '0.875rem', 
               borderRadius: '0.5rem', 
               fontWeight: 500, 
               transition: 'all 0.2s',
+              fontSize: '1rem',
+              touchAction: 'manipulation',
+              userSelect: 'none',
+              WebkitTapHighlightColor: 'transparent',
+              minHeight: '56px',
+              cursor: isSaving ? 'not-allowed' : 'pointer',
+              opacity: isSaving ? 0.5 : 1,
             }}
           >
             キャンセル
@@ -407,4 +494,16 @@ export default function ClockbookForm({
 
   // Reactのcreatecreateを使用してDOMツリーの最上位にモーダルをレンダリング
   return createPortal(modalContent, portalContainer);
+}
+
+// CSSアニメーション用のスタイルを追加
+const styleElement = typeof document !== 'undefined' ? document.createElement('style') : null;
+if (styleElement) {
+  styleElement.textContent = `
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  `;
+  document.head.appendChild(styleElement);
 } 

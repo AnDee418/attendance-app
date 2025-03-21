@@ -21,15 +21,12 @@ const formatMonth = (date) => {
 // 規定勤務時間の定義：設定値から該当期間の労働時間を取得する（21日を境に翌月の設定を使用）
 const getStandardWorkingHours = (date, settingsData) => {
   if (!settingsData || !settingsData.workHours) return 160;
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
-  let configMonth = month;
-  // 21日以降は翌月の設定を利用（年末の場合は1月に繰り越す）
-  if (day >= 21) {
-    configMonth = month + 1;
-    if (configMonth > 12) configMonth = 1;
-  }
-  return settingsData.workHours[configMonth.toString()] || 160;
+  
+  // 選択された月を基準に計算
+  const selectedMonth = date.getMonth() + 1; // JavaScript monthは0オリジン
+  
+  // 常に選択された月のデータを返す（日付に関わらず）
+  return settingsData.workHours[selectedMonth.toString()] || 160;
 };
 
 // 勤務時間計算用ヘルパー関数

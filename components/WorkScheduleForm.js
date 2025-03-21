@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 export default function AttendanceForm({
   attendance,
@@ -7,9 +7,17 @@ export default function AttendanceForm({
   onBreakChange,
   onAddBreak,
   onRemoveBreak,
+  isPartTimer = false // アルバイトユーザー用のフラグを追加
 }) {
   // 休暇系の勤務種別かどうかを判定
   const isLeaveType = ['公休', '有給休暇'].includes(attendance.workType);
+
+  // 時間の刻みを生成する関数
+  const getMinuteOptions = () => {
+    return isPartTimer 
+      ? ['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'] // アルバイト用5分刻み
+      : ['00', '15', '30', '45']; // 通常ユーザー用15分刻み
+  };
 
   // 勤務時間の詳細を計算する関数
   const calculateTimeDetails = () => {
@@ -160,7 +168,7 @@ export default function AttendanceForm({
                     className="flex-1 p-3 border border-l-0 border-gray-300 rounded-r-lg bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                   >
                     <option value="">分</option>
-                    {['00', '15', '30', '45'].map(minute => (
+                    {getMinuteOptions().map(minute => (
                       <option key={minute} value={minute}>{minute}分</option>
                     ))}
                   </select>
@@ -196,7 +204,7 @@ export default function AttendanceForm({
                     className="flex-1 p-3 border border-l-0 border-gray-300 rounded-r-lg bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                   >
                     <option value="">分</option>
-                    {['00', '15', '30', '45'].map(minute => (
+                    {getMinuteOptions().map(minute => (
                       <option key={minute} value={minute}>{minute}分</option>
                     ))}
                   </select>
@@ -248,7 +256,7 @@ export default function AttendanceForm({
                       className="flex-1 p-3 border border-l-0 border-gray-300 rounded-r-lg bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                     >
                       <option value="">分</option>
-                      {['00', '15', '30', '45'].map(minute => (
+                      {getMinuteOptions().map(minute => (
                         <option key={minute} value={minute}>{minute}分</option>
                       ))}
                     </select>
@@ -283,7 +291,7 @@ export default function AttendanceForm({
                       className="flex-1 p-3 border border-l-0 border-gray-300 rounded-r-lg bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                     >
                       <option value="">分</option>
-                      {['00', '15', '30', '45'].map(minute => (
+                      {getMinuteOptions().map(minute => (
                         <option key={minute} value={minute}>{minute}分</option>
                       ))}
                     </select>

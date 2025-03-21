@@ -487,6 +487,26 @@ export default function MySchedulePage() {
       setIsSubmitting(true);
       setSubmitError('');
 
+      // 既存の休憩データを削除
+      const deleteBreakRes = await fetch(`/api/break?date=${attendanceData.date}&employeeName=${attendanceData.employeeName}&recordType=予定`, {
+        method: 'DELETE'
+      });
+      
+      if (!deleteBreakRes.ok) {
+        const deleteBreakJson = await deleteBreakRes.json();
+        console.error('休憩データの削除に失敗:', deleteBreakJson);
+      }
+
+      // 既存の業務詳細データを削除
+      const deleteWorkDetailRes = await fetch(`/api/workdetail?date=${attendanceData.date}&employeeName=${attendanceData.employeeName}&recordType=予定`, {
+        method: 'DELETE'
+      });
+      
+      if (!deleteWorkDetailRes.ok) {
+        const deleteWorkDetailJson = await deleteWorkDetailRes.json();
+        console.error('業務詳細データの削除に失敗:', deleteWorkDetailJson);
+      }
+
       // 勤怠記録の送信
       const attendanceRes = await fetch('/api/attendance', {
         method: 'POST',
@@ -535,22 +555,29 @@ export default function MySchedulePage() {
 
       // 業務詳細の送信 - 複数の業務詳細を一括で送信するよう修正
       if (workDetailRecords && workDetailRecords.length > 0) {
-        const workDetailRes = await fetch('/api/workdetail', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            date: attendanceData.date,
-            employeeName: attendanceData.employeeName,
-            workDetails: workDetailRecords,  // 複数の業務詳細を配列として送信
-            recordType: '予定'
-          }),
-        });
+        // 空のタイトルや詳細のある行をフィルタリング
+        const validWorkDetails = workDetailRecords.filter(detail => 
+          detail.workTitle || detail.detail || (detail.workStart && detail.workEnd)
+        );
+        
+        if (validWorkDetails.length > 0) {
+          const workDetailRes = await fetch('/api/workdetail', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              date: attendanceData.date,
+              employeeName: attendanceData.employeeName,
+              workDetails: validWorkDetails,  // 有効なデータのみ送信
+              recordType: '予定'
+            }),
+          });
 
-        const workDetailJson = await workDetailRes.json();
-        if (!workDetailRes.ok) {
-          throw new Error(workDetailJson.error || '業務詳細の送信に失敗しました');
+          const workDetailJson = await workDetailRes.json();
+          if (!workDetailRes.ok) {
+            throw new Error(workDetailJson.error || '業務詳細の送信に失敗しました');
+          }
         }
       }
 
@@ -576,6 +603,16 @@ export default function MySchedulePage() {
     try {
       setIsSubmitting(true);
       setSubmitError('');
+
+      // 既存の休憩データを削除
+      const deleteBreakRes = await fetch(`/api/break?date=${attendanceData.date}&employeeName=${attendanceData.employeeName}&recordType=出勤簿`, {
+        method: 'DELETE'
+      });
+      
+      if (!deleteBreakRes.ok) {
+        const deleteBreakJson = await deleteBreakRes.json();
+        console.error('休憩データの削除に失敗:', deleteBreakJson);
+      }
 
       // 勤怠記録の送信
       const attendanceRes = await fetch('/api/attendance', {
