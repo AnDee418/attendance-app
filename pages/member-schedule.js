@@ -159,8 +159,8 @@ const getDaysInMonth = (date) => {
 export default function MemberSchedulePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  // クエリパラメータからユーザー識別子を取得（schedules.js で設定した user パラメータ）
-  const { user: userQuery } = router.query;
+  // クエリパラメータからユーザー識別子と年月を取得
+  const { user: userQuery, year: yearQuery, month: monthQuery } = router.query;
   
   const [userData, setUserData] = useState(null);
   const [schedules, setSchedules] = useState([]);
@@ -168,8 +168,21 @@ export default function MemberSchedulePage() {
   const [settings, setSettings] = useState(null);
   const [breakData, setBreakData] = useState([]);
   
-  // 現在の表示月（デフォルトは当月）
+  // 現在の表示月（クエリパラメータがある場合はそれを使用）
   const [currentDate, setCurrentDate] = useState(new Date());
+  
+  // URLパラメータから日付を設定
+  useEffect(() => {
+    if (yearQuery && monthQuery) {
+      const year = parseInt(yearQuery);
+      const month = parseInt(monthQuery) - 1; // JavaScriptの月は0始まり
+      
+      if (!isNaN(year) && !isNaN(month)) {
+        const newDate = new Date(year, month, 1);
+        setCurrentDate(newDate);
+      }
+    }
+  }, [yearQuery, monthQuery]);
   
   // スワイプハンドラーを追加
   const [swipeDirection, setSwipeDirection] = useState(null);
@@ -191,30 +204,48 @@ export default function MemberSchedulePage() {
     const fetchBasicData = async () => {
       setIsLoading(true);
       try {
-        // ユーザー情報と基本スケジュールのみ取得
-        const [usersRes, schedulesRes] = await Promise.all([
-          fetch('/api/users'),
-          fetch('/api/attendance')
-        ]);
+        // ユーザー情報取得
+        const usersRes = await fetch('/api/users');
+        let foundUser = null;
         
         if (usersRes.ok) {
           const userData = await usersRes.json();
           if (userData.data) {
-            const foundUser = userData.data.find(u => u.data[0] === decodeURIComponent(userQuery));
+            foundUser = userData.data.find(u => u.data[0] === decodeURIComponent(userQuery));
             setUserData(foundUser);
           }
         }
         
-        if (schedulesRes.ok) {
-          const schedulesData = await schedulesRes.json();
-          if (schedulesData.data) {
-            // 現在月のデータのみをフィルタリング
-            const filteredData = schedulesData.data.filter(s => {
-              const scheduleDate = new Date(s[0]);
-              return scheduleDate.getMonth() === currentDate.getMonth() && 
-                     scheduleDate.getFullYear() === currentDate.getFullYear();
-            });
-            setSchedules(filteredData);
+        // 選択された月に応じたスケジュールデータを取得
+        if (foundUser) {
+          // 前月のデータも取得するために、前月の情報を計算
+          const year = currentDate.getFullYear();
+          const month = currentDate.getMonth() + 1; // 1-12の範囲
+          let prevMonth = month - 1;
+          let prevYear = year;
+          
+          if (prevMonth < 1) {
+            prevMonth = 12;
+            prevYear = year - 1;
+          }
+          
+          console.log(`データ取得: ${year}年${month}月と${prevYear}年${prevMonth}月`);
+          
+          // 現在の月と前月のデータを両方取得
+          const [currentMonthResponse, prevMonthResponse] = await Promise.all([
+            fetch(`/api/attendance?month=${month}&year=${year}&limit=1000`),
+            fetch(`/api/attendance?month=${prevMonth}&year=${prevYear}&limit=1000`)
+          ]);
+          
+          if (currentMonthResponse.ok && prevMonthResponse.ok) {
+            const currentMonthData = await currentMonthResponse.json();
+            const prevMonthData = await prevMonthResponse.json();
+            
+            // 両方のデータを結合
+            const combinedData = [...(prevMonthData.data || []), ...(currentMonthData.data || [])];
+            setSchedules(combinedData);
+            
+            console.log(`取得データ: 前月=${prevMonthData.data?.length || 0}件, 当月=${currentMonthData.data?.length || 0}件, 合計=${combinedData.length}件`);
           }
         }
         
@@ -309,11 +340,23 @@ export default function MemberSchedulePage() {
       .catch(err => console.error('Error fetching break data:', err));
   }, [userData]);
   
-  // 月移動用の関数
+  // 月移動用の関数を修正
   const handleMonthChange = (delta) => {
     const newDate = new Date(currentDate);
     newDate.setMonth(newDate.getMonth() + delta);
     setCurrentDate(newDate);
+    
+    // URLも更新
+    const newYear = newDate.getFullYear();
+    const newMonth = newDate.getMonth() + 1;
+    router.push({
+      pathname: '/member-schedule',
+      query: { 
+        user: userQuery,
+        year: newYear,
+        month: newMonth
+      }
+    }, undefined, { shallow: true });
   };
   
   // 現在のユーザースケジュールをフィルタリング

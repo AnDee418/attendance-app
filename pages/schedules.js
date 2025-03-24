@@ -753,7 +753,7 @@ export default function SchedulesPage() {
                   return (
                     <Link
                       key={user.rowIndex}
-                      href={`/member-schedule?user=${encodeURIComponent(user.data[0])}`}
+                      href={`/member-schedule?user=${encodeURIComponent(user.data[0])}&year=${currentDate.getFullYear()}&month=${currentDate.getMonth() + 1}`}
                       className="block h-full"
                     >
                       <div className="bg-white rounded-xl p-4 h-full

@@ -7,6 +7,7 @@ import AttendanceForm from '../components/AttendanceForm';
 import WorkDetailModal from '../components/WorkDetailModal';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ClockbookForm from '../components/ClockbookForm';
+import ScheduleForm from '../components/ScheduleForm';
 
 // ヘルパー関数: "HH:MM" を分に変換
 const timeToMinutes = (timeStr) => {
@@ -318,6 +319,7 @@ export default function HomePage() {
   }]);
   const [editMessage, setEditMessage] = useState('');
   const [selectedWorkDetail, setSelectedWorkDetail] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // ユーザー情報のステートを追加
   const [userAccountType, setUserAccountType] = useState('');
@@ -878,9 +880,9 @@ export default function HomePage() {
     }
   };
 
-  const handleEditSubmit = async (e) => {
-    e.preventDefault();
+  const handleEditSubmit = async (attendanceData, breakRecords, workDetailRecords) => {
     setEditMessage('');
+    setIsSubmitting(true);
 
     try {
       // まず既存のデータを削除
@@ -905,46 +907,74 @@ export default function HomePage() {
       const resAttendance = await fetch('/api/attendance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editAttendance),
+        body: JSON.stringify({
+          date: attendanceData.date,
+          employeeName: attendanceData.employeeName,
+          startTime: attendanceData.startTime,
+          endTime: attendanceData.endTime,
+          workType: attendanceData.workType,
+          recordType: '予定',
+          totalWorkTime: attendanceData.totalWorkTime
+        }),
       });
       if (!resAttendance.ok) throw new Error('勤務記録送信エラー');
 
-      // 休憩記録送信
-      for (let record of editBreakRecords) {
-        if (record.breakStart || record.breakEnd) {
-          const resBreak = await fetch('/api/break', {
+      // 休憩記録送信 - 修正：配列送信ではなく個別送信に変更
+      if (breakRecords && breakRecords.length > 0) {
+        // 有効な休憩記録（開始・終了時間が入力されているもの）のみ送信
+        const validBreakRecords = breakRecords.filter(record => 
+          record.breakStart && record.breakEnd
+        );
+
+        // 各休憩記録を個別に送信
+        for (const record of validBreakRecords) {
+          const breakRes = await fetch('/api/break', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+            },
             body: JSON.stringify({
-              date: editAttendance.date,
-              employeeName: editAttendance.employeeName,
+              date: attendanceData.date,
+              employeeName: attendanceData.employeeName,
               breakStart: record.breakStart,
               breakEnd: record.breakEnd,
-              recordType: record.recordType,
+              recordType: '予定'
             }),
           });
-          if (!resBreak.ok) throw new Error('休憩記録送信エラー');
+
+          if (!breakRes.ok) {
+            const errorData = await breakRes.json();
+            throw new Error(errorData.error || '休憩記録送信エラー');
+          }
         }
       }
 
-      // 業務詳細送信
-      for (let detail of editWorkDetails) {
-        if (detail.workTitle || detail.workStart || detail.workEnd || detail.detail) {
-          const resWork = await fetch('/api/workdetail', {
+      // 業務詳細の送信 - workDetailsフィールドを使用するように修正
+      if (workDetailRecords && workDetailRecords.length > 0) {
+        // 空のタイトルや詳細のある行をフィルタリング
+        const validWorkDetails = workDetailRecords.filter(detail => 
+          detail.workTitle || detail.detail || (detail.workStart && detail.workEnd)
+        );
+        
+        if (validWorkDetails.length > 0) {
+          // APIの実装に合わせて、配列として送信
+          const workDetailRes = await fetch('/api/workdetail', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+            },
             body: JSON.stringify({
-              date: editAttendance.date,
-              employeeName: editAttendance.employeeName,
-              workTitle: detail.workTitle,
-              workStart: detail.workStart,
-              workEnd: detail.workEnd,
-              detail: detail.detail,
-              workCategory: detail.workCategory,
-              recordType: detail.recordType,
+              date: attendanceData.date,
+              employeeName: attendanceData.employeeName,
+              workDetails: validWorkDetails,
+              recordType: '予定'
             }),
           });
-          if (!resWork.ok) throw new Error('業務詳細送信エラー');
+          
+          if (!workDetailRes.ok) {
+            const errorData = await workDetailRes.json();
+            throw new Error(errorData.error || '業務詳細の送信エラー');
+          }
         }
       }
 
@@ -958,6 +988,8 @@ export default function HomePage() {
     } catch (error) {
       console.error('Error updating schedule:', error);
       setEditMessage(error.message || '予定の更新に失敗しました');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -1493,8 +1525,8 @@ export default function HomePage() {
             onClose={() => setSelectedWorkDetail(null)} 
           />
 
-          {/* 今週の業務詳細セクション */}
-          <section className="bg-white rounded-2xl shadow-lg p-4">
+          {/* 今週の業務詳細セクション - 復元 */}
+          <section className="bg-white rounded-2xl shadow-lg p-4 mb-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
                 <h2 className="text-base font-semibold text-gray-600">今週の業務</h2>
@@ -1591,144 +1623,48 @@ export default function HomePage() {
               <p className="text-sm text-gray-500 text-center py-4">業務詳細はありません</p>
             )}
           </section>
+
+          {/* ScheduleFormを使用した予定編集モーダル */}
+          {showEditModal && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center">
+              <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowEditModal(false)} />
+              <div className="relative bg-white rounded-2xl shadow-xl w-full h-full sm:h-auto sm:max-w-3xl max-h-[90vh] overflow-y-auto z-[101]">
+                <ScheduleForm
+                  initialAttendance={editAttendance}
+                  initialBreakRecords={editBreakRecords}
+                  initialWorkDetails={editWorkDetails}
+                  onSubmit={handleEditSubmit}
+                  onClose={() => setShowEditModal(false)}
+                />
+                {editMessage && (
+                  <div className="p-4 bg-green-50 text-green-700 rounded-b-2xl text-center font-medium">
+                    {editMessage}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+          
+          {/* 勤務実績報告モーダル */}
+          {showReportModal && (
+            <ClockbookForm
+              initialAttendance={reportAttendance}
+              onSubmit={handleReportSubmit}
+              onClose={() => setShowReportModal(false)}
+            />
+          )}
         </>
       )}
-      {showEditModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50 p-0 sm:p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full h-full sm:h-auto sm:max-w-3xl overflow-y-auto sm:max-h-[90vh]">
-            <div className="sticky top-0 bg-white z-10 flex justify-between items-center p-4 border-b">
-              <h2 className="text-xl sm:text-2xl font-semibold">{editAttendance.date} の予定修正</h2>
-              <button 
-                onClick={() => setShowEditModal(false)} 
-                className="text-gray-600 hover:text-gray-800 text-3xl p-2"
-              >
-                &times;
-              </button>
-            </div>
-            <div className="p-4">
-              <form onSubmit={handleEditSubmit} className="space-y-6">
-                <AttendanceForm 
-                  attendance={editAttendance}
-                  breakRecords={editBreakRecords}
-                  onAttendanceChange={handleEditAttendanceChange}
-                  onBreakChange={handleEditBreakChange}
-                  onAddBreak={addEditBreakRecord}
-                  onRemoveBreak={removeEditBreakRecord}
-                />
 
-                {/* 業務詳細フォーム */}
-                <section className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="text-xl font-semibold mb-3">業務詳細</h3>
-                  {editWorkDetails.map((detail, index) => (
-                    <div key={index} className="mb-5 border-b border-gray-200 pb-4">
-                      <div className="flex flex-col sm:flex-row sm:space-x-4 mb-3">
-                        <div className="flex-1 mb-3 sm:mb-0">
-                          <label className="block mb-2 font-medium">種別:</label>
-                          <select
-                            name="workCategory"
-                            value={detail.workCategory}
-                            onChange={(e) => handleEditWorkDetailChange(index, e)}
-                            className="w-full p-3 border rounded-lg text-base"
-                          >
-                            <option value="業務">業務</option>
-                            <option value="販売会">販売会</option>
-                            <option value="外出">外出</option>
-                            <option value="測定会">測定会</option>
-                            <option value="ミーティング">ミーティング</option>
-                          </select>
-                        </div>
-                        <div className="flex-1">
-                          <label className="block mb-2 font-medium">業務タイトル:</label>
-                          <input 
-                            type="text" 
-                            name="workTitle" 
-                            placeholder="業務タイトル" 
-                            value={detail.workTitle} 
-                            onChange={(e) => handleEditWorkDetailChange(index, e)} 
-                            className="w-full p-3 border rounded-lg text-base" 
-                          />
-                        </div>
-                      </div>
-                      <div className="flex flex-col sm:flex-row sm:space-x-4 mb-3">
-                        <div className="flex-1 mb-3 sm:mb-0">
-                          <label className="block mb-2 font-medium">業務開始:</label>
-                          <input 
-                            type="time" 
-                            name="workStart" 
-                            value={detail.workStart} 
-                            onChange={(e) => handleEditWorkDetailChange(index, e)} 
-                            className="w-full p-3 border rounded-lg text-base" 
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <label className="block mb-2 font-medium">業務終了:</label>
-                          <input 
-                            type="time" 
-                            name="workEnd" 
-                            value={detail.workEnd} 
-                            onChange={(e) => handleEditWorkDetailChange(index, e)} 
-                            className="w-full p-3 border rounded-lg text-base" 
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block mb-2 font-medium">詳細:</label>
-                        <textarea
-                          name="detail"
-                          placeholder="詳細を記入してください"
-                          value={detail.detail}
-                          onChange={(e) => handleEditWorkDetailChange(index, e)}
-                          className="w-full p-3 border rounded-lg text-base h-28"
-                        />
-                      </div>
-                      {editWorkDetails.length > 1 && (
-                        <button 
-                          type="button" 
-                          onClick={() => removeEditWorkDetail(index)}
-                          className="mt-3 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition flex items-center justify-center gap-1"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                          削除
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                  <button 
-                    type="button" 
-                    onClick={addEditWorkDetail} 
-                    className="w-full bg-green-500 text-white p-3 rounded-lg hover:bg-green-600 transition flex items-center justify-center gap-2"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                    業務詳細を追加
-                  </button>
-                </section>
-
-                <button 
-                  type="submit" 
-                  className="w-full bg-blue-600 text-white p-4 rounded-lg hover:bg-blue-700 transition text-base font-medium"
-                >
-                  更新
-                </button>
-              </form>
-              {editMessage && (
-                <p className="mt-4 text-center text-green-600 font-medium text-base">{editMessage}</p>
-              )}
-            </div>
+      {/* 送信中のローディングオーバーレイ */}
+      {isSubmitting && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[200]">
+          <div className="bg-white p-6 rounded-lg shadow-xl text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p className="text-lg font-medium text-gray-700">登録中...</p>
+            <p className="text-sm text-gray-500 mt-1">処理が完了するまでお待ちください</p>
           </div>
         </div>
-      )}
-      
-      {/* 勤務実績報告モーダル */}
-      {showReportModal && (
-        <ClockbookForm
-          initialAttendance={reportAttendance}
-          onSubmit={handleReportSubmit}
-          onClose={() => setShowReportModal(false)}
-        />
       )}
     </div>
   );

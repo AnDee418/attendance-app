@@ -486,7 +486,7 @@ const SummaryCard = ({
   useEffect(() => {
     if (userData && userSchedules?.length > 0) {
       // データが揃った時だけ計算を実行
-      console.log('SummaryCard: 計算開始 - ユーザー:', userData?.data[0]);
+      console.log('SummaryCard: 計算開始 - ユーザー:', userData?.data[0], '月:', currentDate.getFullYear() + '年' + (currentDate.getMonth() + 1) + '月');
       
       const actualHours = calculateActualWorkingHoursForClock(userSchedules, currentDate, userData.data[0]);
       const plannedHours = calculatePlannedWorkingHours(userSchedules, currentDate, userData.data[0]);
@@ -503,7 +503,8 @@ const SummaryCard = ({
         実勤務時間: actualHours.toFixed(1),
         予定勤務時間: plannedHours.toFixed(1),
         標準時間: standardHours.toFixed(1),
-        進捗率: `${progress}%`
+        進捗率: `${progress}%`,
+        月: currentDate.getFullYear() + '年' + (currentDate.getMonth() + 1) + '月'
       });
     }
   }, [
