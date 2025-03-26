@@ -8,10 +8,13 @@ import {
   ShieldCheckIcon, 
   BriefcaseIcon, 
   DocumentTextIcon, 
-  UserIcon 
+  UserIcon,
+  ViewColumnsIcon,
+  ListBulletIcon
 } from '@heroicons/react/24/outline';
 import LoadingSpinner from '../components/LoadingSpinner';
 import MonthlyListSection from '../components/MonthlyListSection';
+import ListView from '../components/ListView';
 
 // 月の表示用ヘルパー関数
 const formatMonth = (date) => {
@@ -429,36 +432,23 @@ const fetchVacationRequests = async () => {
 // データフェッチ関数を修正して前月のデータも取得するように変更
 const fetchUserSchedules = async (month, year) => {
   try {
-    // 前月のデータも取得するために、前月の情報を計算
-    let prevMonth = month - 1;
-    let prevYear = year;
-    if (prevMonth < 1) {
-      prevMonth = 12;
-      prevYear = year - 1;
-    }
+    console.log(`データ取得: ${year}年${month}月の勤怠期間（前月21日〜当月20日）`);
     
-    console.log(`データ取得: ${year}年${month}月と${prevYear}年${prevMonth}月`);
+    // 単一のAPIコールで必要なデータを取得（APIは21日〜20日のデータを返すよう修正済み）
+    const response = await fetch(`/api/attendance?month=${month}&year=${year}&limit=1000`);
     
-    // 現在の月と前月のデータを両方取得
-    const [currentMonthResponse, prevMonthResponse] = await Promise.all([
-      fetch(`/api/attendance?month=${month}&year=${year}&limit=1000`), // 十分な量のデータを取得
-      fetch(`/api/attendance?month=${prevMonth}&year=${prevYear}&limit=1000`)
-    ]);
-    
-    if (!currentMonthResponse.ok || !prevMonthResponse.ok) {
+    if (!response.ok) {
       throw new Error('スケジュールの取得に失敗しました');
     }
     
-    const currentMonthData = await currentMonthResponse.json();
-    const prevMonthData = await prevMonthResponse.json();
+    const data = await response.json();
     
-    // 両方のデータを結合
-    const combinedData = [...(prevMonthData.data || []), ...(currentMonthData.data || [])];
-    console.log(`取得データ: 前月=${prevMonthData.data?.length || 0}件, 当月=${currentMonthData.data?.length || 0}件, 合計=${combinedData.length}件`);
+    console.log(`取得データ: ${data.data?.length || 0}件`);
     
     // 重複チェック - デバッグ用
     const dateMap = {};
-    combinedData.forEach(item => {
+    const scheduleData = data.data || [];
+    scheduleData.forEach(item => {
       if (Array.isArray(item) && item[0] && item[1] && item[5]) {
         const key = `${item[0]}_${item[1]}_${item[5]}`;
         if (dateMap[key]) {
@@ -477,7 +467,7 @@ const fetchUserSchedules = async (month, year) => {
         console.log(`重複エントリ: ${key}, ${count}回出現`);
       });
     
-    return combinedData;
+    return scheduleData;
   } catch (error) {
     console.error('Error:', error);
     return [];
@@ -494,6 +484,8 @@ export default function SchedulesPage() {
   const [vacationRequests, setVacationRequests] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [userWorkHours, setUserWorkHours] = useState({});
+  const [viewMode, setViewMode] = useState('user'); // 'user' or 'list'
+  const [workDetails, setWorkDetails] = useState([]);
 
   // ユーザーの表示フィルタリング関数
   const filterUsers = (allUsers) => {
@@ -582,6 +574,23 @@ export default function SchedulesPage() {
       setVacationRequests(data);
     };
     getVacationRequests();
+  }, []);
+
+  // 業務詳細データを取得
+  useEffect(() => {
+    const fetchWorkDetails = async () => {
+      try {
+        const response = await fetch('/api/workdetail');
+        const data = await response.json();
+        if (data.data) {
+          setWorkDetails(data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching work details:', error);
+      }
+    };
+
+    fetchWorkDetails();
   }, []);
 
   // ユーザー別の勤務時間計算
@@ -689,235 +698,286 @@ export default function SchedulesPage() {
           </div>
         </div>
       </div>
-      
-      {/* ユーザーカードグリッドを更新 */}
-      <div className="space-y-8">
-        {Object.entries(groupedUsers).map(([accountType, departments]) => (
-          <div key={accountType} className="space-y-6">
-            {/* アカウント種別ヘッダー */}
-            <div className="flex items-center gap-4">
-              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg shadow-sm 
-                ${accountTypes[accountType]?.bgColor || 'bg-gray-100'}`}>
-                {accountTypes[accountType]?.icon || <UserIcon className="h-5 w-5 text-gray-500" />}
-                <span className={`font-bold ${accountTypes[accountType]?.textColor || 'text-gray-700'}`}>
-                  {accountType}
-                </span>
-                <span className="text-sm text-gray-500">
-                  {Object.values(departments).reduce((acc, curr) => acc + curr.length, 0)}名
-                </span>
-              </div>
-              
-              {/* 所属グループタグ */}
-              <div className="flex items-center gap-2 flex-wrap">
-                {Object.entries(departments).map(([department, departmentUsers]) => (
-                  <div key={department} 
-                    className="flex items-center gap-1.5 px-2.5 py-1 bg-white rounded-full 
-                      text-sm text-gray-600 border border-gray-100 shadow-sm">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
-                    {department}
-                    <span className="text-gray-400">{departmentUsers.length}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
 
-            {/* ユーザーカードグリッド */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Object.entries(departments).map(([_, departmentUsers]) => 
-                departmentUsers.map((user) => {
-                  const userName = user.data[0];
-                  
-                  // userWorkHoursが確実に存在するか確認
-                  if (!userWorkHours[userName]) {
-                    console.warn(`${userName}の事前計算データがありません`);
-                  }
-                  
-                  // 事前計算の結果を使用（再計算しない）
-                  const userHour = userWorkHours[userName] || { planned: 0, actual: 0 };
-                  const actualHours = userHour.actual;
-                  const plannedWorkingHours = userHour.planned;
-                  const standardHours = getStandardWorkingHours(currentDate, settings);
-                  
-                  console.log(`${userName} カード表示時間: 予定=${plannedWorkingHours.toFixed(1)}h, 実績=${actualHours.toFixed(1)}h, 標準=${standardHours}h`);
-                  
-                  // 勤務種別のカウント計算のみはユーザーフィルタが必要
-                  const plannedCounts = calculateWorkTypeCounts(
-                    schedules.filter(s => s[1] === userName),
-                    '予定'
-                  );
-                  const clockbookCounts = calculateWorkTypeCounts(
-                    schedules.filter(s => s[1] === userName),
-                    '出勤簿'
-                  );
-
-                  return (
-                    <Link
-                      key={user.rowIndex}
-                      href={`/member-schedule?user=${encodeURIComponent(user.data[0])}&year=${currentDate.getFullYear()}&month=${currentDate.getMonth() + 1}`}
-                      className="block h-full"
-                    >
-                      <div className="bg-white rounded-xl p-4 h-full
-                        shadow-sm relative
-                        transition-all duration-200
-                        hover:shadow-md hover:bg-gray-50/50
-                        active:bg-gray-100/70">
-                        
-                        {/* ユーザー情報部分 - レイアウトを調整 */}
-                        <div className="flex items-start gap-4 mb-4">
-                          <div className="flex-shrink-0">
-                            {user.data[6] ? (
-                              <img
-                                src={user.data[6]}
-                                alt={user.data[0]}
-                                className="w-16 h-16 rounded-full object-cover border-2 border-gray-100"
-                              />
-                            ) : (
-                              <UserCircleIcon className="w-16 h-16 text-gray-400" />
-                            )}
-                          </div>
-                          <div className="flex-grow min-w-0">
-                            <h2 className="text-2xl font-bold text-gray-900 truncate">{user.data[0]}</h2>
-                            <div className="flex flex-wrap items-center gap-2 mt-1">
-                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full ${
-                                accountTypes[user.data[5]]?.bgColor || 'bg-gray-100'
-                              } ${accountTypes[user.data[5]]?.textColor || 'text-gray-700'}`}>
-                                {accountTypes[user.data[5]]?.icon}
-                                <span className="text-xs font-medium">{user.data[5]}</span>
-                              </span>
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-100 text-xs font-medium text-gray-700">
-                                {user.data[4]}
-                              </span>
-                            </div>
-                          </div>
-                          {/* タップ詳細メッセージ */}
-                          <span className="text-xs flex items-center gap-0.5 text-blue-500 font-medium">
-                            <span className="w-1 h-1 rounded-full bg-blue-400 animate-pulse"></span>
-                            詳細
-                          </span>
-                        </div>
-
-                        {/* 以降のコンテンツ - グリッドレイアウトに変更 */}
-                        <div className="flex gap-4">
-                          {/* 勤務時間セクション */}
-                          <div className={`relative flex flex-col p-3 rounded-lg border ${
-                            ['業務', 'アルバイト'].includes(user.data[5])
-                              ? 'bg-purple-50/80 border-purple-100' 
-                              : 'bg-blue-50/80 border-blue-100'
-                          } w-3/5`}>
-                            <span className="text-sm text-gray-500">
-                              {['業務', 'アルバイト'].includes(user.data[5]) ? '実勤務時間' : '予定勤務時間'}
-                            </span>
-                            <div className="flex mt-1">
-                              <div className="w-1/2 flex items-center justify-center">
-                                <div className="flex items-baseline">
-                                  <span className={`${['業務', 'アルバイト'].includes(user.data[5]) ? 'text-2xl' : 'text-xl'} font-bold ${['業務', 'アルバイト'].includes(user.data[5]) ? 'text-purple-600' : 'text-blue-600'}`}>
-                                    {roundToOneDecimalPlace(['業務', 'アルバイト'].includes(user.data[5]) ? actualHours : plannedWorkingHours).toFixed(1)}
-                                  </span>
-                                  <span className={`ml-1 ${['業務', 'アルバイト'].includes(user.data[5]) ? 'text-lg' : 'text-base'} ${['業務', 'アルバイト'].includes(user.data[5]) ? 'text-purple-500' : 'text-blue-500'}`}>
-                                    h
-                                  </span>
-                                </div>
-                              </div>
-                              <div className={`w-px ${['業務', 'アルバイト'].includes(user.data[5]) ? 'bg-purple-200' : 'bg-blue-200'}`}></div>
-                              <div className="w-1/2 flex items-center justify-center">
-                                {(() => {
-                                  // 丸め誤差を修正
-                                  const displayValue = ['業務', 'アルバイト'].includes(user.data[5]) ? actualHours : plannedWorkingHours;
-                                  const diff = roundToOneDecimalPlace(Math.abs(displayValue - standardHours));
-                                  return (
-                                    <div className="flex items-baseline">
-                                      <span className={`text-xl font-bold ${['業務', 'アルバイト'].includes(user.data[5])
-                                        ? Math.abs(actualHours - standardHours) <= 3
-                                          ? 'text-green-600'
-                                          : Math.abs(actualHours - standardHours) <= 9
-                                            ? 'text-yellow-600'
-                                            : 'text-red-500'
-                                        : Math.abs(plannedWorkingHours - standardHours) <= 3
-                                          ? 'text-green-600'
-                                          : Math.abs(plannedWorkingHours - standardHours) <= 9
-                                            ? 'text-yellow-600'
-                                            : 'text-red-500'
-                                      }`}>
-                                        {displayValue >= standardHours ? '+' : '-'}{diff.toFixed(1)}
-                                      </span>
-                                      <span className="ml-1 text-lg">h</span>
-                                    </div>
-                                  );
-                                })()}
-                              </div>
-                            </div>
-                            <div 
-                              className={`absolute bottom-0 left-0 right-0 text-xs font-bold flex items-center justify-center text-center py-2 rounded 
-                                ${
-                                  ['業務', 'アルバイト'].includes(user.data[5])
-                                    ? Math.abs(actualHours - standardHours) <= 3
-                                      ? 'bg-green-100 text-green-700'
-                                      : Math.abs(actualHours - standardHours) <= 9
-                                        ? 'bg-yellow-100 text-yellow-700'
-                                        : 'bg-red-100 text-red-700'
-                                    : Math.abs(plannedWorkingHours - standardHours) <= 3
-                                      ? 'bg-green-100 text-green-700'
-                                      : Math.abs(plannedWorkingHours - standardHours) <= 9
-                                        ? 'bg-yellow-100 text-yellow-700'
-                                        : 'bg-red-100 text-red-700'
-                                }`}
-                            >
-                              {['業務', 'アルバイト'].includes(user.data[5])
-                                ? (actualHours >= standardHours)  // 実勤務時間が規定時間以上の場合のみメッセージを表示
-                                  ? Math.abs(actualHours - standardHours) <= 3
-                                    ? "OK"
-                                    : Math.abs(actualHours - standardHours) <= 9
-                                      ? "注意"
-                                      : "働きすぎ"
-                                  : ""  // 実勤務時間が規定時間未満の場合は空文字を表示
-                                : Math.abs(plannedWorkingHours - standardHours) <= 3
-                                  ? "OK"
-                                  : Math.abs(plannedWorkingHours - standardHours) <= 9
-                                    ? "許容範囲"
-                                    : "予定の修正が必要"}
-                            </div>
-                          </div>
-
-                          {/* 進捗グラフセクション */}
-                          <div className="w-2/5 flex flex-col items-center justify-center">
-                            <div className="relative w-28 h-28">
-                              <svg className="w-full h-full transform -rotate-90">
-                                <circle
-                                  cx="56"
-                                  cy="56"
-                                  r="52"
-                                  className="stroke-current text-gray-100"
-                                  strokeWidth="3"
-                                  fill="none"
-                                />
-                                <circle
-                                  cx="56"
-                                  cy="56"
-                                  r="52"
-                                  className="stroke-current text-green-500"
-                                  strokeWidth="3"
-                                  fill="none"
-                                  strokeDasharray={`${(actualHours / standardHours) * 327} 327`}
-                                  strokeLinecap="round"
-                                />
-                              </svg>
-                              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                <span className="text-2xl font-bold text-gray-900">{roundToOneDecimalPlace(actualHours).toFixed(1)}</span>
-                                <span className="text-sm text-gray-500">/{standardHours}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                      </div>
-                    </Link>
-                  );
-                })
-              )}
+      {/* ビュー切り替えボタン - 固定なし */}
+      <div className="bg-white py-3 mb-4 border-b border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex justify-end">
+            <div className="inline-flex rounded-lg shadow-sm bg-white p-1">
+              <button
+                onClick={() => setViewMode('user')}
+                className={`px-3 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium transition-colors ${
+                  viewMode === 'user'
+                    ? 'bg-blue-50 text-blue-600'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <ViewColumnsIcon className="w-4 h-4" />
+                ユーザービュー
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`px-3 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium transition-colors ${
+                  viewMode === 'list'
+                    ? 'bg-blue-50 text-blue-600'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <ListBulletIcon className="w-4 h-4" />
+                リストビュー
+              </button>
             </div>
           </div>
-        ))}
+        </div>
       </div>
+      
+      {/* ビューコンテンツ */}
+      {viewMode === 'user' ? (
+        // 既存のユーザービュー
+        <div className="space-y-8">
+          {Object.entries(groupedUsers).map(([accountType, departments]) => (
+            <div key={accountType} className="space-y-6">
+              {/* アカウント種別ヘッダー */}
+              <div className="flex items-center gap-4">
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg shadow-sm 
+                  ${accountTypes[accountType]?.bgColor || 'bg-gray-100'}`}>
+                  {accountTypes[accountType]?.icon || <UserIcon className="h-5 w-5 text-gray-500" />}
+                  <span className={`font-bold ${accountTypes[accountType]?.textColor || 'text-gray-700'}`}>
+                    {accountType}
+                  </span>
+                  <span className="text-sm text-gray-500">
+                    {Object.values(departments).reduce((acc, curr) => acc + curr.length, 0)}名
+                  </span>
+                </div>
+                
+                {/* 所属グループタグ */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  {Object.entries(departments).map(([department, departmentUsers]) => (
+                    <div key={department} 
+                      className="flex items-center gap-1.5 px-2.5 py-1 bg-white rounded-full 
+                        text-sm text-gray-600 border border-gray-100 shadow-sm">
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                      {department}
+                      <span className="text-gray-400">{departmentUsers.length}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* ユーザーカードグリッド */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {Object.entries(departments).map(([_, departmentUsers]) => 
+                  departmentUsers.map((user) => {
+                    const userName = user.data[0];
+                    
+                    // userWorkHoursが確実に存在するか確認
+                    if (!userWorkHours[userName]) {
+                      console.warn(`${userName}の事前計算データがありません`);
+                    }
+                    
+                    // 事前計算の結果を使用（再計算しない）
+                    const userHour = userWorkHours[userName] || { planned: 0, actual: 0 };
+                    const actualHours = userHour.actual;
+                    const plannedWorkingHours = userHour.planned;
+                    const standardHours = getStandardWorkingHours(currentDate, settings);
+                    
+                    console.log(`${userName} カード表示時間: 予定=${plannedWorkingHours.toFixed(1)}h, 実績=${actualHours.toFixed(1)}h, 標準=${standardHours}h`);
+                    
+                    // 勤務種別のカウント計算のみはユーザーフィルタが必要
+                    const plannedCounts = calculateWorkTypeCounts(
+                      schedules.filter(s => s[1] === userName),
+                      '予定'
+                    );
+                    const clockbookCounts = calculateWorkTypeCounts(
+                      schedules.filter(s => s[1] === userName),
+                      '出勤簿'
+                    );
+
+                    return (
+                      <Link
+                        key={user.rowIndex}
+                        href={`/member-schedule?user=${encodeURIComponent(user.data[0])}&year=${currentDate.getFullYear()}&month=${currentDate.getMonth() + 1}`}
+                        className="block h-full"
+                      >
+                        <div className="bg-white rounded-xl p-4 h-full
+                          shadow-sm relative
+                          transition-all duration-200
+                          hover:shadow-md hover:bg-gray-50/50
+                          active:bg-gray-100/70">
+                          
+                          {/* ユーザー情報部分 - レイアウトを調整 */}
+                          <div className="flex items-start gap-4 mb-4">
+                            <div className="flex-shrink-0">
+                              {user.data[6] ? (
+                                <img
+                                  src={user.data[6]}
+                                  alt={user.data[0]}
+                                  className="w-16 h-16 rounded-full object-cover border-2 border-gray-100"
+                                />
+                              ) : (
+                                <UserCircleIcon className="w-16 h-16 text-gray-400" />
+                              )}
+                            </div>
+                            <div className="flex-grow min-w-0">
+                              <h2 className="text-2xl font-bold text-gray-900 truncate">{user.data[0]}</h2>
+                              <div className="flex flex-wrap items-center gap-2 mt-1">
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full ${
+                                  accountTypes[user.data[5]]?.bgColor || 'bg-gray-100'
+                                } ${accountTypes[user.data[5]]?.textColor || 'text-gray-700'}`}>
+                                  {accountTypes[user.data[5]]?.icon}
+                                  <span className="text-xs font-medium">{user.data[5]}</span>
+                                </span>
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-100 text-xs font-medium text-gray-700">
+                                  {user.data[4]}
+                                </span>
+                              </div>
+                            </div>
+                            {/* タップ詳細メッセージ */}
+                            <span className="text-xs flex items-center gap-0.5 text-blue-500 font-medium">
+                              <span className="w-1 h-1 rounded-full bg-blue-400 animate-pulse"></span>
+                              詳細
+                            </span>
+                          </div>
+
+                          {/* 以降のコンテンツ - グリッドレイアウトに変更 */}
+                          <div className="flex gap-4">
+                            {/* 勤務時間セクション */}
+                            <div className={`relative flex flex-col p-3 rounded-lg border ${
+                              ['業務', 'アルバイト'].includes(user.data[5])
+                                ? 'bg-purple-50/80 border-purple-100' 
+                                : 'bg-blue-50/80 border-blue-100'
+                            } w-3/5`}>
+                              <span className="text-sm text-gray-500">
+                                {['業務', 'アルバイト'].includes(user.data[5]) ? '実勤務時間' : '予定勤務時間'}
+                              </span>
+                              <div className="flex mt-1">
+                                <div className="w-1/2 flex items-center justify-center">
+                                  <div className="flex items-baseline">
+                                    <span className={`${['業務', 'アルバイト'].includes(user.data[5]) ? 'text-2xl' : 'text-xl'} font-bold ${['業務', 'アルバイト'].includes(user.data[5]) ? 'text-purple-600' : 'text-blue-600'}`}>
+                                      {roundToOneDecimalPlace(['業務', 'アルバイト'].includes(user.data[5]) ? actualHours : plannedWorkingHours).toFixed(1)}
+                                    </span>
+                                    <span className={`ml-1 ${['業務', 'アルバイト'].includes(user.data[5]) ? 'text-lg' : 'text-base'} ${['業務', 'アルバイト'].includes(user.data[5]) ? 'text-purple-500' : 'text-blue-500'}`}>
+                                      h
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className={`w-px ${['業務', 'アルバイト'].includes(user.data[5]) ? 'bg-purple-200' : 'bg-blue-200'}`}></div>
+                                <div className="w-1/2 flex items-center justify-center">
+                                  {(() => {
+                                    // 丸め誤差を修正
+                                    const displayValue = ['業務', 'アルバイト'].includes(user.data[5]) ? actualHours : plannedWorkingHours;
+                                    const diff = roundToOneDecimalPlace(Math.abs(displayValue - standardHours));
+                                    return (
+                                      <div className="flex items-baseline">
+                                        <span className={`text-xl font-bold ${['業務', 'アルバイト'].includes(user.data[5])
+                                          ? Math.abs(actualHours - standardHours) <= 3
+                                            ? 'text-green-600'
+                                            : Math.abs(actualHours - standardHours) <= 9
+                                              ? 'text-yellow-600'
+                                              : 'text-red-500'
+                                          : Math.abs(plannedWorkingHours - standardHours) <= 3
+                                            ? 'text-green-600'
+                                            : Math.abs(plannedWorkingHours - standardHours) <= 9
+                                              ? 'text-yellow-600'
+                                              : 'text-red-500'
+                                        }`}>
+                                          {displayValue >= standardHours ? '+' : '-'}{diff.toFixed(1)}
+                                        </span>
+                                        <span className="ml-1 text-lg">h</span>
+                                      </div>
+                                    );
+                                  })()}
+                                </div>
+                              </div>
+                              <div 
+                                className={`absolute bottom-0 left-0 right-0 text-xs font-bold flex items-center justify-center text-center py-2 rounded 
+                                  ${
+                                    ['業務', 'アルバイト'].includes(user.data[5])
+                                      ? Math.abs(actualHours - standardHours) <= 3
+                                        ? 'bg-green-100 text-green-700'
+                                        : Math.abs(actualHours - standardHours) <= 9
+                                          ? 'bg-yellow-100 text-yellow-700'
+                                          : 'bg-red-100 text-red-700'
+                                      : Math.abs(plannedWorkingHours - standardHours) <= 3
+                                        ? 'bg-green-100 text-green-700'
+                                        : Math.abs(plannedWorkingHours - standardHours) <= 9
+                                          ? 'bg-yellow-100 text-yellow-700'
+                                          : 'bg-red-100 text-red-700'
+                                  }`}
+                              >
+                                {['業務', 'アルバイト'].includes(user.data[5])
+                                  ? (actualHours >= standardHours)  // 実勤務時間が規定時間以上の場合のみメッセージを表示
+                                    ? Math.abs(actualHours - standardHours) <= 3
+                                      ? "OK"
+                                      : Math.abs(actualHours - standardHours) <= 9
+                                        ? "注意"
+                                        : "働きすぎ"
+                                    : ""  // 実勤務時間が規定時間未満の場合は空文字を表示
+                                  : Math.abs(plannedWorkingHours - standardHours) <= 3
+                                    ? "OK"
+                                    : Math.abs(plannedWorkingHours - standardHours) <= 9
+                                      ? "許容範囲"
+                                      : "予定の修正が必要"}
+                              </div>
+                            </div>
+
+                            {/* 進捗グラフセクション */}
+                            <div className="w-2/5 flex flex-col items-center justify-center">
+                              <div className="relative w-28 h-28">
+                                <svg className="w-full h-full transform -rotate-90">
+                                  <circle
+                                    cx="56"
+                                    cy="56"
+                                    r="52"
+                                    className="stroke-current text-gray-100"
+                                    strokeWidth="3"
+                                    fill="none"
+                                  />
+                                  <circle
+                                    cx="56"
+                                    cy="56"
+                                    r="52"
+                                    className="stroke-current text-green-500"
+                                    strokeWidth="3"
+                                    fill="none"
+                                    strokeDasharray={`${(actualHours / standardHours) * 327} 327`}
+                                    strokeLinecap="round"
+                                  />
+                                </svg>
+                                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                  <span className="text-2xl font-bold text-gray-900">{roundToOneDecimalPlace(actualHours).toFixed(1)}</span>
+                                  <span className="text-sm text-gray-500">/{standardHours}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                        </div>
+                      </Link>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        // 新しいリストビュー - スクロール位置を調整
+        <div className="pb-16">
+          <ListView
+            currentDate={currentDate}
+            users={users}
+            schedules={schedules}
+            workDetails={workDetails}
+            breakData={breakRecords}
+            parseJapaneseTimeString={parseJapaneseTimeString}
+            timeToHoursAndMinutes={timeToHoursAndMinutes}
+            standardHours={getStandardWorkingHours(currentDate, settings)}
+            headerTopOffset={72} /* アプリヘッダーの高さを考慮したオフセット値を調整 */
+            session={session} /* sessionオブジェクトを渡す */
+          />
+        </div>
+      )}
     </div>
   );
 }

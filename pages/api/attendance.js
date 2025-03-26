@@ -21,14 +21,32 @@ export default async function handler(req, res) {
         // 最大件数制限を設定
         const limit = req.query.limit ? parseInt(req.query.limit, 10) : 500;
         
-        // データをフィルタリング
+        // データをフィルタリング - 21日〜20日の期間を取得するように変更
         const filteredRows = rows.filter((row, index) => {
           if (index >= limit) return false;
           
+          if (!row[0]) return false;
+          
+          // 日付パース
           const rowDate = new Date(row[0]);
-          return !isNaN(rowDate.getTime()) &&
-                 rowDate.getMonth() + 1 === targetMonth &&
-                 rowDate.getFullYear() === targetYear;
+          if (isNaN(rowDate.getTime())) return false;
+          
+          // 対象月の1日から末日までと、前月の21日〜末日を含める
+          const rowMonth = rowDate.getMonth() + 1;
+          const rowYear = rowDate.getFullYear();
+          const rowDay = rowDate.getDate();
+          
+          // 前月のデータ（21日以降）
+          const prevMonth = targetMonth === 1 ? 12 : targetMonth - 1;
+          const prevYear = targetMonth === 1 ? targetYear - 1 : targetYear;
+          
+          // 当月のデータ（1日〜20日）
+          const isCurrentMonthFirstHalf = (rowMonth === targetMonth && rowYear === targetYear && rowDay <= 20);
+          
+          // 前月のデータ（21日〜末日）
+          const isPrevMonthSecondHalf = (rowMonth === prevMonth && rowYear === prevYear && rowDay >= 21);
+          
+          return isCurrentMonthFirstHalf || isPrevMonthSecondHalf;
         });
         
         return res.status(200).json({ data: filteredRows });
