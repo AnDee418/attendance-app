@@ -694,8 +694,59 @@ export default function SchedulesPage() {
 
   // ユーザーをアカウント種別と所属でグループ化する関数
   const groupUsersByTypeAndDepartment = (users) => {
+    // セッションに基づく権限フィルタリングを適用
+    let filteredUsers = users;
+    
+    // セッション情報の詳細なデバッグログ
+    console.log("▼▼▼ schedules.js - セッション情報 ▼▼▼");
+    console.log({
+      isLoggedIn: !!session,
+      user: session?.user ? {
+        name: session.user.name,
+        accountType: session.user.accountType || 'なし',
+        affiliation: session.user.affiliation || 'なし',
+        location: session.user.location || 'なし',
+        isAdmin: !!session.user.isAdmin
+      } : 'セッションなし',
+      availableUsers: users.length
+    });
+    
+    // アルバイトユーザーの場合は同じ所属地のユーザーのみにフィルタリング
+    if (session?.user?.accountType === 'アルバイト') {
+      console.log("▶ アルバイトユーザーのフィルタリングを開始します");
+      
+      // 所属地情報を取得（優先順位: location -> affiliation）
+      const userLocation = session.user.location || session.user.affiliation || '';
+      
+      if (userLocation) {
+        console.log(`▶ フィルター条件: 所属地「${userLocation}」を含むユーザーのみ表示`);
+        console.log(`▶ フィルタリング前のユーザー数: ${users.length}名`);
+        
+        // 所属地でフィルタリング
+        filteredUsers = users.filter(user => {
+          // ユーザーの所属地を取得
+          const userDepartment = user.data[4] || '';
+          
+          // 完全一致と部分一致の両方を試す
+          const isExactMatch = userDepartment === userLocation;
+          const isPartialMatch = userDepartment.includes(userLocation);
+          const isMatched = isExactMatch || isPartialMatch;
+          
+          // 詳細なマッチング情報をログ出力
+          console.log(`▶ ${user.data[0]} (所属: ${userDepartment || '未設定'}) - 完全一致: ${isExactMatch}, 部分一致: ${isPartialMatch}, 表示: ${isMatched}`);
+          
+          return isMatched;
+        });
+        
+        console.log(`▶ フィルタリング結果: ${filteredUsers.length}名のユーザーを表示します`);
+        console.log("▲▲▲ フィルタリング完了 ▲▲▲");
+      } else {
+        console.warn('⚠ 警告: アルバイトユーザーですが、所属地情報がありません');
+      }
+    }
+    
     const grouped = {};
-    users.forEach(user => {
+    filteredUsers.forEach(user => {
       let accountType = user.data[5] || 'その他';
       const department = user.data[4] || 'その他'; // 所属
       

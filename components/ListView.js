@@ -231,25 +231,74 @@ const ListView = ({
     // セッションが無い場合は空配列を返す
     if (!session?.user) return [];
 
+    // セッション情報の詳細なデバッグ
+    console.log("▼▼▼ ListView.js - セッション情報 ▼▼▼");
+    console.log({
+      name: session.user.name || 'なし',
+      accountType: session.user.accountType || 'なし',
+      affiliation: session.user.affiliation || 'なし',
+      location: session.user.location || 'なし',
+      isAdmin: !!session.user.isAdmin
+    });
+
     // 管理者権限を持っている場合は全ユーザーを表示
     if (session.user.isAdmin) {
+      console.log('▶ 管理者権限ユーザーがすべてのユーザーを閲覧します');
       return userList;
     }
 
     const currentUserType = session.user.accountType;
+    
+    // 所属地情報を取得（優先順位: location -> affiliation）
+    const currentUserLocation = session.user.location || session.user.affiliation || '';
+
+    // アルバイトユーザーの場合は、同じ所属地のユーザーのみを表示
+    if (currentUserType === 'アルバイト') {
+      console.log("▶ ListView: アルバイトユーザーのフィルタリングを開始します");
+      
+      if (currentUserLocation) {
+        console.log(`▶ ListView: フィルター条件: 所属地「${currentUserLocation}」を含むユーザーのみ表示`);
+        console.log(`▶ ListView: フィルタリング前のユーザー数: ${userList.length}名`);
+        
+        // 所属地でフィルタリング
+        const filtered = userList.filter(user => {
+          // ユーザーの所属地を取得
+          const userDepartment = user.data[4] || '';
+          
+          // 完全一致と部分一致の両方を試す
+          const isExactMatch = userDepartment === currentUserLocation;
+          const isPartialMatch = userDepartment.includes(currentUserLocation);
+          const isMatched = isExactMatch || isPartialMatch;
+          
+          // 詳細なマッチング情報をログ出力
+          console.log(`▶ ListView: ${user.data[0]} (所属: ${userDepartment || '未設定'}) - 完全一致: ${isExactMatch}, 部分一致: ${isPartialMatch}, 表示: ${isMatched}`);
+          
+          return isMatched;
+        });
+        
+        console.log(`▶ ListView: フィルタリング結果: ${filtered.length}名のユーザーを表示します`);
+        console.log("▲▲▲ ListView: フィルタリング完了 ▲▲▲");
+        return filtered;
+      } else {
+        console.warn('⚠ 警告: ListView: アルバイトユーザーですが、所属地情報がありません');
+      }
+    }
 
     // 営業ユーザーの場合はアルバイトを除外
     if (currentUserType === '営業') {
-      return userList.filter(user => user.data[5] !== 'アルバイト');
+      const filtered = userList.filter(user => user.data[5] !== 'アルバイト');
+      console.log(`▶ ListView: 営業ユーザーがアルバイト以外のユーザーを閲覧します: ${filtered.length}名`);
+      return filtered;
     }
     
     // 業務ユーザーの場合は、全員の実績情報を表示する
     if (currentUserType === '業務') {
-      console.log('業務ユーザーが全員の実績を閲覧します');
+      console.log('▶ ListView: 業務ユーザーが全員の実績を閲覧します:', userList.length, '名');
       return userList;
     }
 
     // その他のケースではそのままのリストを返す
+    console.log('▶ ListView: その他のユーザータイプ:', currentUserType, '- フィルタリングなし');
     return userList;
   };
   

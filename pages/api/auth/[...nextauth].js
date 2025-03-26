@@ -66,6 +66,7 @@ export const authOptions = {
                 name: user.name,
                 email: user.email,
                 affiliation: user.affiliation,
+                location: user.affiliation,
                 accountType: user.accountType,
                 isAdmin: user.isAdmin
               };
@@ -91,6 +92,7 @@ export const authOptions = {
         token.userId = user.id;
         token.email = user.email;
         token.affiliation = user.affiliation;
+        token.location = user.location;
         token.accountType = user.accountType;
         token.isAdmin = user.isAdmin;
       }
@@ -102,10 +104,17 @@ export const authOptions = {
         session.user.userId = token.userId;
         session.user.email = token.email;
         session.user.affiliation = token.affiliation;
+        session.user.location = token.location;
         session.user.accountType = token.accountType;
         session.user.isAdmin = token.isAdmin;
         session.user.iconUrl = token.iconUrl;
       }
+      console.log('セッション更新 - ユーザー情報:', {
+        name: session.user.name,
+        affiliation: session.user.affiliation,
+        location: session.user.location,
+        accountType: session.user.accountType
+      });
       return session;
     },
   },
