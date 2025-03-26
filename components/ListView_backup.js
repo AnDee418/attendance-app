@@ -185,9 +185,9 @@ const getPrefectureOrder = (location) => {
 const ListView = ({
   currentDate,
   users,
-  schedules,
-  workDetails,
-  breakData,
+  schedules: initialSchedules, // schedules.jsから渡されるデータを初期データとして扱う
+  workDetails: initialWorkDetails,
+  breakData: initialBreakData,
   parseJapaneseTimeString,
   timeToHoursAndMinutes,
   standardHours,
@@ -207,24 +207,185 @@ const ListView = ({
   const [isPc, setIsPc] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   
+  // 独自データ管理
+  const [schedules, setSchedules] = useState(initialSchedules || []);
+  const [workDetails, setWorkDetails] = useState(initialWorkDetails || []);
+  const [breakData, setBreakData] = useState(initialBreakData || []);
+  const [isLoading, setIsLoading] = useState(false);
+
   // フィルター関連のステート
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedAccountTypes, setSelectedAccountTypes] = useState([]);
   const [selectedDepartments, setSelectedDepartments] = useState([]);
   
-  // 独自のデータ取得用のステート追加
-  const [listViewSchedules, setListViewSchedules] = useState([]);
-  const [listViewWorkDetails, setListViewWorkDetails] = useState([]);
-  const [listViewBreakData, setListViewBreakData] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [settings, setSettings] = useState(null);
-  
   // 利用可能なアカウント種別と部署の一覧を取得
   const availableAccountTypes = [...new Set(users.map(user => user.data[5] || 'その他'))];
   const availableDepartments = [...new Set(users.map(user => user.data[4] || '未設定'))].sort((a, b) => 
     a.localeCompare(b, 'ja')
   );
+
+  // 独自にデータを取得する関数
+  const fetchListViewData = async () => {
+    if (!currentDate) return;
+    
+    setIsLoading(true);
+    try {
+      console.log(`ListView.js: データ取得開始 - ${currentDate.getFullYear()}年${currentDate.getMonth() + 1}月`);
+      
+      // 当月（1日〜末日）のデータが必要
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth() + 1; // 1-12の範囲
+      
+      // 翌月の情報を計算（月末の処理用）
+      let nextMonth = month + 1;
+      let nextYear = year;
+      
+      if (nextMonth > 12) {
+        nextMonth = 1;
+        nextYear = year + 1;
+      }
+      
+      // 現在の月と翌月のデータを両方取得
+      const [currentMonthResponse, nextMonthResponse] = await Promise.all([
+        fetch(`/api/attendance?month=${month}&year=${year}&limit=2000`),
+        fetch(`/api/attendance?month=${nextMonth}&year=${nextYear}&limit=2000`)
+      ]);
+      
+      if (currentMonthResponse.ok && nextMonthResponse.ok) {
+        const currentMonthData = await currentMonthResponse.json();
+        const nextMonthData = await nextMonthResponse.json();
+        
+        // 両方のデータを結合
+        const allData = [...(currentMonthData.data || []), ...(nextMonthData.data || [])];
+        
+        // 選択した月のカレンダー月（1日～末日）に関連するデータをフィルタリング
+        const filteredData = allData.filter(item => {
+          // データの日付を取得
+          if (!item || !item[0]) return false;
+          
+          try {
+            const itemDate = new Date(item[0]);
+            const itemYear = itemDate.getFullYear();
+            const itemMonth = itemDate.getMonth() + 1; // 1-12の範囲
+            
+            // 選択月のデータのみ残す
+            return itemYear === year && itemMonth === month;
+          } catch (e) {
+            console.error('ListView.js: 日付のパースエラー:', e, item);
+            return false;
+          }
+        });
+        
+        // フィルタリングされたデータを設定
+        setSchedules(filteredData);
+        
+        console.log(`ListView.js: 取得データ - カレンダー月のデータ=${filteredData.length}件（全期間データ=${allData.length}件）`);
+        
+        // 日付の分布を確認
+        const dates = new Set();
+        filteredData.forEach(item => {
+          if (item && item[0]) dates.add(item[0]);
+        });
+        console.log(`ListView.js: 日付の数=${dates.size}件`);
+        
+        // 「業務」アカウントタイプのユーザーデータを確認
+        const businessUsers = users.filter(user => user.data[5] === '業務');
+        for (const user of businessUsers) {
+          const userRecords = filteredData.filter(item => item && item[1] === user.data[0]);
+          console.log(`ListView.js: ${user.data[0]}（業務）のデータ=${userRecords.length}件`);
+        }
+      } else {
+        console.error('ListView.js: データ取得エラー:', 
+          currentMonthResponse.ok ? '' : `当月データ: ${currentMonthResponse.status}`,
+          nextMonthResponse.ok ? '' : `翌月データ: ${nextMonthResponse.status}`
+        );
+      }
+      
+      // 業務詳細データを取得
+      const workDetailRes = await fetch('/api/workdetail');
+      if (workDetailRes.ok) {
+        const data = await workDetailRes.json();
+        if (data.data) {
+          // カレンダー月（1日～末日）のデータだけをフィルタリング
+          const filteredDetails = data.data.filter(item => {
+            if (!item || !item.date) return false;
+            
+            try {
+              const itemDate = new Date(item.date);
+              const itemYear = itemDate.getFullYear();
+              const itemMonth = itemDate.getMonth() + 1; // 1-12の範囲
+              
+              return itemYear === year && itemMonth === month;
+            } catch (e) {
+              console.error('ListView.js: 詳細データの日付パースエラー:', e, item);
+              return false;
+            }
+          });
+          
+          setWorkDetails(filteredDetails);
+          console.log(`ListView.js: 業務詳細データ=${filteredDetails.length}件`);
+        }
+      }
+      
+      // 休憩データを取得
+      const breakRes = await fetch('/api/break');
+      if (breakRes.ok) {
+        const data = await breakRes.json();
+        if (data.data) {
+          // データ形式変換
+          const formattedBreakData = data.data.map(row => ({
+            date: row[0],
+            employeeName: row[1],
+            breakStart: row[2],
+            breakEnd: row[3],
+            recordType: row[4],
+          }));
+          
+          // カレンダー月（1日～末日）のデータだけをフィルタリング
+          const filteredBreaks = formattedBreakData.filter(item => {
+            if (!item || !item.date) return false;
+            
+            try {
+              const itemDate = new Date(item.date);
+              const itemYear = itemDate.getFullYear();
+              const itemMonth = itemDate.getMonth() + 1; // 1-12の範囲
+              
+              return itemYear === year && itemMonth === month;
+            } catch (e) {
+              console.error('ListView.js: 休憩データの日付パースエラー:', e, item);
+              return false;
+            }
+          });
+          
+          setBreakData(filteredBreaks);
+          console.log(`ListView.js: 休憩データ=${filteredBreaks.length}件`);
+        }
+      }
+    } catch (error) {
+      console.error('ListView.js: データ取得エラー:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 月が変更されたらデータを再取得
+  useEffect(() => {
+    fetchListViewData();
+  }, [currentDate]);
+
+  // 初期データが変更されたら更新
+  useEffect(() => {
+    if (initialSchedules && initialSchedules.length > 0) {
+      setSchedules(initialSchedules);
+    }
+    if (initialWorkDetails && initialWorkDetails.length > 0) {
+      setWorkDetails(initialWorkDetails);
+    }
+    if (initialBreakData && initialBreakData.length > 0) {
+      setBreakData(initialBreakData);
+    }
+  }, [initialSchedules, initialWorkDetails, initialBreakData]);
   
   // 権限に基づいてユーザーをフィルタリングする関数
   const filterUsersByPermission = (userList) => {
@@ -252,150 +413,6 @@ const ListView = ({
     // その他のケースではそのままのリストを返す
     return userList;
   };
-  
-  // 独自データ取得用useEffect
-  useEffect(() => {
-    const fetchListViewData = async () => {
-      setIsLoading(true);
-      try {
-        // 選択された月のカレンダー月（1日～末日）のデータを取得
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth() + 1; // 1-12の範囲
-        
-        console.log(`ListView.js: データ取得 - ${year}年${month}月の表示に必要なデータを取得中`);
-        
-        // 現在の月のデータを取得（limit=2000に増加し確実にすべてのデータを取得）
-        const attendanceResponse = await fetch(`/api/attendance?month=${month}&year=${year}&limit=2000`);
-        
-        if (attendanceResponse.ok) {
-          const attendanceData = await attendanceResponse.json();
-          
-          // 選択した月のカレンダー月（1日～末日）に関連するデータをフィルタリング
-          const filteredData = (attendanceData.data || []).filter(item => {
-            // データの日付を取得
-            if (!item || !item[0]) return false;
-            
-            try {
-              const itemDate = new Date(item[0]);
-              const itemYear = itemDate.getFullYear();
-              const itemMonth = itemDate.getMonth() + 1; // 1-12の範囲
-              
-              // 選択月のデータのみ残す
-              return itemYear === year && itemMonth === month;
-            } catch (e) {
-              console.error('日付のパースエラー:', e, item);
-              return false;
-            }
-          });
-          
-          // 出勤簿（業務ユーザーのデータ）が含まれているか確認
-          const businessUserData = filteredData.filter(item => item[5] === '出勤簿');
-          console.log(`ListView.js: 業務ユーザーの出勤簿データ: ${businessUserData.length}件`);
-          
-          // フィルタリングされたデータを設定
-          setListViewSchedules(filteredData);
-          
-          console.log(`ListView.js: 取得データ - カレンダー月のスケジュールデータ=${filteredData.length}件`);
-          
-          // 業務詳細を取得（月指定のクエリパラメータを追加）
-          const workDetailRes = await fetch(`/api/workdetail?month=${month}&year=${year}`);
-          if (workDetailRes.ok) {
-            const data = await workDetailRes.json();
-            if (data.data) {
-              // カレンダー月（1日～末日）のデータだけをフィルタリング
-              const filteredDetails = data.data.filter(item => {
-                if (!item || !item.date) return false;
-                
-                try {
-                  const itemDate = new Date(item.date);
-                  const itemYear = itemDate.getFullYear();
-                  const itemMonth = itemDate.getMonth() + 1; // 1-12の範囲
-                  
-                  return itemYear === year && itemMonth === month;
-                } catch (e) {
-                  console.error('詳細データの日付パースエラー:', e, item);
-                  return false;
-                }
-              });
-              
-              setListViewWorkDetails(filteredDetails);
-              console.log(`ListView.js: 業務詳細データ=${filteredDetails.length}件`);
-            }
-          }
-          
-          // 休憩データを取得（月指定のクエリパラメータを追加）
-          const breakRes = await fetch(`/api/break?month=${month}&year=${year}`);
-          if (breakRes.ok) {
-            const data = await breakRes.json();
-            if (data.data) {
-              // データ形式変換
-              const formattedBreakData = data.data.map(row => ({
-                date: row[0],
-                employeeName: row[1],
-                breakStart: row[2],
-                breakEnd: row[3],
-                recordType: row[4],
-              }));
-              
-              // カレンダー月（1日～末日）のデータだけをフィルタリング
-              const filteredBreaks = formattedBreakData.filter(item => {
-                if (!item || !item.date) return false;
-                
-                try {
-                  const itemDate = new Date(item.date);
-                  const itemYear = itemDate.getFullYear();
-                  const itemMonth = itemDate.getMonth() + 1; // 1-12の範囲
-                  
-                  return itemYear === year && itemMonth === month;
-                } catch (e) {
-                  console.error('休憩データの日付パースエラー:', e, item);
-                  return false;
-                }
-              });
-              
-              setListViewBreakData(filteredBreaks);
-              console.log(`ListView.js: 休憩データ=${filteredBreaks.length}件`);
-            }
-          }
-          
-          // 設定データを取得
-          const settingsRes = await fetch('/api/settings');
-          if (settingsRes.ok) {
-            const settingsData = await settingsRes.json();
-            setSettings(settingsData);
-            console.log('ListView.js: 設定データを取得しました');
-          }
-          
-          setIsLoading(false);
-        } else {
-          console.error('データ取得エラー:', attendanceResponse.status);
-          setIsLoading(false);
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        setIsLoading(false);
-      }
-    };
-    
-    fetchListViewData();
-  }, [currentDate]);
-  
-  // 実際に使用するデータをここで決定
-  const activeSchedules = listViewSchedules.length > 0 ? listViewSchedules : schedules;
-  const activeWorkDetails = listViewWorkDetails.length > 0 ? listViewWorkDetails : workDetails;
-  const activeBreakData = listViewBreakData.length > 0 ? listViewBreakData : breakData;
-  const activeStandardHours = settings ? getStandardWorkingHours(currentDate, settings) : standardHours;
-  
-  // 規定勤務時間の定義：設定値から該当期間の労働時間を取得する
-  function getStandardWorkingHours(date, settingsData) {
-    if (!settingsData || !settingsData.workHours) return 160;
-    
-    // 選択された月を基準に計算
-    const selectedMonth = date.getMonth() + 1; // JavaScript monthは0オリジン
-    
-    // 常に選択された月のデータを返す（日付に関わらず）
-    return settingsData.workHours[selectedMonth.toString()] || 160;
-  }
   
   // ユーザーをソートして設定
   useEffect(() => {
@@ -530,14 +547,14 @@ const ListView = ({
   // 日付ごとのユーザー情報を取得
   const getDailyUserInfo = (date, user) => {
     const dateStr = format(date, 'yyyy-MM-dd');
-    const userSchedules = activeSchedules.filter(s => 
+    const userSchedules = schedules.filter(s => 
       s[0] === dateStr && s[1] === user.data[0]
     );
     
     // 業務詳細データの構造を確認
     let userWorkDetails = [];
     try {
-      userWorkDetails = activeWorkDetails.filter(w => {
+      userWorkDetails = workDetails.filter(w => {
         // データが存在しないか無効な場合はスキップ
         if (!w) return false;
         
@@ -552,7 +569,7 @@ const ListView = ({
       userWorkDetails = [];
     }
     
-    const userBreakData = activeBreakData.filter(b => 
+    const userBreakData = breakData.filter(b => 
       b.date === dateStr && b.employeeName === user.data[0]
     );
 

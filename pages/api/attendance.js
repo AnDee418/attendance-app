@@ -6,6 +6,8 @@ export default async function handler(req, res) {
   // GET メソッドの場合、シートから勤務記録を取得して返す
   if (req.method === 'GET') {
     try {
+      console.log('attendance.js: API呼び出し開始 - パラメータ', req.query);
+      
       const result = await sheets.spreadsheets.values.get({
         spreadsheetId: process.env.GOOGLE_SHEET_ID,
         range: '勤務記録!A:G',
@@ -13,41 +15,109 @@ export default async function handler(req, res) {
       // result.data.values に勤務記録の各行が入っています
       const rows = result.data.values || [];
       
+      // シートの全データログ出力（開発環境のみ）
+      console.log(`attendance.js: シート全データ行数: ${rows.length}件`);
+      if (rows.length > 0) {
+        console.log('attendance.js: 最初の行:', rows[0]);
+        
+        // 業務ユーザーの出勤簿データをカウント
+        const businessUserRows = rows.filter(row => 
+          row.length >= 6 && row[5] === '出勤簿'
+        );
+        console.log(`attendance.js: シート内の全出勤簿データ数: ${businessUserRows.length}件`);
+        
+        // サンプル出力（最初の3件）
+        if (businessUserRows.length > 0) {
+          console.log('attendance.js: 出勤簿データサンプル:', businessUserRows.slice(0, 3));
+        }
+      }
+      
+      // 特定の業務ユーザーのデータを明示的に取得
+      const businessUserName = req.query.businessUser || '後藤 和敏'; // クエリパラメータで指定可能
+      const specificUserRows = rows.filter(row => 
+        row.length >= 2 && row[1] === businessUserName
+      );
+      
+      console.log(`attendance.js: ${businessUserName}のデータ: ${specificUserRows.length}件`);
+      if (specificUserRows.length > 0) {
+        console.log('attendance.js: ユーザーデータサンプル:', specificUserRows.slice(0, 3));
+      }
+      
       // フィルタリングパラメータがある場合はデータを絞り込む
       if (req.query.month && req.query.year) {
         const targetMonth = parseInt(req.query.month, 10);
         const targetYear = parseInt(req.query.year, 10);
         
         // 最大件数制限を設定
-        const limit = req.query.limit ? parseInt(req.query.limit, 10) : 500;
+        const limit = req.query.limit ? parseInt(req.query.limit, 10) : 1000; // デフォルト上限を増加
         
-        // データをフィルタリング - 21日〜20日の期間を取得するように変更
-        const filteredRows = rows.filter((row, index) => {
-          if (index >= limit) return false;
+        console.log(`attendance.js: フィルタリング条件 - ${targetYear}年${targetMonth}月, 上限${limit}件`);
+        
+        // データをフィルタリング - カレンダー月（1日〜末日）を取得
+        const filteredRows = [];
+        
+        for (const row of rows) {
+          if (filteredRows.length >= limit) break;
           
-          if (!row[0]) return false;
+          if (!row[0]) continue;
           
-          // 日付パース
-          const rowDate = new Date(row[0]);
-          if (isNaN(rowDate.getTime())) return false;
-          
-          // 対象月の1日から末日までと、前月の21日〜末日を含める
-          const rowMonth = rowDate.getMonth() + 1;
-          const rowYear = rowDate.getFullYear();
-          const rowDay = rowDate.getDate();
-          
-          // 前月のデータ（21日以降）
-          const prevMonth = targetMonth === 1 ? 12 : targetMonth - 1;
-          const prevYear = targetMonth === 1 ? targetYear - 1 : targetYear;
-          
-          // 当月のデータ（1日〜20日）
-          const isCurrentMonthFirstHalf = (rowMonth === targetMonth && rowYear === targetYear && rowDay <= 20);
-          
-          // 前月のデータ（21日〜末日）
-          const isPrevMonthSecondHalf = (rowMonth === prevMonth && rowYear === prevYear && rowDay >= 21);
-          
-          return isCurrentMonthFirstHalf || isPrevMonthSecondHalf;
-        });
+          try {
+            // 日付パース - より柔軟に
+            let rowDate;
+            if (typeof row[0] === 'string') {
+              // YYYY-MM-DD形式を想定
+              const dateParts = row[0].split('-');
+              if (dateParts.length === 3) {
+                const year = parseInt(dateParts[0], 10);
+                const month = parseInt(dateParts[1], 10) - 1; // JavaScriptの月は0始まり
+                const day = parseInt(dateParts[2], 10);
+                rowDate = new Date(year, month, day);
+              } else {
+                rowDate = new Date(row[0]);
+              }
+            } else {
+              rowDate = new Date(row[0]);
+            }
+            
+            if (isNaN(rowDate.getTime())) {
+              console.log(`attendance.js: 無効な日付: ${row[0]}`);
+              continue;
+            }
+            
+            // 対象月の1日から末日までを取得（カレンダー月）
+            const rowMonth = rowDate.getMonth() + 1; // JavaScriptの月は0始まりなので+1
+            const rowYear = rowDate.getFullYear();
+            
+            // カレンダー月（1日〜末日）
+            const isCurrentMonthData = (rowMonth === targetMonth && rowYear === targetYear);
+            
+            if (isCurrentMonthData) {
+              filteredRows.push(row);
+            }
+          } catch (e) {
+            console.error(`attendance.js: 行の処理でエラー: ${e.message}`, row);
+          }
+        }
+        
+        // 「業務」ユーザーの具体的なデータ確認
+        const filteredBusinessUserRows = filteredRows.filter(row => 
+          row.length >= 6 && row[5] === '出勤簿'
+        );
+        
+        console.log(`attendance.js: フィルタリング後の出勤簿データ: ${filteredBusinessUserRows.length}件`);
+        
+        // 「業務」アカウントタイプのデータも確実に含まれるか確認
+        const businessTypeCount = filteredRows.filter(row => {
+          return row.length >= 6 && row[5] === '出勤簿';
+        }).length;
+        
+        console.log(`attendance.js: フィルタリング後の出勤簿データ数: ${businessTypeCount}件`);
+        console.log(`attendance.js: 全データ数: ${filteredRows.length}件`);
+        
+        // データサンプルを出力（最初の5件）
+        if (filteredRows.length > 0) {
+          console.log("attendance.js: データサンプル:", filteredRows.slice(0, 5));
+        }
         
         return res.status(200).json({ data: filteredRows });
       }

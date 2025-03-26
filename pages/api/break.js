@@ -87,6 +87,34 @@ export default async function handler(req, res) {
         range: `'${SHEET_NAME}'!A:E`,
       });
       const rows = result.data.values || [];
+      
+      // 月別フィルタリングのサポート
+      if (req.query.month && req.query.year) {
+        const targetMonth = parseInt(req.query.month, 10);
+        const targetYear = parseInt(req.query.year, 10);
+        
+        console.log(`break.js: フィルタリング - ${targetYear}年${targetMonth}月のデータを取得します`);
+        
+        // 日付に基づいてフィルタリング
+        const filteredRows = rows.filter(row => {
+          if (!row[0]) return false;
+          
+          try {
+            const itemDate = new Date(row[0]);
+            const itemYear = itemDate.getFullYear();
+            const itemMonth = itemDate.getMonth() + 1; // 1-12の範囲
+            
+            return itemYear === targetYear && itemMonth === targetMonth;
+          } catch (e) {
+            console.error('日付のパースエラー:', e, row);
+            return false;
+          }
+        });
+        
+        console.log(`break.js: フィルタリング結果 - ${filteredRows.length}件のデータを返します`);
+        return res.status(200).json({ data: filteredRows });
+      }
+      
       res.status(200).json({ data: rows });
     } catch (error) {
       console.error(error);

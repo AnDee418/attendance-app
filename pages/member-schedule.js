@@ -218,34 +218,73 @@ export default function MemberSchedulePage() {
         
         // 選択された月に応じたスケジュールデータを取得
         if (foundUser) {
-          // 前月のデータも取得するために、前月の情報を計算
+          // MonthlyListSectionでは当月（1日～末日）のデータが必要なため
+          // 当月と翌月のデータを取得
           const year = currentDate.getFullYear();
           const month = currentDate.getMonth() + 1; // 1-12の範囲
-          let prevMonth = month - 1;
-          let prevYear = year;
           
-          if (prevMonth < 1) {
-            prevMonth = 12;
-            prevYear = year - 1;
+          // 翌月の情報を計算（月末の処理用）
+          let nextMonth = month + 1;
+          let nextYear = year;
+          
+          if (nextMonth > 12) {
+            nextMonth = 1;
+            nextYear = year + 1;
           }
           
-          console.log(`データ取得: ${year}年${month}月と${prevYear}年${prevMonth}月`);
+          console.log(`member-schedule.js: データ取得 - ${year}年${month}月の表示に必要なデータを取得中`);
           
-          // 現在の月と前月のデータを両方取得
-          const [currentMonthResponse, prevMonthResponse] = await Promise.all([
-            fetch(`/api/attendance?month=${month}&year=${year}&limit=1000`),
-            fetch(`/api/attendance?month=${prevMonth}&year=${prevYear}&limit=1000`)
+          // 現在の月と翌月のデータを両方取得
+          const [currentMonthResponse, nextMonthResponse] = await Promise.all([
+            fetch(`/api/attendance?month=${month}&year=${year}&limit=2000`),
+            fetch(`/api/attendance?month=${nextMonth}&year=${nextYear}&limit=2000`)
           ]);
           
-          if (currentMonthResponse.ok && prevMonthResponse.ok) {
+          if (currentMonthResponse.ok && nextMonthResponse.ok) {
             const currentMonthData = await currentMonthResponse.json();
-            const prevMonthData = await prevMonthResponse.json();
+            const nextMonthData = await nextMonthResponse.json();
             
             // 両方のデータを結合
-            const combinedData = [...(prevMonthData.data || []), ...(currentMonthData.data || [])];
-            setSchedules(combinedData);
+            const allData = [...(currentMonthData.data || []), ...(nextMonthData.data || [])];
             
-            console.log(`取得データ: 前月=${prevMonthData.data?.length || 0}件, 当月=${currentMonthData.data?.length || 0}件, 合計=${combinedData.length}件`);
+            // 選択した月のカレンダー月（1日～末日）に関連するデータをフィルタリング
+            const filteredData = allData.filter(item => {
+              // データの日付を取得
+              if (!item || !item[0]) return false;
+              
+              try {
+                const itemDate = new Date(item[0]);
+                const itemYear = itemDate.getFullYear();
+                const itemMonth = itemDate.getMonth() + 1; // 1-12の範囲
+                
+                // 選択月のデータのみ残す
+                return itemYear === year && itemMonth === month;
+              } catch (e) {
+                console.error('日付のパースエラー:', e, item);
+                return false;
+              }
+            });
+            
+            // フィルタリングされたデータを設定
+            setSchedules(filteredData);
+            
+            console.log(`member-schedule.js: 取得データ - カレンダー月のデータ=${filteredData.length}件（全期間データ=${allData.length}件）`);
+            
+            // 特定のユーザーのデータ確認
+            const userRecords = filteredData.filter(item => item && item[1] === foundUser.data[0]);
+            console.log(`member-schedule.js: ${foundUser.data[0]}の${year}年${month}月のデータ=${userRecords.length}件`);
+            
+            // 日付の分布を確認
+            const dates = new Set();
+            filteredData.forEach(item => {
+              if (item && item[0]) dates.add(item[0]);
+            });
+            console.log(`member-schedule.js: 日付の数=${dates.size}件`);
+          } else {
+            console.error('データ取得エラー:', 
+              currentMonthResponse.ok ? '' : `当月データ: ${currentMonthResponse.status}`,
+              nextMonthResponse.ok ? '' : `翌月データ: ${nextMonthResponse.status}`
+            );
           }
         }
         
@@ -261,84 +300,111 @@ export default function MemberSchedulePage() {
     }
   }, [userQuery, currentDate]);
   
-  // 詳細データは必要になったタイミングで読み込み
-  const loadWorkDetails = async () => {
-    if (isWorkDetailsLoaded) return;
-    
-    try {
-      setIsDetailLoading(true);
-      const params = new URLSearchParams({
-        employeeName: userData?.data[0] || '',
-        date: new Date().toLocaleDateString('en-CA')
-      });
+  // 詳細データも適切な期間で取得するよう修正
+  useEffect(() => {
+    const fetchDetailData = async () => {
+      if (!userData) return;
       
-      const detailsRes = await fetch(`/api/workdetail?${params}`);
-      const breakRes = await fetch(`/api/break?${params}`);
-      
-      // データ処理...
-      
-      setIsWorkDetailsLoaded(true);
-      setIsDetailLoading(false);
-    } catch (error) {
-      console.error('Error loading details:', error);
-    }
-  };
-  
-  // /api/schedules から勤務記録を取得
-  useEffect(() => {
-    fetch('/api/schedules')
-      .then(res => res.json())
-      .then(data => {
-        if (data.data) {
-          setSchedules(data.data);
-        }
-      })
-      .catch(err => console.error('Error fetching schedules:', err));
-  }, []);
-  
-  // /api/workdetail から業務詳細を取得
-  useEffect(() => {
-    fetch('/api/workdetail')
-      .then(res => res.json())
-      .then(data => {
-        if (data.data) {
-          // 予定のみをフィルタリング
-          const filtered = data.data.filter(record => record.recordType === '予定');
-          setWorkDetails(filtered);
-        }
-      })
-      .catch(err => console.error('Error fetching work details:', err));
-  }, []);
-  
-  // /api/settings から設定値を取得
-  useEffect(() => {
-    fetch('/api/settings')
-      .then(res => res.json())
-      .then(data => setSettings(data))
-      .catch(err => console.error('Error fetching settings:', err));
-  }, []);
-  
-  // /api/break から休憩記録を取得
-  useEffect(() => {
-    fetch('/api/break')
-      .then(res => res.json())
-      .then(data => {
-        if (data.data) {
-          const records = data.data.map(row => ({
-            date: row[0],
-            employeeName: row[1],
-            breakStart: row[2],
-            breakEnd: row[3],
-            recordType: row[4],
-          }));
-          if (userData) {
-            const userRecords = records.filter(rec => rec.employeeName === userData.data[0]);
-            setBreakData(userRecords);
+      try {
+        setIsDetailLoading(true);
+        
+        // 対象月のカレンダー月（1日～末日）
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth() + 1; // 1-12の範囲
+        
+        console.log(`member-schedule.js: 詳細データ取得 - ${year}年${month}月のデータ`);
+        
+        // 業務詳細を取得
+        const workDetailRes = await fetch(`/api/workdetail?employeeName=${encodeURIComponent(userData.data[0])}`);
+        if (workDetailRes.ok) {
+          const data = await workDetailRes.json();
+          if (data.data) {
+            // カレンダー月（1日～末日）のデータだけをフィルタリング
+            const filteredDetails = data.data.filter(item => {
+              if (!item || !item.date) return false;
+              
+              try {
+                const itemDate = new Date(item.date);
+                const itemYear = itemDate.getFullYear();
+                const itemMonth = itemDate.getMonth() + 1; // 1-12の範囲
+                
+                return itemYear === year && itemMonth === month;
+              } catch (e) {
+                console.error('詳細データの日付パースエラー:', e, item);
+                return false;
+              }
+            });
+            
+            setWorkDetails(filteredDetails);
+            console.log(`member-schedule.js: 業務詳細データ=${filteredDetails.length}件`);
           }
         }
-      })
-      .catch(err => console.error('Error fetching break data:', err));
-  }, [userData]);
+        
+        // 休憩データを取得
+        const breakRes = await fetch(`/api/break?employeeName=${encodeURIComponent(userData.data[0])}`);
+        if (breakRes.ok) {
+          const data = await breakRes.json();
+          if (data.data) {
+            // データ形式変換
+            const formattedBreakData = data.data.map(row => ({
+              date: row[0],
+              employeeName: row[1],
+              breakStart: row[2],
+              breakEnd: row[3],
+              recordType: row[4],
+            }));
+            
+            // カレンダー月（1日～末日）のデータだけをフィルタリング
+            const filteredBreaks = formattedBreakData.filter(item => {
+              if (!item || !item.date) return false;
+              
+              try {
+                const itemDate = new Date(item.date);
+                const itemYear = itemDate.getFullYear();
+                const itemMonth = itemDate.getMonth() + 1; // 1-12の範囲
+                
+                return itemYear === year && itemMonth === month;
+              } catch (e) {
+                console.error('休憩データの日付パースエラー:', e, item);
+                return false;
+              }
+            });
+            
+            setBreakData(filteredBreaks);
+            console.log(`member-schedule.js: 休憩データ=${filteredBreaks.length}件`);
+          }
+        }
+        
+        setIsDetailLoading(false);
+        setIsWorkDetailsLoaded(true);
+      } catch (error) {
+        console.error('Error loading details:', error);
+        setIsDetailLoading(false);
+      }
+    };
+    
+    fetchDetailData();
+  }, [userData, currentDate]);
+  
+  // 設定値を取得する
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch('/api/settings');
+        if (res.ok) {
+          const data = await res.json();
+          setSettings(data);
+          console.log('member-schedule.js: 設定データを取得しました');
+        } else {
+          console.error('設定取得エラー:', res.status);
+        }
+      } catch (err) {
+        console.error('Error fetching settings:', err);
+      }
+    };
+    
+    fetchSettings();
+  }, []);
   
   // 月移動用の関数を修正
   const handleMonthChange = (delta) => {

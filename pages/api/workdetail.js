@@ -23,6 +23,34 @@ export default async function handler(req, res) {
         recordType: row[6],     // 登録タイプ
         detail: row[7]          // 詳細 (H列)
       }));
+      
+      // 月別フィルタリングのサポート
+      if (req.query.month && req.query.year) {
+        const targetMonth = parseInt(req.query.month, 10);
+        const targetYear = parseInt(req.query.year, 10);
+        
+        console.log(`workdetail.js: フィルタリング - ${targetYear}年${targetMonth}月のデータを取得します`);
+        
+        // 日付に基づいてフィルタリング
+        const filteredRows = mappedRows.filter(item => {
+          if (!item.date) return false;
+          
+          try {
+            const itemDate = new Date(item.date);
+            const itemYear = itemDate.getFullYear();
+            const itemMonth = itemDate.getMonth() + 1; // 1-12の範囲
+            
+            return itemYear === targetYear && itemMonth === targetMonth;
+          } catch (e) {
+            console.error('日付のパースエラー:', e, item);
+            return false;
+          }
+        });
+        
+        console.log(`workdetail.js: フィルタリング結果 - ${filteredRows.length}件のデータを返します`);
+        return res.status(200).json({ data: filteredRows });
+      }
+      
       res.status(200).json({ data: mappedRows });
     } catch (error) {
       console.error(error);

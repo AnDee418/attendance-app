@@ -15,6 +15,7 @@ import {
 import LoadingSpinner from '../components/LoadingSpinner';
 import MonthlyListSection from '../components/MonthlyListSection';
 import ListView from '../components/ListView';
+import { useRouter } from 'next/router';
 
 // 月の表示用ヘルパー関数
 const formatMonth = (date) => {
@@ -150,9 +151,19 @@ const calculateActualWorkingHoursForClock = (schedules, currentDate, userName) =
   // 対象データのフィルタリング（重複を排除）
   const targetSchedules = [];
   
+  // 「業務」アカウントタイプのユーザーデータも確実に含めるようにデバッグ
+  let businessTypeDataCount = 0;
+  
   schedules.forEach(schedule => {
-    if (!Array.isArray(schedule) || schedule.length < 7) return;
-    if (!schedule[0] || !schedule[1] || !schedule[5] || !schedule[6]) return;
+    if (!Array.isArray(schedule) || schedule.length < 7) {
+      console.log('無効なスケジュールデータ:', schedule);
+      return;
+    }
+    
+    if (!schedule[0] || !schedule[1] || !schedule[5] || !schedule[6]) {
+      console.log('不完全なスケジュールデータ:', schedule);
+      return;
+    }
     
     try {
       // 日付文字列を明示的にパース - YYYY-MM-DD形式を想定
@@ -164,7 +175,10 @@ const calculateActualWorkingHoursForClock = (schedules, currentDate, userName) =
         scheduleDate = new Date(schedule[0]);
       }
       
-      if (isNaN(scheduleDate.getTime())) return;
+      if (isNaN(scheduleDate.getTime())) {
+        console.log('無効な日付:', schedule[0]);
+        return;
+      }
 
       const dateKey = scheduleDate.toLocaleDateString('en-CA');
       const isInDateRange = scheduleDate >= startDate && scheduleDate <= endDate;
@@ -172,7 +186,15 @@ const calculateActualWorkingHoursForClock = (schedules, currentDate, userName) =
       const isClockbookRecord = schedule[5] === '出勤簿';
       const hasWorkingHours = schedule[6] && typeof schedule[6] === 'string';
 
+      // 「業務」アカウントタイプの処理確認
+      if (isMatchingUser && isClockbookRecord) {
+        businessTypeDataCount++;
+      }
+
       if (isInDateRange && isMatchingUser && isClockbookRecord && hasWorkingHours) {
+        // ここで詳細なログを出力
+        console.log(`日付: ${dateKey}, 名前: ${schedule[1]}, 種別: ${schedule[5]}, 時間: ${schedule[6]}`);
+        
         // 日付ベースでの重複排除
         if (!processedDates[dateKey]) {
           processedDates[dateKey] = true;
@@ -186,6 +208,7 @@ const calculateActualWorkingHoursForClock = (schedules, currentDate, userName) =
     }
   });
 
+  console.log(`業務関連データ件数: ${businessTypeDataCount}件`);
   console.log(`${userName}の集計対象レコード数(重複排除後):`, targetSchedules.length);
   
   // フィルタリングされたデータの合計時間を計算
@@ -417,225 +440,255 @@ const calculatePlannedBreakHours = (breakRecords, currentDate) => {
   return totalMinutes / 60;  // 時間単位で返す
 };
 
-// 休暇申請データを取得する関数を追加
-const fetchVacationRequests = async () => {
-  try {
-    const response = await fetch('/api/vacation-requests');
-    if (!response.ok) throw new Error('休暇申請の取得に失敗しました');
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching vacation requests:', error);
-    return { data: [] };
+// 月内の全日付を生成するヘルパー関数を追加
+const getDaysInMonth = (date) => {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const days = [];
+  for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
+    days.push(new Date(d));
   }
-};
-
-// データフェッチ関数を修正して前月のデータも取得するように変更
-const fetchUserSchedules = async (month, year) => {
-  try {
-    console.log(`データ取得: ${year}年${month}月の勤怠期間（前月21日〜当月20日）`);
-    
-    // 単一のAPIコールで必要なデータを取得（APIは21日〜20日のデータを返すよう修正済み）
-    const response = await fetch(`/api/attendance?month=${month}&year=${year}&limit=1000`);
-    
-    if (!response.ok) {
-      throw new Error('スケジュールの取得に失敗しました');
-    }
-    
-    const data = await response.json();
-    
-    console.log(`取得データ: ${data.data?.length || 0}件`);
-    
-    // 重複チェック - デバッグ用
-    const dateMap = {};
-    const scheduleData = data.data || [];
-    scheduleData.forEach(item => {
-      if (Array.isArray(item) && item[0] && item[1] && item[5]) {
-        const key = `${item[0]}_${item[1]}_${item[5]}`;
-        if (dateMap[key]) {
-          console.log(`重複データ検出: ${item[0]} - ${item[1]} - ${item[5]}`);
-          dateMap[key]++;
-        } else {
-          dateMap[key] = 1;
-        }
-      }
-    });
-    
-    // 重複が多いエントリを表示
-    Object.entries(dateMap)
-      .filter(([_, count]) => count > 1)
-      .forEach(([key, count]) => {
-        console.log(`重複エントリ: ${key}, ${count}回出現`);
-      });
-    
-    return scheduleData;
-  } catch (error) {
-    console.error('Error:', error);
-    return [];
-  }
+  return days;
 };
 
 export default function SchedulesPage() {
-  const { data: session } = useSession();
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [users, setUsers] = useState([]);
   const [schedules, setSchedules] = useState([]);
-  const [settings, setSettings] = useState(null);
-  const [breakRecords, setBreakRecords] = useState([]);
-  const [vacationRequests, setVacationRequests] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [userWorkHours, setUserWorkHours] = useState({});
-  const [viewMode, setViewMode] = useState('user'); // 'user' or 'list'
   const [workDetails, setWorkDetails] = useState([]);
+  const [breakData, setBreakData] = useState([]);
+  const [settings, setSettings] = useState(null);
+  const [view, setView] = useState('user'); // 'list' または 'monthly'
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [hoveredUser, setHoveredUser] = useState(null);
+  const [vacationRequests, setVacationRequests] = useState({ data: [] });
 
-  // ユーザーの表示フィルタリング関数
-  const filterUsers = (allUsers) => {
-    if (!session?.user) return [];
+  // 現在の月を状態として保持
+  const [currentDate, setCurrentDate] = useState(new Date());
+  
+  // データ読み込みの状態を保持
+  const [dataLoadStatus, setDataLoadStatus] = useState({
+    users: false,
+    schedules: false,
+    workDetails: false,
+    breakData: false,
+    settings: false,
+    vacationRequests: false
+  });
+  
+  // 一括で読み込み状態を更新する関数
+  const updateLoadStatus = (key, value) => {
+    setDataLoadStatus(prev => ({ ...prev, [key]: value }));
+  };
 
-    // 管理者権限を持っている場合は全ユーザーを表示
-    if (session.user.isAdmin) {
-      return allUsers;
-    }
-
-    const currentUserType = session.user.accountType;
-    const currentUserId = session.user.userId;
-
-    switch (currentUserType) {
-      case '営業':
-      case '業務':
-        // 営業と業務のユーザーのみ表示
-        return allUsers.filter(user => 
-          user.data[5] === '営業' || user.data[5] === '業務'
-        );
-      case 'アルバイト':
-        // 自分のみ表示
-        return allUsers.filter(user => 
-          user.data[1] === currentUserId
-        );
-      default:
-        return [];
+  // 休暇申請を取得する関数
+  const fetchVacationRequests = async () => {
+    try {
+      updateLoadStatus('vacationRequests', false);
+      const res = await fetch('/api/vacation-requests');
+      const data = await res.json();
+      setVacationRequests(data);
+      updateLoadStatus('vacationRequests', true);
+    } catch (err) {
+      console.error('休暇申請の取得に失敗しました:', err);
+      setError('休暇申請の取得に失敗しました');
+      updateLoadStatus('vacationRequests', true);
     }
   };
 
-  // ユーザー一覧を取得
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const res = await fetch('/api/users');
-        const data = await res.json();
-        if (data.data) {
-          // フィルタリングしたユーザー一覧をセット
-          const filteredUsers = filterUsers(data.data);
-          setUsers(filteredUsers);
-        }
-      } catch (error) {
-        console.error('Error fetching users:', error);
+  // ユーザースケジュールを取得する
+  const fetchUserSchedules = async (month, year) => {
+    updateLoadStatus('schedules', false);
+    setIsLoading(true);
+    
+    try {
+      // 前月のデータも取得するために、前月の情報を計算
+      let prevMonth = month - 1;
+      let prevYear = year;
+      
+      if (prevMonth < 1) {
+        prevMonth = 12;
+        prevYear = year - 1;
       }
-    };
+      
+      console.log(`schedules.js: データ取得開始 - ${year}年${month}月と${prevYear}年${prevMonth}月`);
+      
+      // 現在の月と前月のデータを両方取得（より大きな上限値を設定）
+      const [currentMonthResponse, prevMonthResponse] = await Promise.all([
+        fetch(`/api/attendance?month=${month}&year=${year}&limit=2000`),
+        fetch(`/api/attendance?month=${prevMonth}&year=${prevYear}&limit=2000`)
+      ]);
+      
+      if (!currentMonthResponse.ok) throw new Error(`当月データの取得に失敗: ${currentMonthResponse.status}`);
+      if (!prevMonthResponse.ok) throw new Error(`前月データの取得に失敗: ${prevMonthResponse.status}`);
+      
+      const currentMonthData = await currentMonthResponse.json();
+      const prevMonthData = await prevMonthResponse.json();
+      
+      // 両方のデータを結合
+      const combinedData = [...(prevMonthData.data || []), ...(currentMonthData.data || [])];
+      
+      console.log(`schedules.js: 取得データ総数 - 前月=${prevMonthData.data?.length || 0}件, 当月=${currentMonthData.data?.length || 0}件, 合計=${combinedData.length}件`);
+      
+      // データ検証: 配列である必要がある
+      if (!Array.isArray(combinedData)) {
+        console.error('schedules.js: データ形式エラー - 配列ではありません', combinedData);
+        throw new Error('スケジュールデータの形式が正しくありません');
+      }
+      
+      // データサンプルを出力
+      if (combinedData.length > 0) {
+        console.log('schedules.js: データサンプル（最初の5件）:', combinedData.slice(0, 5));
+      } else {
+        console.warn('schedules.js: 取得データがありません');
+      }
+      
+      // 「業務」アカウントタイプのデータを確認
+      const businessTypeRecords = combinedData.filter(row => 
+        Array.isArray(row) && row.length >= 6 && row[5] === '出勤簿'
+      );
+      
+      console.log(`schedules.js: 出勤簿データ数=${businessTypeRecords.length}件`);
+      if (businessTypeRecords.length > 0) {
+        console.log('schedules.js: 出勤簿データサンプル:', businessTypeRecords.slice(0, 3));
+      }
+      
+      // 「業務」ユーザー（例：後藤 和敏）のデータを特別に確認
+      const businessUserName = '後藤 和敏'; // 特定のユーザー名
+      const businessUserRecords = combinedData.filter(row =>
+        Array.isArray(row) && row.length >= 2 && row[1] === businessUserName
+      );
+      
+      console.log(`schedules.js: ${businessUserName}のデータ=${businessUserRecords.length}件`);
+      if (businessUserRecords.length > 0) {
+        console.log(`schedules.js: ${businessUserName}のデータサンプル:`, businessUserRecords);
+      }
+      
+      // 日付の範囲を確認
+      const dates = new Set();
+      combinedData.forEach(row => {
+        if (Array.isArray(row) && row[0]) {
+          dates.add(row[0]);
+        }
+      });
+      console.log(`schedules.js: 取得データの日付数=${dates.size}件`);
+      console.log('schedules.js: 日付一覧:', [...dates].sort());
+      
+      // データを設定
+      setSchedules(combinedData);
+      updateLoadStatus('schedules', true);
+    } catch (err) {
+      console.error('schedules.js: スケジュールデータの取得に失敗しました:', err);
+      setError('スケジュールデータの取得に失敗しました');
+      updateLoadStatus('schedules', true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    fetchUsers();
-  }, [session]); // session を依存配列に追加
-
-  // スケジュールを取得
+  // 初期表示時のデータ取得
   useEffect(() => {
     const loadData = async () => {
-      setIsLoading(true);
-      const scheduleData = await fetchUserSchedules(
-        currentDate.getMonth() + 1,
-        currentDate.getFullYear()
-      );
-      setSchedules(scheduleData);
-      setIsLoading(false);
+      try {
+        setIsLoading(true);
+        
+        // ユーザー一覧を取得
+        try {
+          updateLoadStatus('users', false);
+          const res = await fetch('/api/users');
+          const data = await res.json();
+          if (data.data) {
+            console.log(`schedules.js: ユーザーデータ取得 - ${data.data.length}人`);
+            setUsers(data.data);
+          }
+          updateLoadStatus('users', true);
+        } catch (err) {
+          console.error('ユーザー情報の取得に失敗しました:', err);
+          updateLoadStatus('users', true);
+        }
+
+        // スケジュールデータを取得
+        await fetchUserSchedules(currentDate.getMonth() + 1, currentDate.getFullYear());
+        
+        // 業務詳細を取得
+        try {
+          updateLoadStatus('workDetails', false);
+          const res = await fetch('/api/workdetail');
+          const data = await res.json();
+          if (data.data) {
+            console.log(`schedules.js: 業務詳細データ取得 - ${data.data.length}件`);
+            setWorkDetails(data.data);
+          }
+          updateLoadStatus('workDetails', true);
+        } catch (err) {
+          console.error('業務詳細の取得に失敗しました:', err);
+          updateLoadStatus('workDetails', true);
+        }
+        
+        // 設定値を取得
+        try {
+          updateLoadStatus('settings', false);
+          const res = await fetch('/api/settings');
+          const data = await res.json();
+          console.log('schedules.js: 設定データ取得');
+          setSettings(data);
+          updateLoadStatus('settings', true);
+        } catch (err) {
+          console.error('設定情報の取得に失敗しました:', err);
+          updateLoadStatus('settings', true);
+        }
+
+        // 休憩情報を取得
+        try {
+          updateLoadStatus('breakData', false);
+          const res = await fetch('/api/break');
+          const data = await res.json();
+          
+          if (data.data) {
+            // データ形式変換
+            const formattedBreakData = data.data.map(row => ({
+              date: row[0],
+              employeeName: row[1],
+              breakStart: row[2],
+              breakEnd: row[3],
+              recordType: row[4],
+            }));
+            console.log(`schedules.js: 休憩データ取得 - ${formattedBreakData.length}件`);
+            setBreakData(formattedBreakData);
+          }
+          updateLoadStatus('breakData', true);
+        } catch (err) {
+          console.error('休憩情報の取得に失敗しました:', err);
+          updateLoadStatus('breakData', true);
+        }
+        
+        // 休暇申請データを取得
+        await fetchVacationRequests();
+        
+      } catch (error) {
+        console.error('データロード中にエラーが発生しました:', error);
+        setError('データの読み込み中にエラーが発生しました。');
+      } finally {
+        setIsLoading(false);
+      }
     };
-    
+
     loadData();
+  }, []);
+  
+  // 月が変更されたらデータを再取得
+  useEffect(() => {
+    fetchUserSchedules(currentDate.getMonth() + 1, currentDate.getFullYear());
   }, [currentDate]);
 
-  // 設定を取得
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const res = await fetch('/api/settings');
-        const data = await res.json();
-        if (data) {
-          setSettings(data);
-        }
-      } catch (error) {
-        console.error('Error fetching settings:', error);
-      }
-    };
-
-    fetchSettings();
-  }, []);
-
-  // 休暇申請データを取得するuseEffectを追加
-  useEffect(() => {
-    const getVacationRequests = async () => {
-      const data = await fetchVacationRequests();
-      setVacationRequests(data);
-    };
-    getVacationRequests();
-  }, []);
-
-  // 業務詳細データを取得
-  useEffect(() => {
-    const fetchWorkDetails = async () => {
-      try {
-        const response = await fetch('/api/workdetail');
-        const data = await response.json();
-        if (data.data) {
-          setWorkDetails(data.data);
-        }
-      } catch (error) {
-        console.error('Error fetching work details:', error);
-      }
-    };
-
-    fetchWorkDetails();
-  }, []);
-
-  // ユーザー別の勤務時間計算
-  useEffect(() => {
-    if (users && schedules.length > 0) {
-      // 各ユーザーの勤務時間をここで事前計算
-      const userHours = {};
-      console.log('ユーザー数:', users.length);
-      console.log('スケジュールデータ数:', schedules.length);
-      
-      users.forEach(user => {
-        const userName = user.data[0];
-        // スケジュールデータが大きい場合、処理に時間がかかることを警告
-        if (schedules.length > 500) {
-          console.warn(`大量のスケジュールデータ(${schedules.length}件)を処理中。パフォーマンスに影響する可能性があります。`);
-        }
-        
-        console.log(`${userName}の勤務時間計算開始...`);
-        
-        // 重複を排除した正確な計算を行う
-        const actual = calculateActualWorkingHoursForClock(schedules, currentDate, userName);
-        const planned = calculatePlannedWorkingHours(schedules, currentDate, userName);
-        
-        userHours[userName] = {
-          planned: planned,
-          actual: actual
-        };
-        
-        console.log(`${userName}の計算結果:`, { 
-          planned: planned.toFixed(1), 
-          actual: actual.toFixed(1) 
-        });
-      });
-      
-      // 計算結果をログに出力して確認
-      console.log('全ユーザーの勤務時間計算結果:', userHours);
-      
-      // 計算結果をステート変数に保存
-      setUserWorkHours(userHours);
-    }
-  }, [users, schedules, currentDate]);
-
+  // 月移動処理
   const handleMonthChange = (delta) => {
     const newDate = new Date(currentDate);
-    newDate.setMonth(currentDate.getMonth() + delta);
+    newDate.setMonth(newDate.getMonth() + delta);
     setCurrentDate(newDate);
   };
 
@@ -705,9 +758,9 @@ export default function SchedulesPage() {
           <div className="flex justify-end">
             <div className="inline-flex rounded-lg shadow-sm bg-white p-1">
               <button
-                onClick={() => setViewMode('user')}
+                onClick={() => setView('user')}
                 className={`px-3 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium transition-colors ${
-                  viewMode === 'user'
+                  view === 'user'
                     ? 'bg-blue-50 text-blue-600'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
@@ -716,9 +769,9 @@ export default function SchedulesPage() {
                 ユーザービュー
               </button>
               <button
-                onClick={() => setViewMode('list')}
+                onClick={() => setView('list')}
                 className={`px-3 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium transition-colors ${
-                  viewMode === 'list'
+                  view === 'list'
                     ? 'bg-blue-50 text-blue-600'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
@@ -732,7 +785,7 @@ export default function SchedulesPage() {
       </div>
       
       {/* ビューコンテンツ */}
-      {viewMode === 'user' ? (
+      {view === 'user' ? (
         // 既存のユーザービュー
         <div className="space-y-8">
           {Object.entries(groupedUsers).map(([accountType, departments]) => (
@@ -770,15 +823,21 @@ export default function SchedulesPage() {
                   departmentUsers.map((user) => {
                     const userName = user.data[0];
                     
-                    // userWorkHoursが確実に存在するか確認
-                    if (!userWorkHours[userName]) {
-                      console.warn(`${userName}の事前計算データがありません`);
-                    }
+                    // userWorkHoursの代わりに、各ユーザーごとにその場で計算
+                    // 実績勤務時間を計算
+                    const actualHours = calculateActualWorkingHoursForClock(
+                      schedules.filter(s => s[1] === userName), 
+                      currentDate, 
+                      userName
+                    );
                     
-                    // 事前計算の結果を使用（再計算しない）
-                    const userHour = userWorkHours[userName] || { planned: 0, actual: 0 };
-                    const actualHours = userHour.actual;
-                    const plannedWorkingHours = userHour.planned;
+                    // 予定勤務時間を計算
+                    const plannedWorkingHours = calculatePlannedWorkingHours(
+                      schedules.filter(s => s[1] === userName), 
+                      currentDate, 
+                      userName
+                    );
+                    
                     const standardHours = getStandardWorkingHours(currentDate, settings);
                     
                     console.log(`${userName} カード表示時間: 予定=${plannedWorkingHours.toFixed(1)}h, 実績=${actualHours.toFixed(1)}h, 標準=${standardHours}h`);
@@ -969,7 +1028,7 @@ export default function SchedulesPage() {
             users={users}
             schedules={schedules}
             workDetails={workDetails}
-            breakData={breakRecords}
+            breakData={breakData}
             parseJapaneseTimeString={parseJapaneseTimeString}
             timeToHoursAndMinutes={timeToHoursAndMinutes}
             standardHours={getStandardWorkingHours(currentDate, settings)}
