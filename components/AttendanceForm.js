@@ -17,31 +17,6 @@ export default function AttendanceForm({
     recordType: attendance.recordType || '出勤簿'
   });
 
-  // 休憩時間入力後の自動追加処理を追加
-  useEffect(() => {
-    // 両方の時間が入力されている場合のみ自動追加
-    if (newBreak.breakStart && newBreak.breakEnd) {
-      const startDate = new Date(`2000/01/01 ${newBreak.breakStart}`);
-      const endDate = new Date(`2000/01/01 ${newBreak.breakEnd}`);
-      
-      // 有効な時間範囲（開始時間が終了時間より前）の場合のみ追加
-      if (startDate < endDate) {
-        onAddBreak({
-          breakStart: newBreak.breakStart, 
-          breakEnd: newBreak.breakEnd, 
-          recordType: attendance.recordType || '出勤簿'
-        });
-        
-        // 入力欄をリセット
-        setNewBreak({
-          breakStart: '',
-          breakEnd: '',
-          recordType: attendance.recordType || '出勤簿'
-        });
-      }
-    }
-  }, [newBreak.breakStart, newBreak.breakEnd]);
-
   // 削除確認用の機能
   const handleBreakDelete = (index) => {
     // モバイルフレンドリーな確認
@@ -169,7 +144,7 @@ export default function AttendanceForm({
 
   // 選択した時間と分から時刻文字列を生成
   const formatTime = (hour, minute) => {
-    if (!hour && !minute) return '';
+    if (!hour || !minute) return ''; // 時と分の両方が必要
     return `${hour}:${minute}`;
   };
 
@@ -216,36 +191,46 @@ export default function AttendanceForm({
       : ['00', '15', '30', '45']; // 通常ユーザーは15分刻み
   };
 
-  // 休憩時間の自動追加処理（useEffectではなく、時間選択後に直接実行）
+  // 休憩時間の入力を更新する関数 (自動追加ロジックを削除)
   const handleBreakTimeChange = (field, value) => {
     const updatedBreak = { ...newBreak, [field]: value };
     setNewBreak(updatedBreak);
-    
-    // 両方の時間が入力されているか確認
-    if (updatedBreak.breakStart && updatedBreak.breakEnd) {
-      const startDate = new Date(`2000/01/01 ${updatedBreak.breakStart}`);
-      const endDate = new Date(`2000/01/01 ${updatedBreak.breakEnd}`);
-      
+  };
+
+  // 休憩追加ボタンのクリックハンドラ
+  const handleAddBreakClick = () => {
+    if (newBreak.breakStart && newBreak.breakEnd) {
+      const startDate = new Date(`2000/01/01 ${newBreak.breakStart}`);
+      const endDate = new Date(`2000/01/01 ${newBreak.breakEnd}`);
+
       // 有効な時間範囲（開始時間が終了時間より前）の場合のみ追加
       if (startDate < endDate) {
-        // 少し遅延させて追加（UIの更新を確実にするため）
-        setTimeout(() => {
-          onAddBreak({
-            breakStart: updatedBreak.breakStart, 
-            breakEnd: updatedBreak.breakEnd, 
-            recordType: attendance.recordType || '出勤簿'
-          });
-          
-          // 入力欄をリセット
-          setNewBreak({
-            breakStart: '',
-            breakEnd: '',
-            recordType: attendance.recordType || '出勤簿'
-          });
-        }, 100);
+        onAddBreak({
+          breakStart: newBreak.breakStart,
+          breakEnd: newBreak.breakEnd,
+          recordType: attendance.recordType || '出勤簿'
+        });
+
+        // 入力欄をリセット
+        setNewBreak({
+          breakStart: '',
+          breakEnd: '',
+          recordType: attendance.recordType || '出勤簿'
+        });
+      } else {
+        alert('休憩終了時間は開始時間より後に設定してください。');
       }
     }
   };
+
+  // 休憩追加ボタンの有効/無効状態を判定
+  const isAddBreakButtonDisabled = !newBreak.breakStart || !newBreak.breakEnd || (() => {
+      if (!newBreak.breakStart || !newBreak.breakEnd) return true;
+      const startDate = new Date(`2000/01/01 ${newBreak.breakStart}`);
+      const endDate = new Date(`2000/01/01 ${newBreak.breakEnd}`);
+      return !(startDate < endDate);
+  })();
+
 
   return (
     <>
@@ -473,10 +458,10 @@ export default function AttendanceForm({
                 <div className="relative">
                   <select 
                     name="newBreakStartHour" 
-                    value={newBreak.breakStart.split(':')[0] || ''}
+                    value={parseTime(newBreak.breakStart).hour || ''}
                     onChange={(e) => {
                       const hour = e.target.value;
-                      const minute = newBreak.breakStart.split(':')[1] || '00';
+                      const minute = parseTime(newBreak.breakStart).minute || '00';
                       handleBreakTimeChange('breakStart', formatTime(hour, minute));
                     }}
                     className="w-full py-3 px-4 appearance-none bg-blue-50 border border-blue-200 rounded-lg text-center text-blue-700 font-medium text-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
@@ -495,10 +480,10 @@ export default function AttendanceForm({
                 <div className="relative">
                   <select 
                     name="newBreakStartMinute" 
-                    value={newBreak.breakStart.split(':')[1] || ''}
+                    value={parseTime(newBreak.breakStart).minute || ''}
                     onChange={(e) => {
                       const minute = e.target.value;
-                      const hour = newBreak.breakStart.split(':')[0] || '12';
+                      const hour = parseTime(newBreak.breakStart).hour || '12'; // デフォルト時間を調整
                       handleBreakTimeChange('breakStart', formatTime(hour, minute));
                     }}
                     className="w-full py-3 px-4 appearance-none bg-blue-50 border border-blue-200 rounded-lg text-center text-blue-700 font-medium text-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
@@ -524,10 +509,10 @@ export default function AttendanceForm({
                 <div className="relative">
                   <select 
                     name="newBreakEndHour" 
-                    value={newBreak.breakEnd.split(':')[0] || ''}
+                    value={parseTime(newBreak.breakEnd).hour || ''}
                     onChange={(e) => {
                       const hour = e.target.value;
-                      const minute = newBreak.breakEnd.split(':')[1] || '00';
+                      const minute = parseTime(newBreak.breakEnd).minute || '00';
                       handleBreakTimeChange('breakEnd', formatTime(hour, minute));
                     }}
                     className="w-full py-3 px-4 appearance-none bg-blue-50 border border-blue-200 rounded-lg text-center text-blue-700 font-medium text-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
@@ -546,10 +531,10 @@ export default function AttendanceForm({
                 <div className="relative">
                   <select 
                     name="newBreakEndMinute" 
-                    value={newBreak.breakEnd.split(':')[1] || ''}
+                    value={parseTime(newBreak.breakEnd).minute || ''}
                     onChange={(e) => {
                       const minute = e.target.value;
-                      const hour = newBreak.breakEnd.split(':')[0] || '13';
+                      const hour = parseTime(newBreak.breakEnd).hour || '13'; // デフォルト時間を調整
                       handleBreakTimeChange('breakEnd', formatTime(hour, minute));
                     }}
                     className="w-full py-3 px-4 appearance-none bg-blue-50 border border-blue-200 rounded-lg text-center text-blue-700 font-medium text-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
@@ -568,20 +553,22 @@ export default function AttendanceForm({
               </div>
             </div>
             
-            {/* 選択した休憩時間のプレビュー表示 */}
-            {(newBreak.breakStart || newBreak.breakEnd) && (
-              <div className="mt-2 mb-3 bg-blue-50 rounded-lg p-2 border border-blue-200">
-                <p className="text-sm text-blue-700 flex items-center justify-center">
-                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  新しい休憩: 
-                  <span className="ml-1 font-medium">
-                    {newBreak.breakStart || '--:--'} - {newBreak.breakEnd || '--:--'}
-                  </span>
-                </p>
-              </div>
-            )}
+            {/* 休憩を追加ボタン */}
+            <button
+              type="button"
+              onClick={handleAddBreakClick}
+              disabled={isAddBreakButtonDisabled}
+              className={`w-full mt-2 flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white transition-colors duration-200 ${
+                isAddBreakButtonDisabled
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 active:bg-blue-800'
+              }`}
+            >
+              <svg className="w-5 h-5 mr-2 -ml-1" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+              </svg>
+              休憩を追加
+            </button>
 
             {/* 入力方法ガイド - スマホユーザー向け */}
             <div className="mt-3 text-xs text-gray-500 bg-gray-50 rounded-lg p-2 border border-gray-200">
@@ -589,7 +576,7 @@ export default function AttendanceForm({
                 <svg className="w-4 h-4 mr-1 text-gray-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span>休憩開始と終了時間を両方入力すると自動的に追加されます。削除は各休憩時間の右側にある×ボタンをタップしてください。</span>
+                <span>休憩開始と終了時間を両方入力し、「休憩を追加」ボタンを押してください。削除はサマリーの右側にある×ボタンをタップします。</span>
               </p>
             </div>
           </div>

@@ -84,7 +84,7 @@ export default function VacationManagementPage() {
   useEffect(() => {
     if (session) {
       fetchRequests();
-      const intervalId = setInterval(fetchRequests, 30000); // 30秒ごとに更新
+      const intervalId = setInterval(fetchRequests, 3600000); // 1時間ごとに更新
       return () => clearInterval(intervalId);
     }
   }, [session]);

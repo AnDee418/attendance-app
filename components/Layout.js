@@ -113,11 +113,11 @@ export default function Layout({ children, title }) {
   useEffect(() => {
     if (session?.user?.isAdmin) {
       fetchPendingRequests();
-      const intervalId = setInterval(fetchPendingRequests, 30000);
+      const intervalId = setInterval(fetchPendingRequests, 3600000); // 1時間ごとに更新
       return () => clearInterval(intervalId);
     } else if (session?.user) {  // 管理者以外のログインユーザー全て
       fetchApprovedRequests();
-      const intervalId = setInterval(fetchApprovedRequests, 30000);
+      const intervalId = setInterval(fetchApprovedRequests, 3600000); // 1時間ごとに更新
       return () => clearInterval(intervalId);
     }
   }, [session]);
